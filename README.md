@@ -1,6 +1,16 @@
 # PULSE — Animated Realtime WebSocket Chat Application
 
+> **Project Owner & Lead Developer**: [Shreyash Dwivedi](https://github.com/shreyashdwivedi36)
+
 A complete, production-ready full-stack real-time chat application built with **Node.js**, **Express**, **WebSockets (`ws`)**, **JWT Authentication**, and an interactive **Animated Glassmorphism Frontend**.
+
+---
+
+## 👤 Author Information
+
+- **Owner**: Shreyash Dwivedi
+- **GitHub**: [@shreyashdwivedi36](https://github.com/shreyashdwivedi36)
+- **Repository**: [https://github.com/shreyashdwivedi36/pulse-chat-app](https://github.com/shreyashdwivedi36/pulse-chat-app)
 
 ---
 
@@ -32,52 +42,3 @@ A complete, production-ready full-stack real-time chat application built with **
 1. **Install Dependencies**:
    ```bash
    npm install
-   ```
-
-2. **Start the Server**:
-   ```bash
-   npm start
-   ```
-
-3. **Open in Browser**:
-   Navigate to `http://localhost:3000`
-
----
-
-## 🐙 Publishing to GitHub
-
-To push this project to your GitHub repository:
-
-1. **Initialize Git Repository**:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit: Pulse Realtime Chat WebApp"
-   ```
-
-2. **Create a new repository on GitHub** (e.g. `pulse-chat-app`).
-
-3. **Link Local Repository to GitHub & Push**:
-   ```bash
-   git branch -M main
-   git remote add origin https://github.com/YOUR_GITHUB_USERNAME/pulse-chat-app.git
-   git push -u origin main
-   ```
-
----
-
-## 🌐 Deploying to the Web
-
-### Option A: Deploy on Render (Recommended & Free)
-1. Log in to [Render.com](https://render.com).
-2. Click **New +** -> **Web Service**.
-3. Connect your GitHub repository (`pulse-chat-app`).
-4. Set Build Command: `npm install`
-5. Set Start Command: `node server.js`
-6. Click **Create Web Service**. Your app will be live with full WebSocket support!
-
-### Option B: Deploy with Docker
-```bash
-docker build -t pulse-chat-app .
-docker run -p 3000:3000 pulse-chat-app
-```
