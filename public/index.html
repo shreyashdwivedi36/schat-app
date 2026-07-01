@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PULSE — Next-Gen Realtime Chat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Animated Background Canvas & Particles -->
+  <div class="bg-gradient-container">
+    <div class="gradient-orb orb-1"></div>
+    <div class="gradient-orb orb-2"></div>
+    <div class="gradient-orb orb-3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <div id="app" class="app-container">
+    
+    <!-- ================= AUTH CONTAINER ================= -->
+    <div id="authView" class="auth-wrapper">
+      <div class="brand-header">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
+        <h1 class="brand-title">PULSE<span class="dot">.</span></h1>
+        <p class="brand-subtitle">Realtime Animated Messaging Platform</p>
+      </div>
+
+      <div class="auth-card-container">
+        <!-- Alert Banner -->
+        <div id="authAlert" class="alert-banner hidden"></div>
+
+        <!-- LOGIN FORM -->
+        <form id="loginForm" class="auth-form active">
+          <h2 class="form-title">Welcome Back</h2>
+          <p class="form-desc">Sign in to join the conversation</p>
+
+          <div class="input-group">
+            <label for="loginUsername">Username or Email</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input type="text" id="loginUsername" placeholder="e.g. shreyash_d" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="loginPassword">Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
+              <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-glow" id="loginBtn">
+            <span class="btn-text">Sign In</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+
+          <div class="auth-switch">
+            <span>Don't have an account?</span>
+            <button type="button" class="switch-btn" id="switchToRegister">Create Account</button>
+          </div>
+        </form>
+
+        <!-- REGISTER FORM -->
+        <form id="registerForm" class="auth-form hidden">
+          <h2 class="form-title">Create Account</h2>
+          <p class="form-desc">Start messaging instantly with real-time speed</p>
+
+          <div class="avatar-selector">
+            <label>Choose Your Avatar</label>
+            <div class="avatar-options" id="avatarPicker">
+              <button type="button" class="avatar-opt selected" data-avatar="⚡">⚡</button>
+              <button type="button" class="avatar-opt" data-avatar="🚀">🚀</button>
+              <button type="button" class="avatar-opt" data-avatar="👾">👾</button>
+              <button type="button" class="avatar-opt" data-avatar="🦊">🦊</button>
+              <button type="button" class="avatar-opt" data-avatar="💎">💎</button>
+              <button type="button" class="avatar-opt" data-avatar="🔥">🔥</button>
+              <button type="button" class="avatar-opt" data-avatar="🤖">🤖</button>
+              <button type="button" class="avatar-opt" data-avatar="🌌">🌌</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="regUsername">Username</label>
+            <div class="input-wrapper">
+              <span class="input-icon">👤</span>
+              <input type="text" id="regUsername" placeholder="e.g. alex_spark" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="regEmail">Email Address</label>
+            <div class="input-wrapper">
+              <span class="input-icon">✉️</span>
+              <input type="email" id="regEmail" placeholder="e.g. alex@example.com" required autocomplete="email">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="regPassword">Password</label>
+            <div class="input-wrapper">
+              <span class="input-icon">🔒</span>
+              <input type="password" id="regPassword" placeholder="Minimum 6 characters" required autocomplete="new-password">
+              <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-glow" id="registerBtn">
+            <span class="btn-text">Register & Join</span>
+            <span class="btn-loader hidden"></span>
+          </button>
+
+          <div class="auth-switch">
+            <span>Already registered?</span>
+            <button type="button" class="switch-btn" id="switchToLogin">Sign In</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+    <!-- ================= CHAT MAIN VIEW ================= -->
+    <div id="chatView" class="chat-wrapper hidden">
+      
+      <!-- Sidebar -->
+      <aside class="chat-sidebar">
+        <div class="sidebar-header">
+          <div class="brand-mini">
+            <div class="logo-icon-sm">⚡</div>
+            <h2>PULSE</h2>
+          </div>
+          <button id="themeToggleBtn" class="icon-btn" title="Toggle Sound/Visual Effects">🔊</button>
+        </div>
+
+        <!-- Current User Profile Card -->
+        <div class="current-user-card">
+          <div class="user-avatar-wrapper">
+            <span id="myAvatar" class="avatar-badge">⚡</span>
+            <span class="status-indicator online"></span>
+          </div>
+          <div class="user-info">
+            <h3 id="myUsername">Username</h3>
+            <span class="status-label">Online</span>
+          </div>
+          <button id="logoutBtn" class="icon-btn logout-btn" title="Sign Out">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="sidebar-search">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="filterInput" placeholder="Filter messages or users...">
+        </div>
+
+        <!-- Active Channels / Online Users -->
+        <div class="sidebar-section">
+          <div class="section-title">
+            <span>ONLINE USERS</span>
+            <span id="onlineCountBadge" class="count-badge">1</span>
+          </div>
+          <ul id="onlineUsersList" class="online-users-list">
+            <!-- User items injected dynamically -->
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Main Chat Container -->
+      <main class="chat-main">
+        <!-- Chat Header -->
+        <header class="chat-header">
+          <div class="room-info">
+            <div class="room-avatar">🌐</div>
+            <div>
+              <h2 class="room-title">Global Channel</h2>
+              <p class="room-subtitle"><span class="pulse-dot"></span> Live WebSocket Connection</p>
+            </div>
+          </div>
+          <div class="chat-actions">
+            <button id="scrollBottomBtn" class="icon-btn hidden" title="Scroll to bottom">👇</button>
+          </div>
+        </header>
+
+        <!-- Message History Feed -->
+        <div id="messagesFeed" class="messages-feed">
+          <div class="welcome-banner">
+            <div class="spark-icon">✨</div>
+            <h3>Welcome to Pulse Chat!</h3>
+            <p>End-to-end real-time messaging active. All messages are persisted securely.</p>
+          </div>
+          <!-- Messages dynamically rendered here -->
+        </div>
+
+        <!-- Typing Indicator Banner -->
+        <div id="typingBanner" class="typing-indicator-banner hidden">
+          <span class="dancing-dots">
+            <span></span><span></span><span></span>
+          </span>
+          <span id="typingText">Someone is typing...</span>
+        </div>
+
+        <!-- Message Input Bar -->
+        <footer class="chat-footer">
+          <!-- Emoji Picker Popup -->
+          <div id="emojiPicker" class="emoji-picker-container hidden">
+            <span class="emoji-item">👍</span>
+            <span class="emoji-item">❤️</span>
+            <span class="emoji-item">🔥</span>
+            <span class="emoji-item">😂</span>
+            <span class="emoji-item">🎉</span>
+            <span class="emoji-item">🚀</span>
+            <span class="emoji-item">💯</span>
+            <span class="emoji-item">✨</span>
+            <span class="emoji-item">😎</span>
+            <span class="emoji-item">🙌</span>
+            <span class="emoji-item">⚡</span>
+            <span class="emoji-item">💡</span>
+          </div>
+
+          <form id="messageForm" class="message-input-form">
+            <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji">😊</button>
+            <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required>
+            <button type="submit" id="sendBtn" class="send-btn" title="Send Message">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </form>
+        </footer>
+
+      </main>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
