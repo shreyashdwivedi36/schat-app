@@ -1,5 +1,5 @@
 {
-  "name": "pulse-chat-app",
+  "name": "schat-app",
   "version": "1.0.0",
   "description": "Real-time animated chat application with Node.js, WebSockets, and Authentication",
   "main": "server.js",
@@ -9,6 +9,7 @@
   },
   "keywords": [
     "chat",
+    "schat",
     "websocket",
     "nodejs",
     "authentication",

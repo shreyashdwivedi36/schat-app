@@ -1,13 +1,17 @@
-// PULSE Realtime Animated Chat App Core Frontend Logic
+// SChat Realtime Animated Chat App Core Frontend Logic
 
 document.addEventListener('DOMContentLoaded', () => {
   // Application State
-  let authToken = localStorage.getItem('pulse_token') || null;
-  let currentUser = JSON.parse(localStorage.getItem('pulse_user')) || null;
+  let authToken = localStorage.getItem('schat_token') || null;
+  let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
+  let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let ws = null;
   let selectedAvatar = '⚡';
   let soundEnabled = true;
   let typingTimeout = null;
+
+  // Set initial theme
+  document.documentElement.setAttribute('data-theme', currentTheme);
 
   // DOM Elements
   const authView = document.getElementById('authView');
@@ -23,7 +27,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const myAvatarEl = document.getElementById('myAvatar');
   const myUsernameEl = document.getElementById('myUsername');
   const logoutBtn = document.getElementById('logoutBtn');
-  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const soundToggleBtn = document.getElementById('soundToggleBtn');
+  const themeModeBtn = document.getElementById('themeModeBtn');
+  const headerThemeBtn = document.getElementById('headerThemeBtn');
+
+  const chatSidebar = document.getElementById('chatSidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
+  const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
   const onlineCountBadge = document.getElementById('onlineCountBadge');
   const onlineUsersList = document.getElementById('onlineUsersList');
@@ -37,6 +48,40 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageInput = document.getElementById('messageInput');
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
+
+  // Theme Switcher Logic
+  const updateThemeUI = () => {
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    localStorage.setItem('schat_theme', currentTheme);
+    const icon = currentTheme === 'dark' ? '🌙' : '☀️';
+    if (themeModeBtn) themeModeBtn.textContent = icon;
+    if (headerThemeBtn) headerThemeBtn.textContent = icon;
+  };
+
+  const toggleTheme = () => {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    updateThemeUI();
+  };
+
+  updateThemeUI();
+
+  if (themeModeBtn) themeModeBtn.addEventListener('click', toggleTheme);
+  if (headerThemeBtn) headerThemeBtn.addEventListener('click', toggleTheme);
+
+  // Mobile Sidebar Drawer Actions
+  const openSidebar = () => {
+    chatSidebar.classList.add('open');
+    sidebarOverlay.classList.add('active');
+  };
+
+  const closeSidebar = () => {
+    chatSidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('active');
+  };
+
+  if (mobileSidebarToggle) mobileSidebarToggle.addEventListener('click', openSidebar);
+  if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
+  if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
   // Web Audio Synthesizer for UI SFX
   const playSound = (type) => {
@@ -65,13 +110,20 @@ document.addEventListener('DOMContentLoaded', () => {
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
         osc.start();
         osc.stop(ctx.currentTime + 0.15);
+      } else if (type === 'delete') {
+        osc.frequency.setValueAtTime(300, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
       }
     } catch (e) {
-      // Audio context policy fallback
+      // Audio policy
     }
   };
 
-  // Helper: Password Visibility Toggle
+  // Password Visibility Toggle
   window.togglePasswordVisibility = (inputId, btn) => {
     const input = document.getElementById(inputId);
     if (input.type === 'password') {
@@ -120,10 +172,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Sound Toggle
-  themeToggleBtn.addEventListener('click', () => {
-    soundEnabled = !soundEnabled;
-    themeToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
-  });
+  if (soundToggleBtn) {
+    soundToggleBtn.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
+    });
+  }
 
   // Register Form Handler
   registerForm.addEventListener('submit', async (e) => {
@@ -147,8 +201,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       authToken = data.token;
       currentUser = data.user;
-      localStorage.setItem('pulse_token', authToken);
-      localStorage.setItem('pulse_user', JSON.stringify(currentUser));
+      localStorage.setItem('schat_token', authToken);
+      localStorage.setItem('schat_user', JSON.stringify(currentUser));
 
       showAlert('Account created successfully!', 'success');
       setTimeout(initializeChatSession, 600);
@@ -180,8 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
       authToken = data.token;
       currentUser = data.user;
-      localStorage.setItem('pulse_token', authToken);
-      localStorage.setItem('pulse_user', JSON.stringify(currentUser));
+      localStorage.setItem('schat_token', authToken);
+      localStorage.setItem('schat_user', JSON.stringify(currentUser));
 
       initializeChatSession();
     } catch (err) {
@@ -193,14 +247,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Logout Handler
   logoutBtn.addEventListener('click', () => {
-    localStorage.removeItem('pulse_token');
-    localStorage.removeItem('pulse_user');
+    localStorage.removeItem('schat_token');
+    localStorage.removeItem('schat_user');
     authToken = null;
     currentUser = null;
     if (ws) ws.close();
 
     chatView.classList.add('hidden');
     authView.classList.remove('hidden');
+    closeSidebar();
   });
 
   // Initialize Chat Session & WebSocket
@@ -229,8 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
       messagesFeed.innerHTML = `
         <div class="welcome-banner">
           <div class="spark-icon">✨</div>
-          <h3>Welcome to Pulse Chat!</h3>
-          <p>End-to-end real-time messaging active. All messages are persisted securely.</p>
+          <h3>Welcome to SChat!</h3>
+          <p>End-to-end real-time messaging active across mobile & desktop.</p>
         </div>
       `;
 
@@ -251,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('⚡ Connected to Pulse WebSocket Server');
+      console.log('⚡ Connected to SChat WebSocket Server');
     };
 
     ws.onmessage = (event) => {
@@ -266,6 +321,8 @@ document.addEventListener('DOMContentLoaded', () => {
           if (data.user_id !== currentUser.id) {
             playSound('receive');
           }
+        } else if (data.type === 'delete_message') {
+          removeMessageFromDOM(data.messageId);
         } else if (data.type === 'presence') {
           updateOnlineUsers(data.onlineUsers);
         } else if (data.type === 'typing') {
@@ -284,8 +341,41 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   };
 
+  // Delete Message Function
+  const deleteMessage = async (messageId) => {
+    try {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'delete_message',
+          messageId: messageId
+        }));
+      } else {
+        await fetch(`/api/messages/${messageId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+      }
+      removeMessageFromDOM(messageId);
+      playSound('delete');
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+    }
+  };
+
+  // Remove Message Element from DOM
+  const removeMessageFromDOM = (messageId) => {
+    const card = document.querySelector(`.message-card[data-msg-id="${messageId}"]`);
+    if (card) {
+      card.classList.add('removing');
+      setTimeout(() => card.remove(), 300);
+    }
+  };
+
   // Render Single Message Bubble
   const renderMessage = (msg) => {
+    // Avoid duplicate render
+    if (document.querySelector(`.message-card[data-msg-id="${msg.id}"]`)) return;
+
     const isOutgoing = msg.user_id === currentUser.id;
     const msgCard = document.createElement('div');
     msgCard.className = `message-card ${isOutgoing ? 'outgoing' : 'incoming'}`;
@@ -296,21 +386,35 @@ document.addEventListener('DOMContentLoaded', () => {
       minute: '2-digit'
     });
 
+    const deleteBtnHtml = isOutgoing 
+      ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msg.id}">🗑️</button>` 
+      : '';
+
     msgCard.innerHTML = `
       <div class="msg-avatar">${msg.avatar || '⚡'}</div>
       <div class="msg-body">
         <div class="msg-header">
           <span class="msg-author">${isOutgoing ? 'You' : msg.username}</span>
           <span class="msg-time">${timeFormatted}</span>
+          ${deleteBtnHtml}
         </div>
         <div class="msg-bubble">${escapeHtml(msg.content)}</div>
       </div>
     `;
 
+    // Event listener for delete button
+    const deleteBtn = msgCard.querySelector('.msg-delete-btn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteMessage(msg.id);
+      });
+    }
+
     messagesFeed.appendChild(msgCard);
   };
 
-  // Escape HTML to prevent XSS
+  // Escape HTML
   const escapeHtml = (str) => {
     return str.replace(/[&<>'"]/g, 
       tag => ({
@@ -359,7 +463,6 @@ document.addEventListener('DOMContentLoaded', () => {
     emojiPicker.classList.add('hidden');
     playSound('send');
 
-    // Reset typing
     ws.send(JSON.stringify({ type: 'typing', isTyping: false }));
   });
 
@@ -406,7 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Auto-Login if token exists
+  // Auto-Login
   if (authToken && currentUser) {
     initializeChatSession();
   }

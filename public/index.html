@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PULSE — Next-Gen Realtime Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SChat — Realtime Animated Chat</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -25,10 +25,10 @@
       <div class="brand-header">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
-        <h1 class="brand-title">PULSE<span class="dot">.</span></h1>
+        <h1 class="brand-title">SChat<span class="dot">.</span></h1>
         <p class="brand-subtitle">Realtime Animated Messaging Platform</p>
       </div>
 
@@ -45,7 +45,7 @@
             <label for="loginUsername">Username or Email</label>
             <div class="input-wrapper">
               <span class="input-icon">👤</span>
-              <input type="text" id="loginUsername" placeholder="e.g. shreyash_d" required autocomplete="username">
+              <input type="text" id="loginUsername" placeholder="e.g. shreyash" required autocomplete="username">
             </div>
           </div>
 
@@ -130,14 +130,21 @@
     <!-- ================= CHAT MAIN VIEW ================= -->
     <div id="chatView" class="chat-wrapper hidden">
       
-      <!-- Sidebar -->
-      <aside class="chat-sidebar">
+      <!-- Mobile Drawer Overlay Backdrop -->
+      <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+      <!-- Sidebar (Collapsible Drawer on Mobile) -->
+      <aside id="chatSidebar" class="chat-sidebar">
         <div class="sidebar-header">
           <div class="brand-mini">
-            <div class="logo-icon-sm">⚡</div>
-            <h2>PULSE</h2>
+            <div class="logo-icon-sm">💬</div>
+            <h2>SChat</h2>
           </div>
-          <button id="themeToggleBtn" class="icon-btn" title="Toggle Sound/Visual Effects">🔊</button>
+          <div class="sidebar-top-actions">
+            <button id="themeModeBtn" class="icon-btn" title="Toggle Light/Dark Theme">🌙</button>
+            <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound">🔊</button>
+            <button id="closeSidebarBtn" class="icon-btn mobile-only-btn" title="Close Menu">✕</button>
+          </div>
         </div>
 
         <!-- Current User Profile Card -->
@@ -182,14 +189,17 @@
         <!-- Chat Header -->
         <header class="chat-header">
           <div class="room-info">
-            <div class="room-avatar">🌐</div>
+            <button id="mobileSidebarToggle" class="icon-btn mobile-toggle-btn" title="Open Users Menu">
+              👥
+            </button>
+            <div class="room-avatar">💬</div>
             <div>
-              <h2 class="room-title">Global Channel</h2>
-              <p class="room-subtitle"><span class="pulse-dot"></span> Live WebSocket Connection</p>
+              <h2 class="room-title">SChat Global</h2>
+              <p class="room-subtitle"><span class="pulse-dot"></span> Realtime Active</p>
             </div>
           </div>
-          <div class="chat-actions">
-            <button id="scrollBottomBtn" class="icon-btn hidden" title="Scroll to bottom">👇</button>
+          <div class="chat-header-actions">
+            <button id="headerThemeBtn" class="icon-btn" title="Toggle Light/Dark Theme">🌙</button>
           </div>
         </header>
 
@@ -197,8 +207,8 @@
         <div id="messagesFeed" class="messages-feed">
           <div class="welcome-banner">
             <div class="spark-icon">✨</div>
-            <h3>Welcome to Pulse Chat!</h3>
-            <p>End-to-end real-time messaging active. All messages are persisted securely.</p>
+            <h3>Welcome to SChat!</h3>
+            <p>End-to-end real-time messaging active across mobile & desktop.</p>
           </div>
           <!-- Messages dynamically rendered here -->
         </div>
@@ -226,7 +236,7 @@
             <span class="emoji-item">😎</span>
             <span class="emoji-item">🙌</span>
             <span class="emoji-item">⚡</span>
-            <span class="emoji-item">💡</span>
+            <span class="emoji-item">💬</span>
           </div>
 
           <form id="messageForm" class="message-input-form">

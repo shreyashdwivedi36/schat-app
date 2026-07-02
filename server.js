@@ -11,7 +11,6 @@ let WebSocket;
 try {
   WebSocket = require('ws');
 } catch (e) {
-  console.log('ws package not installed. Installing simple standard WebSocket wrapper...');
   WebSocket = require('ws');
 }
 
@@ -41,7 +40,6 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
     }
 
-    // Check existing
     const existingUsername = await db.get('SELECT id FROM users WHERE username = ?', [username]);
     if (existingUsername) {
       return res.status(400).json({ error: 'Username is already taken.' });
@@ -143,10 +141,38 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete Message REST API
+app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    const messageId = parseInt(req.params.id, 10);
+    const msg = await db.get('SELECT * FROM messages WHERE id = ?', [messageId]);
+
+    if (!msg) {
+      return res.status(404).json({ error: 'Message not found.' });
+    }
+
+    if (msg.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'You can only delete your own messages.' });
+    }
+
+    await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
+
+    // Broadcast deletion event via WebSockets
+    broadcast({
+      type: 'delete_message',
+      messageId: messageId
+    });
+
+    res.json({ message: 'Message deleted successfully.' });
+  } catch (err) {
+    console.error('Delete Message Error:', err);
+    res.status(500).json({ error: 'Failed to delete message.' });
+  }
+});
+
 // WebSocket Implementation
 const wss = new WebSocket.Server({ server });
 
-// Map of socket -> user payload
 const clients = new Map();
 
 function broadcast(data, excludeWs = null) {
@@ -175,7 +201,6 @@ function getOnlineUsersList() {
 wss.on('connection', (ws, req) => {
   let currentUser = null;
 
-  // Handle URL token query if present
   const urlParams = new URLSearchParams(req.url.replace(/^.*\?/, ''));
   const urlToken = urlParams.get('token');
   if (urlToken) {
@@ -183,7 +208,7 @@ wss.on('connection', (ws, req) => {
     if (decoded) {
       currentUser = decoded;
       clients.set(ws, currentUser);
-      
+
       ws.send(JSON.stringify({
         type: 'auth_success',
         user: currentUser,
@@ -254,6 +279,17 @@ wss.on('connection', (ws, req) => {
         };
 
         broadcast(msgPayload);
+      } else if (data.type === 'delete_message') {
+        const messageId = parseInt(data.messageId, 10);
+        const msg = await db.get('SELECT * FROM messages WHERE id = ?', [messageId]);
+
+        if (msg && msg.user_id === currentUser.id) {
+          await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
+          broadcast({
+            type: 'delete_message',
+            messageId: messageId
+          });
+        }
       } else if (data.type === 'typing') {
         broadcast({
           type: 'typing',
@@ -261,13 +297,6 @@ wss.on('connection', (ws, req) => {
           username: currentUser.username,
           isTyping: !!data.isTyping
         }, ws);
-      } else if (data.type === 'reaction') {
-        broadcast({
-          type: 'reaction',
-          messageId: data.messageId,
-          emoji: data.emoji,
-          username: currentUser.username
-        });
       }
     } catch (err) {
       console.error('WS Message Handler Error:', err);
@@ -290,7 +319,7 @@ wss.on('connection', (ws, req) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`================================================`);
-  console.log(`🚀 Pulse Chat Server running on http://localhost:${PORT}`);
+  console.log(`🚀 SChat Server running on http://localhost:${PORT}`);
   console.log(`⚡ WebSockets active on ws://localhost:${PORT}`);
   console.log(`================================================`);
 });

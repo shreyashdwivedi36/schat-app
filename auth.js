@@ -4,7 +4,6 @@ let bcrypt;
 try {
   bcrypt = require('bcryptjs');
 } catch (e) {
-  // Simple SHA-256 fallback if bcryptjs module is missing
   bcrypt = {
     hashSync: (pwd) => crypto.createHash('sha256').update(pwd + 'salt_key_123').digest('hex'),
     compareSync: (pwd, hash) => crypto.createHash('sha256').update(pwd + 'salt_key_123').digest('hex') === hash
@@ -15,7 +14,6 @@ let jwt;
 try {
   jwt = require('jsonwebtoken');
 } catch (e) {
-  // Simple HMAC JWT fallback
   jwt = {
     sign: (payload, secret, opts = {}) => {
       const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
@@ -35,7 +33,7 @@ try {
   };
 }
 
-const JWT_SECRET = process.env.JWT_SECRET || 'pulse_super_secret_jwt_key_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'schat_super_secret_jwt_key_2026';
 
 function hashPassword(password) {
   return bcrypt.hashSync(password, 10);
