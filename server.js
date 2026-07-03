@@ -130,11 +130,23 @@ app.get('/api/me', authMiddleware, async (req, res) => {
   }
 });
 
-// Get Chat Message History
+// Get Chat Messages (Global or Private 1-on-1 DM)
 app.get('/api/messages', authMiddleware, async (req, res) => {
   try {
-    const messages = await db.all('SELECT id, user_id, username, avatar, content, created_at FROM messages ORDER BY id ASC LIMIT 100');
-    res.json({ messages });
+    const recipientId = req.query.recipient_id ? parseInt(req.query.recipient_id, 10) : null;
+
+    if (recipientId) {
+      const messages = await db.all(
+        'SELECT id, user_id, recipient_id, username, avatar, content, created_at FROM messages WHERE (user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?) ORDER BY id ASC LIMIT 100',
+        [req.user.id, recipientId, recipientId, req.user.id]
+      );
+      return res.json({ messages });
+    } else {
+      const messages = await db.all(
+        'SELECT id, user_id, recipient_id, username, avatar, content, created_at FROM messages WHERE recipient_id IS NULL ORDER BY id ASC LIMIT 100'
+      );
+      return res.json({ messages });
+    }
   } catch (err) {
     console.error('Fetch Messages Error:', err);
     res.status(500).json({ error: 'Failed to retrieve message history.' });
@@ -157,7 +169,6 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
 
     await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
 
-    // Broadcast deletion event via WebSockets
     broadcast({
       type: 'delete_message',
       messageId: messageId
@@ -179,6 +190,15 @@ function broadcast(data, excludeWs = null) {
   const payload = JSON.stringify(data);
   for (const [client, user] of clients.entries()) {
     if (client.readyState === WebSocket.OPEN && client !== excludeWs) {
+      client.send(payload);
+    }
+  }
+}
+
+function sendToUser(userId, data) {
+  const payload = JSON.stringify(data);
+  for (const [client, user] of clients.entries()) {
+    if (user && user.id === userId && client.readyState === WebSocket.OPEN) {
       client.send(payload);
     }
   }
@@ -263,22 +283,34 @@ wss.on('connection', (ws, req) => {
         const content = (data.content || '').trim();
         if (!content) return;
 
+        const recipientId = data.recipient_id ? parseInt(data.recipient_id, 10) : null;
+
         const result = await db.run(
-          'INSERT INTO messages (user_id, username, avatar, content) VALUES (?, ?, ?, ?)',
-          [currentUser.id, currentUser.username, currentUser.avatar || '⚡', content]
+          'INSERT INTO messages (user_id, recipient_id, username, avatar, content) VALUES (?, ?, ?, ?, ?)',
+          [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content]
         );
 
         const msgPayload = {
           type: 'new_message',
           id: result.id,
           user_id: currentUser.id,
+          recipient_id: recipientId,
           username: currentUser.username,
           avatar: currentUser.avatar || '⚡',
           content,
           created_at: new Date().toISOString()
         };
 
-        broadcast(msgPayload);
+        if (recipientId) {
+          // Private DM: send only to sender and recipient
+          sendToUser(recipientId, msgPayload);
+          if (recipientId !== currentUser.id) {
+            sendToUser(currentUser.id, msgPayload);
+          }
+        } else {
+          // Global channel: broadcast to everyone
+          broadcast(msgPayload);
+        }
       } else if (data.type === 'delete_message') {
         const messageId = parseInt(data.messageId, 10);
         const msg = await db.get('SELECT * FROM messages WHERE id = ?', [messageId]);
@@ -291,12 +323,20 @@ wss.on('connection', (ws, req) => {
           });
         }
       } else if (data.type === 'typing') {
-        broadcast({
+        const recipientId = data.recipient_id ? parseInt(data.recipient_id, 10) : null;
+        const typingPayload = {
           type: 'typing',
           user_id: currentUser.id,
+          recipient_id: recipientId,
           username: currentUser.username,
           isTyping: !!data.isTyping
-        }, ws);
+        };
+
+        if (recipientId) {
+          sendToUser(recipientId, typingPayload);
+        } else {
+          broadcast(typingPayload, ws);
+        }
       }
     } catch (err) {
       console.error('WS Message Handler Error:', err);

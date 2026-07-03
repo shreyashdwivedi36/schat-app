@@ -1,91 +1,73 @@
-# PULSE — Animated Realtime WebSocket Chat Application
+# SChat — Animated Realtime WebSocket Chat Application
 
-> **Project Owner & Lead Developer**: [Shreyash Dwivedi](https://github.com/shreyashdwivedi36)
+> **Lead Developer & Owner**: [Shreyash Dwivedi](https://github.com/shreyashdwivedi36)  
+> **Live Demo**: [https://schat-app.onrender.com](https://schat-app.onrender.com)
 
-A complete, production-ready full-stack real-time chat application built with **Node.js**, **Express**, **WebSockets (`ws`)**, **JWT Authentication**, and an interactive **Animated Glassmorphism Frontend**.
-
----
-
-## 👤 Author Information
-
-- **Owner**: Shreyash Dwivedi
-- **GitHub**: [@shreyashdwivedi36](https://github.com/shreyashdwivedi36)
-- **Repository**: [https://github.com/shreyashdwivedi36/pulse-chat-app](https://github.com/shreyashdwivedi36/pulse-chat-app)
+A full-stack, real-time messaging application engineered with **Node.js**, **Express**, **WebSockets (`ws`)**, **JWT Authentication**, **PostgreSQL / SQLite Database**, and an interactive **Animated Glassmorphism Frontend**.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-- **Authentication System**: User Registration & Login with password hashing (`bcryptjs`) and secure JWT session tokens (`jsonwebtoken`).
-- **Real-Time WebSockets**: Instant message broadcast, presence indicators (Online/Offline status), and live dancing-dot typing indicators ("Alice is typing...").
-- **Animated UI/UX**:
-  - Dark glassmorphism interface with floating background radial gradients.
-  - Smooth card transitions between Login & Register views.
-  - Avatar selection picker.
-  - Keyframe entrance animations for message bubbles.
-  - Audio SFX synthesis using Web Audio API (subtle incoming/outgoing message chimes).
-  - Emoji picker with animation.
-- **Message Persistence**: SQLite database storage for users & messages history.
-- **Responsive Design**: Optimized for Desktop, Tablet, and Mobile devices.
+- **Real-Time Messaging**: Built on persistent WebSocket connections (`ws`) for instant two-way message delivery.
+- **Live Presence & Typing Indicators**: Dynamic online user count, user presence tracking, and real-time dancing-dot typing indicators.
+- **Message Management**: Users can delete their own sent messages with real-time broadcast removal across all connected clients.
+- **Dark & Light Mode**: Customizable UI theme toggle with persistent state saved in browser storage.
+- **User Authentication & Security**: Secure signup and login powered by JSON Web Tokens (JWT) and Bcrypt password hashing.
+- **Responsive Glassmorphism UI**:
+  - Adaptive design optimized for both mobile smartphones and desktop PC screens.
+  - Mobile drawer navigation overlay for active users list.
+  - Synthesized audio feedback via Web Audio API for message interactions.
+  - Interactive avatar picker and emoji popup drawer.
+- **Database Persistence**: Flexible database layer supporting cloud PostgreSQL in production and local SQLite for development.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Node.js, Express.js, WebSockets (`ws`), SQLite3 / File-backed DB, JWT, Bcrypt
-- **Frontend**: HTML5, CSS3 (CSS Variables, Flexbox/Grid, Glassmorphism, Keyframe Animations), Vanilla ES6 JavaScript (Fetch API, WebSockets API, Web Audio API)
+- **Backend**: Node.js, Express.js, WebSockets (`ws`), PostgreSQL (`pg`), SQLite3, JWT (`jsonwebtoken`), Bcrypt
+- **Frontend**: HTML5, CSS3 (Glassmorphism, Flexbox/Grid, Keyframe Animations), ES6 JavaScript, Web Audio API
+- **DevOps**: Docker, Render CI/CD Pipeline, Git
 
 ---
 
-## 🚀 Quick Start (Local Run)
+## 🚀 Local Development Setup
 
-1. **Install Dependencies**:
+To run this project locally on your machine:
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/shreyashdwivedi36/schat-app.git
+   cd schat-app
+   ```
+
+2. **Install Dependencies**:
    ```bash
    npm install
    ```
 
-2. **Start the Server**:
+3. **Start Development Server**:
    ```bash
    npm start
    ```
 
-3. **Open in Browser**:
-   Navigate to `http://localhost:3000`
+4. **Access Application**:
+   Open `http://localhost:3000` in your web browser.
 
 ---
 
-## 🐙 Publishing to GitHub
+## 🐳 Docker Deployment
 
-To push this project to your GitHub repository:
+To build and run the application container using Docker:
 
-1. **Initialize & Commit**:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit: Pulse Realtime Chat WebApp"
-   ```
-
-2. **Push to Remote**:
-   ```bash
-   git branch -M main
-   git remote add origin https://github.com/shreyashdwivedi36/pulse-chat-app.git
-   git push -u origin main
-   ```
+```bash
+docker build -t schat-app .
+docker run -p 3000:3000 schat-app
+```
 
 ---
 
-## 🌐 Deploying to the Web
+## 📄 Author & License
 
-### Deploy on Render (Recommended & Free)
-1. Log in to [Render.com](https://render.com).
-2. Click **New +** -> **Web Service**.
-3. Connect your GitHub repository (`shreyashdwivedi36/pulse-chat-app`).
-4. Set Build Command: `npm install`
-5. Set Start Command: `node server.js`
-6. Click **Create Web Service**. Your app will be live with full WebSocket support!
-
----
-
-## 📄 License
-
-Created and owned by Shreyash Dwivedi.
+Developed and maintained by **Shreyash Dwivedi** ([@shreyashdwivedi36](https://github.com/shreyashdwivedi36)).  
+Licensed under the [MIT License](LICENSE).

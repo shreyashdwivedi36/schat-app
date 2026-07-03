@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SChat — Realtime Animated Chat</title>
+  <title>SChat — Real-Time Messaging Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -166,16 +166,27 @@
           </button>
         </div>
 
+        <!-- Channels & Navigation -->
+        <div class="sidebar-section">
+          <div class="section-title">
+            <span>CHANNELS</span>
+          </div>
+          <div id="globalChannelBtn" class="channel-item active">
+            <span class="channel-icon">🌐</span>
+            <span class="channel-name">Global Chat</span>
+          </div>
+        </div>
+
         <!-- Search Bar -->
         <div class="sidebar-search">
           <span class="search-icon">🔍</span>
-          <input type="text" id="filterInput" placeholder="Filter messages or users...">
+          <input type="text" id="filterInput" placeholder="Filter users or messages...">
         </div>
 
         <!-- Active Channels / Online Users -->
-        <div class="sidebar-section">
+        <div class="sidebar-section flex-fill">
           <div class="section-title">
-            <span>ONLINE USERS</span>
+            <span>DIRECT MESSAGES</span>
             <span id="onlineCountBadge" class="count-badge">1</span>
           </div>
           <ul id="onlineUsersList" class="online-users-list">
@@ -192,10 +203,10 @@
             <button id="mobileSidebarToggle" class="icon-btn mobile-toggle-btn" title="Open Users Menu">
               👥
             </button>
-            <div class="room-avatar">💬</div>
+            <div id="roomAvatar" class="room-avatar">💬</div>
             <div>
-              <h2 class="room-title">SChat Global</h2>
-              <p class="room-subtitle"><span class="pulse-dot"></span> Realtime Active</p>
+              <h2 id="roomTitle" class="room-title">Global Channel</h2>
+              <p id="roomSubtitle" class="room-subtitle"><span class="pulse-dot"></span> Realtime Active</p>
             </div>
           </div>
           <div class="chat-header-actions">
@@ -207,8 +218,8 @@
         <div id="messagesFeed" class="messages-feed">
           <div class="welcome-banner">
             <div class="spark-icon">✨</div>
-            <h3>Welcome to SChat!</h3>
-            <p>End-to-end real-time messaging active across mobile & desktop.</p>
+            <h3 id="welcomeTitle">Welcome to SChat!</h3>
+            <p id="welcomeSubtitle">End-to-end real-time messaging active across mobile & desktop.</p>
           </div>
           <!-- Messages dynamically rendered here -->
         </div>

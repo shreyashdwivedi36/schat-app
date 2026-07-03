@@ -3,7 +3,6 @@ const path = require('path');
 
 let dbInstance = null;
 
-// Check if PostgreSQL connection string exists (e.g. on Render)
 if (process.env.DATABASE_URL) {
   const { Pool } = require('pg');
   const pool = new Pool({
@@ -11,7 +10,6 @@ if (process.env.DATABASE_URL) {
     ssl: { rejectUnauthorized: false }
   });
 
-  // Initialize Postgres tables
   pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -24,6 +22,7 @@ if (process.env.DATABASE_URL) {
     CREATE TABLE IF NOT EXISTS messages (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL,
+      recipient_id INTEGER DEFAULT NULL,
       username VARCHAR(255) NOT NULL,
       avatar VARCHAR(50) DEFAULT '⚡',
       content TEXT NOT NULL,
@@ -38,7 +37,6 @@ if (process.env.DATABASE_URL) {
 
   dbInstance = {
     async run(sql, params = []) {
-      // Convert SQLite ? placeholders to $1, $2, etc. for PostgreSQL
       let paramIndex = 1;
       const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
       const isInsert = pgSql.trim().toUpperCase().startsWith('INSERT');
@@ -61,7 +59,6 @@ if (process.env.DATABASE_URL) {
     }
   };
 } else {
-  // SQLite & JSON Fallback for local development
   let sqlite3;
   let useFallback = false;
   try {
@@ -93,6 +90,7 @@ if (process.env.DATABASE_URL) {
         CREATE TABLE IF NOT EXISTS messages (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
+          recipient_id INTEGER DEFAULT NULL,
           username TEXT NOT NULL,
           avatar TEXT DEFAULT '⚡',
           content TEXT NOT NULL,
@@ -139,8 +137,8 @@ if (process.env.DATABASE_URL) {
           return { id: newUser.id, changes: 1 };
         }
         if (sql.includes('INSERT INTO messages')) {
-          const [user_id, username, avatar, content] = params;
-          const newMsg = { id: data.messages.length + 1, user_id, username, avatar: avatar || '⚡', content, created_at: new Date().toISOString() };
+          const [user_id, recipient_id, username, avatar, content] = params;
+          const newMsg = { id: data.messages.length + 1, user_id, recipient_id: recipient_id || null, username, avatar: avatar || '⚡', content, created_at: new Date().toISOString() };
           data.messages.push(newMsg);
           saveData();
           return { id: newMsg.id, changes: 1 };
@@ -160,7 +158,16 @@ if (process.env.DATABASE_URL) {
         return null;
       },
       async all(sql, params = []) {
-        if (sql.includes('FROM messages')) return data.messages.slice(-100);
+        if (sql.includes('FROM messages')) {
+          if (params.length === 2) {
+            // Private DM filter: (user_id = p0 AND recipient_id = p1) OR (user_id = p1 AND recipient_id = p0)
+            const [u1, u2] = params;
+            return data.messages.filter(m => (m.user_id === u1 && m.recipient_id === u2) || (m.user_id === u2 && m.recipient_id === u1));
+          } else {
+            // Global messages (recipient_id IS NULL)
+            return data.messages.filter(m => !m.recipient_id).slice(-100);
+          }
+        }
         return [];
       }
     };

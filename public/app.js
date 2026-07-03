@@ -5,12 +5,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let authToken = localStorage.getItem('schat_token') || null;
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
+  let activeRecipient = null; // null = Global Channel, { id, username, avatar } = Direct Message
   let ws = null;
   let selectedAvatar = '⚡';
   let soundEnabled = true;
   let typingTimeout = null;
 
-  // Set initial theme
   document.documentElement.setAttribute('data-theme', currentTheme);
 
   // DOM Elements
@@ -36,9 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const mobileSidebarToggle = document.getElementById('mobileSidebarToggle');
   const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
+  const globalChannelBtn = document.getElementById('globalChannelBtn');
   const onlineCountBadge = document.getElementById('onlineCountBadge');
   const onlineUsersList = document.getElementById('onlineUsersList');
   const filterInput = document.getElementById('filterInput');
+
+  const roomAvatar = document.getElementById('roomAvatar');
+  const roomTitle = document.getElementById('roomTitle');
+  const roomSubtitle = document.getElementById('roomSubtitle');
+  const welcomeTitle = document.getElementById('welcomeTitle');
+  const welcomeSubtitle = document.getElementById('welcomeSubtitle');
 
   const messagesFeed = document.getElementById('messagesFeed');
   const typingBanner = document.getElementById('typingBanner');
@@ -49,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
 
-  // Theme Switcher Logic
+  // Theme Switcher
   const updateThemeUI = () => {
     document.documentElement.setAttribute('data-theme', currentTheme);
     localStorage.setItem('schat_theme', currentTheme);
@@ -64,11 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   updateThemeUI();
-
   if (themeModeBtn) themeModeBtn.addEventListener('click', toggleTheme);
   if (headerThemeBtn) headerThemeBtn.addEventListener('click', toggleTheme);
 
-  // Mobile Sidebar Drawer Actions
+  // Mobile Sidebar Drawer
   const openSidebar = () => {
     chatSidebar.classList.add('open');
     sidebarOverlay.classList.add('active');
@@ -83,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
   if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
-  // Web Audio Synthesizer for UI SFX
+  // Web Audio Synthesizer
   const playSound = (type) => {
     if (!soundEnabled) return;
     try {
@@ -118,34 +124,22 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.start();
         osc.stop(ctx.currentTime + 0.12);
       }
-    } catch (e) {
-      // Audio policy
-    }
+    } catch (e) {}
   };
 
-  // Password Visibility Toggle
   window.togglePasswordVisibility = (inputId, btn) => {
     const input = document.getElementById(inputId);
-    if (input.type === 'password') {
-      input.type = 'text';
-      btn.textContent = '🔒';
-    } else {
-      input.type = 'password';
-      btn.textContent = '👁️';
-    }
+    input.type = input.type === 'password' ? 'text' : 'password';
+    btn.textContent = input.type === 'password' ? '👁️' : '🔒';
   };
 
-  // Alert Banner Helper
   const showAlert = (message, type = 'error') => {
     authAlert.textContent = message;
     authAlert.className = `alert-banner ${type}`;
     authAlert.classList.remove('hidden');
-    setTimeout(() => {
-      authAlert.classList.add('hidden');
-    }, 4000);
+    setTimeout(() => authAlert.classList.add('hidden'), 4000);
   };
 
-  // Toggle Forms
   switchToRegisterBtn.addEventListener('click', () => {
     loginForm.classList.remove('active');
     loginForm.classList.add('hidden');
@@ -162,7 +156,6 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  // Avatar Selection
   avatarPicker.addEventListener('click', (e) => {
     const opt = e.target.closest('.avatar-opt');
     if (!opt) return;
@@ -171,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedAvatar = opt.dataset.avatar;
   });
 
-  // Sound Toggle
   if (soundToggleBtn) {
     soundToggleBtn.addEventListener('click', () => {
       soundEnabled = !soundEnabled;
@@ -179,7 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Register Form Handler
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
@@ -213,7 +204,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Login Form Handler
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value.trim();
@@ -245,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Logout Handler
   logoutBtn.addEventListener('click', () => {
     localStorage.removeItem('schat_token');
     localStorage.removeItem('schat_user');
@@ -258,7 +247,39 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebar();
   });
 
-  // Initialize Chat Session & WebSocket
+  // Channel & DM Tab Switching
+  globalChannelBtn.addEventListener('click', () => {
+    switchChatTab(null);
+  });
+
+  const switchChatTab = (recipient) => {
+    activeRecipient = recipient;
+
+    document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
+    globalChannelBtn.classList.remove('active');
+
+    if (!activeRecipient) {
+      globalChannelBtn.classList.add('active');
+      roomAvatar.textContent = '💬';
+      roomTitle.textContent = 'Global Channel';
+      roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Realtime Active';
+      welcomeTitle.textContent = 'Welcome to SChat!';
+      welcomeSubtitle.textContent = 'End-to-end real-time messaging active across mobile & desktop.';
+    } else {
+      const userEl = document.querySelector(`.online-user-item[data-user-id="${activeRecipient.id}"]`);
+      if (userEl) userEl.classList.add('active');
+
+      roomAvatar.textContent = activeRecipient.avatar || '🔒';
+      roomTitle.textContent = `DM with @${activeRecipient.username}`;
+      roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Private Encrypted DM';
+      welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
+      welcomeSubtitle.textContent = `Private end-to-end communication channel.`;
+    }
+
+    closeSidebar();
+    loadMessageHistory();
+  };
+
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
@@ -272,10 +293,13 @@ document.addEventListener('DOMContentLoaded', () => {
     connectWebSocket();
   };
 
-  // Load Past Message History
   const loadMessageHistory = async () => {
     try {
-      const res = await fetch('/api/messages', {
+      const url = activeRecipient 
+        ? `/api/messages?recipient_id=${activeRecipient.id}` 
+        : '/api/messages';
+
+      const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (!res.ok) return;
@@ -284,8 +308,8 @@ document.addEventListener('DOMContentLoaded', () => {
       messagesFeed.innerHTML = `
         <div class="welcome-banner">
           <div class="spark-icon">✨</div>
-          <h3>Welcome to SChat!</h3>
-          <p>End-to-end real-time messaging active across mobile & desktop.</p>
+          <h3 id="welcomeTitle">${activeRecipient ? 'Direct Message with ' + activeRecipient.username : 'Welcome to SChat!'}</h3>
+          <p id="welcomeSubtitle">${activeRecipient ? 'Private communication channel.' : 'End-to-end real-time messaging active across mobile & desktop.'}</p>
         </div>
       `;
 
@@ -298,7 +322,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // WebSocket Connection
   const connectWebSocket = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}?token=${encodeURIComponent(authToken)}`;
@@ -316,8 +339,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.type === 'auth_success') {
           updateOnlineUsers(data.onlineUsers);
         } else if (data.type === 'new_message') {
-          renderMessage(data);
-          scrollToBottom();
+          // Check if message belongs to current tab
+          const isCurrentTab = activeRecipient 
+            ? (data.recipient_id === activeRecipient.id || (data.user_id === activeRecipient.id && data.recipient_id === currentUser.id))
+            : (!data.recipient_id);
+
+          if (isCurrentTab) {
+            renderMessage(data);
+            scrollToBottom();
+          }
+
           if (data.user_id !== currentUser.id) {
             playSound('receive');
           }
@@ -334,14 +365,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     ws.onclose = () => {
-      console.log('WebSocket connection closed. Reconnecting in 3s...');
-      setTimeout(() => {
-        if (authToken) connectWebSocket();
-      }, 3000);
+      setTimeout(() => { if (authToken) connectWebSocket(); }, 3000);
     };
   };
 
-  // Delete Message Function
   const deleteMessage = async (messageId) => {
     try {
       if (ws && ws.readyState === WebSocket.OPEN) {
@@ -362,7 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Remove Message Element from DOM
   const removeMessageFromDOM = (messageId) => {
     const card = document.querySelector(`.message-card[data-msg-id="${messageId}"]`);
     if (card) {
@@ -371,9 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Render Single Message Bubble
   const renderMessage = (msg) => {
-    // Avoid duplicate render
     if (document.querySelector(`.message-card[data-msg-id="${msg.id}"]`)) return;
 
     const isOutgoing = msg.user_id === currentUser.id;
@@ -402,7 +426,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Event listener for delete button
     const deleteBtn = msgCard.querySelector('.msg-delete-btn');
     if (deleteBtn) {
       deleteBtn.addEventListener('click', (e) => {
@@ -414,7 +437,6 @@ document.addEventListener('DOMContentLoaded', () => {
     messagesFeed.appendChild(msgCard);
   };
 
-  // Escape HTML
   const escapeHtml = (str) => {
     return str.replace(/[&<>'"]/g, 
       tag => ({
@@ -427,28 +449,38 @@ document.addEventListener('DOMContentLoaded', () => {
     );
   };
 
-  // Scroll Chat to Bottom
   const scrollToBottom = () => {
     messagesFeed.scrollTop = messagesFeed.scrollHeight;
   };
 
-  // Update Online Users List
   const updateOnlineUsers = (users = []) => {
-    onlineCountBadge.textContent = users.length;
+    // Filter out current user
+    const otherUsers = users.filter(u => u.id !== currentUser.id);
+    onlineCountBadge.textContent = otherUsers.length;
     onlineUsersList.innerHTML = '';
 
-    users.forEach(u => {
+    if (otherUsers.length === 0) {
+      onlineUsersList.innerHTML = `<li class="online-user-item disabled"><span class="u-name">No other users online</span></li>`;
+      return;
+    }
+
+    otherUsers.forEach(u => {
       const li = document.createElement('li');
-      li.className = 'online-user-item';
+      li.className = `online-user-item ${activeRecipient && activeRecipient.id === u.id ? 'active' : ''}`;
+      li.dataset.userId = u.id;
       li.innerHTML = `
         <span class="u-avatar">${u.avatar || '⚡'}</span>
         <span class="u-name">${escapeHtml(u.username)}</span>
       `;
+
+      li.addEventListener('click', () => {
+        switchChatTab(u);
+      });
+
       onlineUsersList.appendChild(li);
     });
   };
 
-  // Send Message
   messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const content = messageInput.value.trim();
@@ -456,6 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ws.send(JSON.stringify({
       type: 'chat_message',
+      recipient_id: activeRecipient ? activeRecipient.id : null,
       content: content
     }));
 
@@ -463,24 +496,38 @@ document.addEventListener('DOMContentLoaded', () => {
     emojiPicker.classList.add('hidden');
     playSound('send');
 
-    ws.send(JSON.stringify({ type: 'typing', isTyping: false }));
+    ws.send(JSON.stringify({
+      type: 'typing',
+      recipient_id: activeRecipient ? activeRecipient.id : null,
+      isTyping: false
+    }));
   });
 
-  // Typing Broadcast Handler
   messageInput.addEventListener('input', () => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-    ws.send(JSON.stringify({ type: 'typing', isTyping: true }));
+    ws.send(JSON.stringify({
+      type: 'typing',
+      recipient_id: activeRecipient ? activeRecipient.id : null,
+      isTyping: true
+    }));
 
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
-      ws.send(JSON.stringify({ type: 'typing', isTyping: false }));
+      ws.send(JSON.stringify({
+        type: 'typing',
+        recipient_id: activeRecipient ? activeRecipient.id : null,
+        isTyping: false
+      }));
     }, 2000);
   });
 
-  // Receive Typing Indicator
   const handleTypingEvent = (data) => {
-    if (data.isTyping) {
+    const isRelevantTyping = activeRecipient 
+      ? (data.user_id === activeRecipient.id && data.recipient_id === currentUser.id)
+      : (!data.recipient_id && data.user_id !== currentUser.id);
+
+    if (isRelevantTyping && data.isTyping) {
       typingText.textContent = `${data.username} is typing...`;
       typingBanner.classList.remove('hidden');
     } else {
@@ -488,7 +535,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // Emoji Picker Toggle & Injection
   emojiBtn.addEventListener('click', () => {
     emojiPicker.classList.toggle('hidden');
   });
@@ -500,16 +546,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Filter Search
   filterInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
+    document.querySelectorAll('.online-user-item').forEach(item => {
+      const text = item.textContent.toLowerCase();
+      item.style.display = text.includes(term) ? 'flex' : 'none';
+    });
     document.querySelectorAll('.message-card').forEach(card => {
       const text = card.textContent.toLowerCase();
       card.style.display = text.includes(term) ? 'flex' : 'none';
     });
   });
 
-  // Auto-Login
   if (authToken && currentUser) {
     initializeChatSession();
   }
