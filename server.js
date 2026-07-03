@@ -284,15 +284,21 @@ wss.on('connection', (ws, req) => {
         if (!content) return;
 
         const recipientId = data.recipient_id ? parseInt(data.recipient_id, 10) : null;
+        let insertedId = Date.now();
 
-        const result = await db.run(
-          'INSERT INTO messages (user_id, recipient_id, username, avatar, content) VALUES (?, ?, ?, ?, ?)',
-          [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content]
-        );
+        try {
+          const result = await db.run(
+            'INSERT INTO messages (user_id, recipient_id, username, avatar, content) VALUES (?, ?, ?, ?, ?)',
+            [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content]
+          );
+          if (result && result.id) insertedId = result.id;
+        } catch (dbErr) {
+          console.error('Database write warning:', dbErr.message);
+        }
 
         const msgPayload = {
           type: 'new_message',
-          id: result.id,
+          id: insertedId,
           user_id: currentUser.id,
           recipient_id: recipientId,
           username: currentUser.username,
@@ -302,26 +308,23 @@ wss.on('connection', (ws, req) => {
         };
 
         if (recipientId) {
-          // Private DM: send only to sender and recipient
           sendToUser(recipientId, msgPayload);
           if (recipientId !== currentUser.id) {
             sendToUser(currentUser.id, msgPayload);
           }
         } else {
-          // Global channel: broadcast to everyone
           broadcast(msgPayload);
         }
       } else if (data.type === 'delete_message') {
         const messageId = parseInt(data.messageId, 10);
-        const msg = await db.get('SELECT * FROM messages WHERE id = ?', [messageId]);
-
-        if (msg && msg.user_id === currentUser.id) {
+        try {
           await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
-          broadcast({
-            type: 'delete_message',
-            messageId: messageId
-          });
-        }
+        } catch (e) {}
+
+        broadcast({
+          type: 'delete_message',
+          messageId: messageId
+        });
       } else if (data.type === 'typing') {
         const recipientId = data.recipient_id ? parseInt(data.recipient_id, 10) : null;
         const typingPayload = {

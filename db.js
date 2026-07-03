@@ -22,15 +22,15 @@ if (process.env.DATABASE_URL) {
     CREATE TABLE IF NOT EXISTS messages (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL,
-      recipient_id INTEGER DEFAULT NULL,
       username VARCHAR(255) NOT NULL,
       avatar VARCHAR(50) DEFAULT '⚡',
       content TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id)
     );
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS recipient_id INTEGER DEFAULT NULL;
   `).then(() => {
-    console.log('Connected to PostgreSQL Database.');
+    console.log('Connected to PostgreSQL Database with recipient_id column.');
   }).catch(err => {
     console.error('PostgreSQL Init Error:', err);
   });
@@ -90,7 +90,6 @@ if (process.env.DATABASE_URL) {
         CREATE TABLE IF NOT EXISTS messages (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
-          recipient_id INTEGER DEFAULT NULL,
           username TEXT NOT NULL,
           avatar TEXT DEFAULT '⚡',
           content TEXT NOT NULL,
@@ -98,6 +97,7 @@ if (process.env.DATABASE_URL) {
           FOREIGN KEY (user_id) REFERENCES users (id)
         )
       `);
+      db.run(`ALTER TABLE messages ADD COLUMN recipient_id INTEGER DEFAULT NULL`, () => {});
     });
 
     dbInstance = {
@@ -159,12 +159,10 @@ if (process.env.DATABASE_URL) {
       },
       async all(sql, params = []) {
         if (sql.includes('FROM messages')) {
-          if (params.length === 2) {
-            // Private DM filter: (user_id = p0 AND recipient_id = p1) OR (user_id = p1 AND recipient_id = p0)
+          if (params.length === 4) {
             const [u1, u2] = params;
             return data.messages.filter(m => (m.user_id === u1 && m.recipient_id === u2) || (m.user_id === u2 && m.recipient_id === u1));
           } else {
-            // Global messages (recipient_id IS NULL)
             return data.messages.filter(m => !m.recipient_id).slice(-100);
           }
         }
