@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let activeRecipient = null; // null = Global Channel, { id, username, avatar } = Direct Message
+  let isPrivacyBlurActive = false;
   let ws = null;
   let selectedAvatar = '⚡';
   let soundEnabled = true;
@@ -51,10 +52,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const typingBanner = document.getElementById('typingBanner');
   const typingText = document.getElementById('typingText');
 
+  const privacyBlurBtn = document.getElementById('privacyBlurBtn');
+  const timerSelect = document.getElementById('timerSelect');
+
   const messageForm = document.getElementById('messageForm');
   const messageInput = document.getElementById('messageInput');
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
+
+  // Privacy Blur Control Toggle
+  if (privacyBlurBtn) {
+    privacyBlurBtn.addEventListener('click', () => {
+      isPrivacyBlurActive = !isPrivacyBlurActive;
+      if (isPrivacyBlurActive) {
+        privacyBlurBtn.classList.add('active');
+        privacyBlurBtn.querySelector('.control-text').textContent = 'Blur On';
+      } else {
+        privacyBlurBtn.classList.remove('active');
+        privacyBlurBtn.querySelector('.control-text').textContent = 'Blur Off';
+      }
+    });
+  }
 
   // Theme Switcher
   const updateThemeUI = () => {
@@ -339,14 +357,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.type === 'auth_success') {
           updateOnlineUsers(data.onlineUsers);
         } else if (data.type === 'new_message') {
-          // Robust current tab matching logic
           let isCurrentTab = false;
 
           if (!activeRecipient) {
-            // Global tab: matches if recipient_id is null, undefined, 0, or false
             isCurrentTab = !data.recipient_id || data.recipient_id === 'null' || Number(data.recipient_id) === 0;
           } else {
-            // DM tab: matches if message is between currentUser and activeRecipient
             const msgSender = Number(data.user_id);
             const msgTarget = Number(data.recipient_id);
             const activeId = Number(activeRecipient.id);
@@ -409,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const renderMessage = (msg) => {
-    // Generate a guaranteed unique fallback ID if msg.id is missing or null
     const msgUniqueId = msg.id || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
     if (msg.id && document.querySelector(`.message-card[data-msg-id="${msg.id}"]`)) {
@@ -430,17 +444,50 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msgUniqueId}">🗑️</button>` 
       : '';
 
+    // Handle Timer display
+    let timerBadgeHtml = '';
+    if (msg.expires_at) {
+      const remainingMs = new Date(msg.expires_at).getTime() - Date.now();
+      if (remainingMs > 0) {
+        const secondsLeft = Math.ceil(remainingMs / 1000);
+        timerBadgeHtml = `<span class="timer-badge" id="timerBadge_${msgUniqueId}">⏱️ ${secondsLeft}s</span>`;
+        
+        // Start live countdown timer on client
+        const timerInterval = setInterval(() => {
+          const updatedRemaining = new Date(msg.expires_at).getTime() - Date.now();
+          const badgeEl = document.getElementById(`timerBadge_${msgUniqueId}`);
+          if (updatedRemaining <= 0) {
+            clearInterval(timerInterval);
+            removeMessageFromDOM(msgUniqueId);
+          } else if (badgeEl) {
+            badgeEl.textContent = `⏱️ ${Math.ceil(updatedRemaining / 1000)}s`;
+          }
+        }, 1000);
+      }
+    }
+
+    const isBlurredClass = msg.is_blurred ? 'blurred' : '';
+
     msgCard.innerHTML = `
       <div class="msg-avatar">${msg.avatar || '⚡'}</div>
       <div class="msg-body">
         <div class="msg-header">
           <span class="msg-author">${isOutgoing ? 'You' : (msg.username || 'User')}</span>
           <span class="msg-time">${timeFormatted}</span>
+          ${timerBadgeHtml}
           ${deleteBtnHtml}
         </div>
-        <div class="msg-bubble">${escapeHtml(msg.content || '')}</div>
+        <div class="msg-bubble ${isBlurredClass}">${escapeHtml(msg.content || '')}</div>
       </div>
     `;
+
+    // Handle Blur Unmask Tap
+    const bubbleEl = msgCard.querySelector('.msg-bubble');
+    if (msg.is_blurred && bubbleEl) {
+      bubbleEl.addEventListener('click', () => {
+        bubbleEl.classList.toggle('unmasked');
+      });
+    }
 
     const deleteBtn = msgCard.querySelector('.msg-delete-btn');
     if (deleteBtn && msg.id) {
@@ -501,10 +548,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const content = messageInput.value.trim();
     if (!content || !ws || ws.readyState !== WebSocket.OPEN) return;
 
+    const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
+
     ws.send(JSON.stringify({
       type: 'chat_message',
       recipient_id: activeRecipient ? activeRecipient.id : null,
-      content: content
+      content: content,
+      is_blurred: isPrivacyBlurActive ? 1 : 0,
+      timer_seconds: timerSeconds
     }));
 
     messageInput.value = '';

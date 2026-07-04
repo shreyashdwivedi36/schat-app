@@ -22,15 +22,20 @@ if (process.env.DATABASE_URL) {
     CREATE TABLE IF NOT EXISTS messages (
       id SERIAL PRIMARY KEY,
       user_id INTEGER NOT NULL,
+      recipient_id INTEGER DEFAULT NULL,
       username VARCHAR(255) NOT NULL,
       avatar VARCHAR(50) DEFAULT '⚡',
       content TEXT NOT NULL,
+      is_blurred INTEGER DEFAULT 0,
+      expires_at TIMESTAMP DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id)
     );
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS recipient_id INTEGER DEFAULT NULL;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_blurred INTEGER DEFAULT 0;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP DEFAULT NULL;
   `).then(() => {
-    console.log('Connected to PostgreSQL Database with recipient_id column.');
+    console.log('Connected to PostgreSQL Database with privacy & timer columns.');
   }).catch(err => {
     console.error('PostgreSQL Init Error:', err);
   });
@@ -90,14 +95,19 @@ if (process.env.DATABASE_URL) {
         CREATE TABLE IF NOT EXISTS messages (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL,
+          recipient_id INTEGER DEFAULT NULL,
           username TEXT NOT NULL,
           avatar TEXT DEFAULT '⚡',
           content TEXT NOT NULL,
+          is_blurred INTEGER DEFAULT 0,
+          expires_at DATETIME DEFAULT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id)
         )
       `);
       db.run(`ALTER TABLE messages ADD COLUMN recipient_id INTEGER DEFAULT NULL`, () => {});
+      db.run(`ALTER TABLE messages ADD COLUMN is_blurred INTEGER DEFAULT 0`, () => {});
+      db.run(`ALTER TABLE messages ADD COLUMN expires_at DATETIME DEFAULT NULL`, () => {});
     });
 
     dbInstance = {
@@ -137,8 +147,18 @@ if (process.env.DATABASE_URL) {
           return { id: newUser.id, changes: 1 };
         }
         if (sql.includes('INSERT INTO messages')) {
-          const [user_id, recipient_id, username, avatar, content] = params;
-          const newMsg = { id: data.messages.length + 1, user_id, recipient_id: recipient_id || null, username, avatar: avatar || '⚡', content, created_at: new Date().toISOString() };
+          const [user_id, recipient_id, username, avatar, content, is_blurred, expires_at] = params;
+          const newMsg = {
+            id: data.messages.length + 1,
+            user_id,
+            recipient_id: recipient_id || null,
+            username,
+            avatar: avatar || '⚡',
+            content,
+            is_blurred: is_blurred || 0,
+            expires_at: expires_at || null,
+            created_at: new Date().toISOString()
+          };
           data.messages.push(newMsg);
           saveData();
           return { id: newMsg.id, changes: 1 };
@@ -159,11 +179,13 @@ if (process.env.DATABASE_URL) {
       },
       async all(sql, params = []) {
         if (sql.includes('FROM messages')) {
+          const nowIso = new Date().toISOString();
+          let validMsgs = data.messages.filter(m => !m.expires_at || m.expires_at > nowIso);
           if (params.length === 4) {
             const [u1, u2] = params;
-            return data.messages.filter(m => (m.user_id === u1 && m.recipient_id === u2) || (m.user_id === u2 && m.recipient_id === u1));
+            return validMsgs.filter(m => (m.user_id === u1 && m.recipient_id === u2) || (m.user_id === u2 && m.recipient_id === u1));
           } else {
-            return data.messages.filter(m => !m.recipient_id).slice(-100);
+            return validMsgs.filter(m => !m.recipient_id).slice(-100);
           }
         }
         return [];

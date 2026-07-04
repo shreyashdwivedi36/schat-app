@@ -250,6 +250,24 @@
             <span class="emoji-item">💬</span>
           </div>
 
+          <!-- Feature Controls Bar (Blur & Timer) -->
+          <div class="input-controls-bar">
+            <button type="button" id="privacyBlurBtn" class="control-toggle-btn" title="Toggle Privacy Blur on next message">
+              <span class="control-icon">👁️</span> <span class="control-text">Blur Off</span>
+            </button>
+
+            <div class="control-select-wrapper">
+              <span class="control-icon">⏱️</span>
+              <select id="timerSelect" class="control-select" title="Self-Destruct Timer">
+                <option value="0">Timer Off</option>
+                <option value="10">10 Seconds</option>
+                <option value="60">1 Minute</option>
+                <option value="300">5 Minutes</option>
+                <option value="3600">1 Hour</option>
+              </select>
+            </div>
+          </div>
+
           <form id="messageForm" class="message-input-form">
             <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji">😊</button>
             <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required>

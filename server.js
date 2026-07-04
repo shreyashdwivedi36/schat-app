@@ -137,13 +137,13 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
 
     if (recipientId) {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, created_at FROM messages WHERE (user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?) ORDER BY id ASC LIMIT 100',
+        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100',
         [req.user.id, recipientId, recipientId, req.user.id]
       );
       return res.json({ messages });
     } else {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, created_at FROM messages WHERE recipient_id IS NULL ORDER BY id ASC LIMIT 100'
+        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100'
       );
       return res.json({ messages });
     }
@@ -218,6 +218,22 @@ function getOnlineUsersList() {
   return Array.from(uniqueUsers.values());
 }
 
+// Background cleanup timer for self-destructing messages
+setInterval(async () => {
+  try {
+    const expired = await db.all('SELECT id FROM messages WHERE expires_at IS NOT NULL AND expires_at <= CURRENT_TIMESTAMP');
+    if (expired && expired.length > 0) {
+      for (const m of expired) {
+        await db.run('DELETE FROM messages WHERE id = ?', [m.id]);
+        broadcast({
+          type: 'delete_message',
+          messageId: m.id
+        });
+      }
+    }
+  } catch (e) {}
+}, 4000);
+
 wss.on('connection', (ws, req) => {
   let currentUser = null;
 
@@ -284,12 +300,20 @@ wss.on('connection', (ws, req) => {
         if (!content) return;
 
         const recipientId = data.recipient_id ? parseInt(data.recipient_id, 10) : null;
+        const isBlurred = data.is_blurred ? 1 : 0;
+        const timerSeconds = data.timer_seconds ? parseInt(data.timer_seconds, 10) : 0;
+
+        let expiresAtIso = null;
+        if (timerSeconds > 0) {
+          expiresAtIso = new Date(Date.now() + timerSeconds * 1000).toISOString();
+        }
+
         let insertedId = Date.now();
 
         try {
           const result = await db.run(
-            'INSERT INTO messages (user_id, recipient_id, username, avatar, content) VALUES (?, ?, ?, ?, ?)',
-            [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content]
+            'INSERT INTO messages (user_id, recipient_id, username, avatar, content, is_blurred, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content, isBlurred, expiresAtIso]
           );
           if (result && result.id) insertedId = result.id;
         } catch (dbErr) {
@@ -304,6 +328,8 @@ wss.on('connection', (ws, req) => {
           username: currentUser.username,
           avatar: currentUser.avatar || '⚡',
           content,
+          is_blurred: isBlurred,
+          expires_at: expiresAtIso,
           created_at: new Date().toISOString()
         };
 
