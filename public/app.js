@@ -339,17 +339,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.type === 'auth_success') {
           updateOnlineUsers(data.onlineUsers);
         } else if (data.type === 'new_message') {
-          // Check if message belongs to current tab
-          const isCurrentTab = activeRecipient 
-            ? (data.recipient_id === activeRecipient.id || (data.user_id === activeRecipient.id && data.recipient_id === currentUser.id))
-            : (!data.recipient_id);
+          // Robust current tab matching logic
+          let isCurrentTab = false;
+
+          if (!activeRecipient) {
+            // Global tab: matches if recipient_id is null, undefined, 0, or false
+            isCurrentTab = !data.recipient_id || data.recipient_id === 'null' || Number(data.recipient_id) === 0;
+          } else {
+            // DM tab: matches if message is between currentUser and activeRecipient
+            const msgSender = Number(data.user_id);
+            const msgTarget = Number(data.recipient_id);
+            const activeId = Number(activeRecipient.id);
+            const myId = Number(currentUser.id);
+
+            isCurrentTab = (msgSender === myId && msgTarget === activeId) || (msgSender === activeId && msgTarget === myId);
+          }
 
           if (isCurrentTab) {
             renderMessage(data);
             scrollToBottom();
           }
 
-          if (data.user_id !== currentUser.id) {
+          if (Number(data.user_id) !== Number(currentUser.id)) {
             playSound('receive');
           }
         } else if (data.type === 'delete_message') {
@@ -398,12 +409,17 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const renderMessage = (msg) => {
-    if (document.querySelector(`.message-card[data-msg-id="${msg.id}"]`)) return;
+    // Generate a guaranteed unique fallback ID if msg.id is missing or null
+    const msgUniqueId = msg.id || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
-    const isOutgoing = msg.user_id === currentUser.id;
+    if (msg.id && document.querySelector(`.message-card[data-msg-id="${msg.id}"]`)) {
+      return;
+    }
+
+    const isOutgoing = Number(msg.user_id) === Number(currentUser.id);
     const msgCard = document.createElement('div');
     msgCard.className = `message-card ${isOutgoing ? 'outgoing' : 'incoming'}`;
-    msgCard.dataset.msgId = msg.id;
+    msgCard.dataset.msgId = msgUniqueId;
 
     const timeFormatted = new Date(msg.created_at || Date.now()).toLocaleTimeString([], {
       hour: '2-digit',
@@ -411,23 +427,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const deleteBtnHtml = isOutgoing 
-      ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msg.id}">🗑️</button>` 
+      ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msgUniqueId}">🗑️</button>` 
       : '';
 
     msgCard.innerHTML = `
       <div class="msg-avatar">${msg.avatar || '⚡'}</div>
       <div class="msg-body">
         <div class="msg-header">
-          <span class="msg-author">${isOutgoing ? 'You' : msg.username}</span>
+          <span class="msg-author">${isOutgoing ? 'You' : (msg.username || 'User')}</span>
           <span class="msg-time">${timeFormatted}</span>
           ${deleteBtnHtml}
         </div>
-        <div class="msg-bubble">${escapeHtml(msg.content)}</div>
+        <div class="msg-bubble">${escapeHtml(msg.content || '')}</div>
       </div>
     `;
 
     const deleteBtn = msgCard.querySelector('.msg-delete-btn');
-    if (deleteBtn) {
+    if (deleteBtn && msg.id) {
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         deleteMessage(msg.id);
@@ -454,8 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateOnlineUsers = (users = []) => {
-    // Filter out current user
-    const otherUsers = users.filter(u => u.id !== currentUser.id);
+    const otherUsers = users.filter(u => Number(u.id) !== Number(currentUser.id));
     onlineCountBadge.textContent = otherUsers.length;
     onlineUsersList.innerHTML = '';
 
@@ -466,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     otherUsers.forEach(u => {
       const li = document.createElement('li');
-      li.className = `online-user-item ${activeRecipient && activeRecipient.id === u.id ? 'active' : ''}`;
+      li.className = `online-user-item ${activeRecipient && Number(activeRecipient.id) === Number(u.id) ? 'active' : ''}`;
       li.dataset.userId = u.id;
       li.innerHTML = `
         <span class="u-avatar">${u.avatar || '⚡'}</span>
@@ -524,8 +539,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const handleTypingEvent = (data) => {
     const isRelevantTyping = activeRecipient 
-      ? (data.user_id === activeRecipient.id && data.recipient_id === currentUser.id)
-      : (!data.recipient_id && data.user_id !== currentUser.id);
+      ? (Number(data.user_id) === Number(activeRecipient.id) && Number(data.recipient_id) === Number(currentUser.id))
+      : (!data.recipient_id && Number(data.user_id) !== Number(currentUser.id));
 
     if (isRelevantTyping && data.isTyping) {
       typingText.textContent = `${data.username} is typing...`;
