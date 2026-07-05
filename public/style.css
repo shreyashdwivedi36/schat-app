@@ -1063,6 +1063,144 @@ body {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Feature Controls Bar (Privacy Blur & Self-Destruct Timer) */
+.input-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.control-toggle-btn {
+  background: var(--input-bg);
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  border-radius: 10px;
+  padding: 6px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition-fast);
+}
+
+.control-toggle-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--text-main);
+}
+
+.control-toggle-btn.active {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: var(--primary-accent);
+  color: var(--primary-glow);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+.control-select-wrapper {
+  background: var(--input-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.control-select {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-family);
+  font-size: 0.8rem;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.control-select option {
+  background: var(--bg-dark);
+  color: var(--text-main);
+}
+
+/* Privacy Blur Effect on Message Bubble - Deep Gaussian Dissolve */
+.msg-bubble.blurred {
+  color: transparent !important;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.95);
+  filter: blur(8px);
+  -webkit-filter: blur(8px);
+  user-select: none;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+[data-theme="light"] .msg-bubble.blurred {
+  text-shadow: 0 0 14px rgba(15, 23, 42, 0.95);
+}
+
+.msg-bubble.blurred:hover,
+.msg-bubble.blurred.unmasked {
+  color: inherit !important;
+  text-shadow: none !important;
+  filter: blur(0) !important;
+  -webkit-filter: blur(0) !important;
+}
+
+/* Timer Badge */
+.timer-badge {
+  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  color: var(--secondary-glow);
+  background: rgba(6, 182, 212, 0.15);
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-left: 6px;
+}
+
+/* Channel & DM Item Styling */
+.channel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--input-bg);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid var(--panel-border);
+}
+
+.channel-item:hover, .channel-item.active {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--primary-accent);
+}
+
+.channel-item .channel-icon {
+  font-size: 1.1rem;
+}
+
+.channel-item .channel-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.online-user-item {
+  cursor: pointer;
+}
+
+.online-user-item.active {
+  background: rgba(139, 92, 246, 0.25);
+  border: 1px solid var(--primary-accent);
+}
+
+.flex-fill {
+  flex: 1;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 6px;
@@ -1137,152 +1275,4 @@ body {
   .messages-feed {
     padding: 14px;
   }
-}
-
-/* Channel & DM Item Styling */
-.channel-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--input-bg);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  border: 1px solid var(--panel-border);
-}
-
-.channel-item:hover, .channel-item.active {
-  background: rgba(139, 92, 246, 0.2);
-  border-color: var(--primary-accent);
-}
-
-.channel-item .channel-icon {
-  font-size: 1.1rem;
-}
-
-.channel-item .channel-name {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-
-.online-user-item {
-  cursor: pointer;
-}
-
-.online-user-item.active {
-  background: rgba(139, 92, 246, 0.25);
-  border: 1px solid var(--primary-accent);
-}
-
-.flex-fill {
-  flex: 1;
-}
-
-/* Feature Controls Bar (Privacy Blur & Self-Destruct Timer) */
-.input-controls-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.control-toggle-btn {
-  background: var(--input-bg);
-  border: 1px solid var(--panel-border);
-  color: var(--text-muted);
-  border-radius: 10px;
-  padding: 6px 12px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all var(--transition-fast);
-}
-
-.control-toggle-btn:hover {
-  background: rgba(139, 92, 246, 0.15);
-  color: var(--text-main);
-}
-
-.control-toggle-btn.active {
-  background: rgba(139, 92, 246, 0.25);
-  border-color: var(--primary-accent);
-  color: var(--primary-glow);
-  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
-}
-
-.control-select-wrapper {
-  background: var(--input-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 10px;
-  padding: 4px 10px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-}
-
-.control-select {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-family: var(--font-family);
-  font-size: 0.8rem;
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-}
-
-.control-select option {
-  background: var(--bg-dark);
-  color: var(--text-main);
-}
-
-/* Privacy Blur Effect on Message Bubble */
-.msg-bubble.blurred {
-  filter: blur(6px);
-  user-select: none;
-  transition: filter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
-  position: relative;
-}
-
-.msg-bubble.blurred::after {
-  content: '🔒 Tap to Unmask';
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 18px;
-  pointer-events: none;
-}
-
-.msg-bubble.blurred:hover,
-.msg-bubble.blurred.unmasked {
-  filter: blur(0) !important;
-}
-
-.msg-bubble.blurred:hover::after,
-.msg-bubble.blurred.unmasked::after {
-  display: none;
-}
-
-/* Timer Badge */
-.timer-badge {
-  font-size: 0.7rem;
-  font-family: var(--font-mono);
-  color: var(--secondary-glow);
-  background: rgba(6, 182, 212, 0.15);
-  padding: 2px 6px;
-  border-radius: 8px;
-  margin-left: 6px;
 }

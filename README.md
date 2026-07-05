@@ -69,4 +69,5 @@ docker run -p 3000:3000 schat-app
 
 ## 📄 Author & License
 
-Developed and maintained by **Shreyash Dwivedi** ([@shreyashdwivedi36](https://github.com/shreyashdwivedi36)).
+Developed and maintained by **Shreyash Dwivedi** ([@shreyashdwivedi36](https://github.com/shreyashdwivedi36)).  
+Licensed under the [MIT License](LICENSE).
