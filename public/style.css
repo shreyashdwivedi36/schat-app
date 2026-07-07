@@ -1276,3 +1276,19 @@ body {
     padding: 14px;
   }
 }
+
+/* Message Delivery & Read Receipts (Checkmarks) */
+.msg-status-icon {
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin-left: 4px;
+  letter-spacing: -2px;
+  color: var(--text-dim);
+  transition: color 0.3s ease;
+  display: inline-block;
+}
+
+.msg-status-icon.read {
+  color: var(--secondary-glow) !important;
+  text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+}

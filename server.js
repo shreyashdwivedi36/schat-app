@@ -137,13 +137,13 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
 
     if (recipientId) {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100',
+        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100',
         [req.user.id, recipientId, recipientId, req.user.id]
       );
       return res.json({ messages });
     } else {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100'
+        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100'
       );
       return res.json({ messages });
     }
@@ -202,6 +202,13 @@ function sendToUser(userId, data) {
       client.send(payload);
     }
   }
+}
+
+function isUserOnline(userId) {
+  for (const user of clients.values()) {
+    if (user && user.id === userId) return true;
+  }
+  return false;
 }
 
 function getOnlineUsersList() {
@@ -308,12 +315,14 @@ wss.on('connection', (ws, req) => {
           expiresAtIso = new Date(Date.now() + timerSeconds * 1000).toISOString();
         }
 
+        // Determine status: 'delivered' if recipient is online, else 'sent'
+        const initialStatus = (recipientId && isUserOnline(recipientId)) ? 'delivered' : 'sent';
         let insertedId = Date.now();
 
         try {
           const result = await db.run(
-            'INSERT INTO messages (user_id, recipient_id, username, avatar, content, is_blurred, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-            [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content, isBlurred, expiresAtIso]
+            'INSERT INTO messages (user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content, isBlurred, expiresAtIso, initialStatus]
           );
           if (result && result.id) insertedId = result.id;
         } catch (dbErr) {
@@ -330,6 +339,7 @@ wss.on('connection', (ws, req) => {
           content,
           is_blurred: isBlurred,
           expires_at: expiresAtIso,
+          status: initialStatus,
           created_at: new Date().toISOString()
         };
 
@@ -341,6 +351,19 @@ wss.on('connection', (ws, req) => {
         } else {
           broadcast(msgPayload);
         }
+      } else if (data.type === 'mark_read') {
+        const senderId = data.sender_id ? parseInt(data.sender_id, 10) : null;
+        try {
+          if (senderId) {
+            await db.run('UPDATE messages SET status = ? WHERE user_id = ? AND recipient_id = ? AND status != ?', ['read', senderId, currentUser.id, 'read']);
+            sendToUser(senderId, {
+              type: 'msg_status_update',
+              status: 'read',
+              sender_id: senderId,
+              recipient_id: currentUser.id
+            });
+          }
+        } catch (e) {}
       } else if (data.type === 'delete_message') {
         const messageId = parseInt(data.messageId, 10);
         try {

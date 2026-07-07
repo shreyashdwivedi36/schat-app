@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
 
-  // Privacy Blur Control Toggle
+  // Privacy Blur Toggle
   if (privacyBlurBtn) {
     privacyBlurBtn.addEventListener('click', () => {
       isPrivacyBlurActive = !isPrivacyBlurActive;
@@ -292,6 +292,14 @@ document.addEventListener('DOMContentLoaded', () => {
       roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Private Encrypted DM';
       welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
       welcomeSubtitle.textContent = `Private end-to-end communication channel.`;
+
+      // Emit Mark Read event for this user's DMs
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({
+          type: 'mark_read',
+          sender_id: activeRecipient.id
+        }));
+      }
     }
 
     closeSidebar();
@@ -334,6 +342,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.messages && data.messages.length > 0) {
         data.messages.forEach(renderMessage);
         scrollToBottom();
+
+        // Mark read if active DM tab
+        if (activeRecipient && ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({
+            type: 'mark_read',
+            sender_id: activeRecipient.id
+          }));
+        }
       }
     } catch (err) {
       console.error('Failed to load history:', err);
@@ -348,6 +364,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     ws.onopen = () => {
       console.log('⚡ Connected to SChat WebSocket Server');
+      if (activeRecipient) {
+        ws.send(JSON.stringify({
+          type: 'mark_read',
+          sender_id: activeRecipient.id
+        }));
+      }
     };
 
     ws.onmessage = (event) => {
@@ -373,10 +395,25 @@ document.addEventListener('DOMContentLoaded', () => {
           if (isCurrentTab) {
             renderMessage(data);
             scrollToBottom();
+
+            // Mark read immediately if we are currently viewing this DM
+            if (activeRecipient && Number(data.user_id) === Number(activeRecipient.id)) {
+              ws.send(JSON.stringify({
+                type: 'mark_read',
+                sender_id: activeRecipient.id
+              }));
+            }
           }
 
           if (Number(data.user_id) !== Number(currentUser.id)) {
             playSound('receive');
+          }
+        } else if (data.type === 'msg_status_update') {
+          if (data.status === 'read') {
+            document.querySelectorAll('.msg-status-icon').forEach(icon => {
+              icon.textContent = '✓✓';
+              icon.classList.add('read');
+            });
           }
         } else if (data.type === 'delete_message') {
           removeMessageFromDOM(data.messageId);
@@ -444,7 +481,15 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msgUniqueId}">🗑️</button>` 
       : '';
 
-    // Handle Timer display
+    // Checkmark status html for outgoing messages
+    let statusIconHtml = '';
+    if (isOutgoing) {
+      const status = msg.status || 'sent';
+      const checkSymbol = status === 'sent' ? '✓' : '✓✓';
+      const isReadClass = status === 'read' ? 'read' : (status === 'delivered' ? 'delivered' : 'sent');
+      statusIconHtml = `<span class="msg-status-icon ${isReadClass}">${checkSymbol}</span>`;
+    }
+
     let timerBadgeHtml = '';
     if (msg.expires_at) {
       const remainingMs = new Date(msg.expires_at).getTime() - Date.now();
@@ -452,7 +497,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const secondsLeft = Math.ceil(remainingMs / 1000);
         timerBadgeHtml = `<span class="timer-badge" id="timerBadge_${msgUniqueId}">⏱️ ${secondsLeft}s</span>`;
         
-        // Start live countdown timer on client
         const timerInterval = setInterval(() => {
           const updatedRemaining = new Date(msg.expires_at).getTime() - Date.now();
           const badgeEl = document.getElementById(`timerBadge_${msgUniqueId}`);
@@ -474,6 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="msg-header">
           <span class="msg-author">${isOutgoing ? 'You' : (msg.username || 'User')}</span>
           <span class="msg-time">${timeFormatted}</span>
+          ${statusIconHtml}
           ${timerBadgeHtml}
           ${deleteBtnHtml}
         </div>
@@ -481,7 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Handle Blur Unmask Tap
     const bubbleEl = msgCard.querySelector('.msg-bubble');
     if (msg.is_blurred && bubbleEl) {
       bubbleEl.addEventListener('click', () => {

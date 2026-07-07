@@ -28,14 +28,16 @@ if (process.env.DATABASE_URL) {
       content TEXT NOT NULL,
       is_blurred INTEGER DEFAULT 0,
       expires_at TIMESTAMP DEFAULT NULL,
+      status VARCHAR(20) DEFAULT 'sent',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id)
     );
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS recipient_id INTEGER DEFAULT NULL;
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_blurred INTEGER DEFAULT 0;
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP DEFAULT NULL;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'sent';
   `).then(() => {
-    console.log('Connected to PostgreSQL Database with privacy & timer columns.');
+    console.log('Connected to PostgreSQL Database with status column.');
   }).catch(err => {
     console.error('PostgreSQL Init Error:', err);
   });
@@ -101,6 +103,7 @@ if (process.env.DATABASE_URL) {
           content TEXT NOT NULL,
           is_blurred INTEGER DEFAULT 0,
           expires_at DATETIME DEFAULT NULL,
+          status TEXT DEFAULT 'sent',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id)
         )
@@ -108,6 +111,7 @@ if (process.env.DATABASE_URL) {
       db.run(`ALTER TABLE messages ADD COLUMN recipient_id INTEGER DEFAULT NULL`, () => {});
       db.run(`ALTER TABLE messages ADD COLUMN is_blurred INTEGER DEFAULT 0`, () => {});
       db.run(`ALTER TABLE messages ADD COLUMN expires_at DATETIME DEFAULT NULL`, () => {});
+      db.run(`ALTER TABLE messages ADD COLUMN status TEXT DEFAULT 'sent'`, () => {});
     });
 
     dbInstance = {
@@ -147,7 +151,7 @@ if (process.env.DATABASE_URL) {
           return { id: newUser.id, changes: 1 };
         }
         if (sql.includes('INSERT INTO messages')) {
-          const [user_id, recipient_id, username, avatar, content, is_blurred, expires_at] = params;
+          const [user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status] = params;
           const newMsg = {
             id: data.messages.length + 1,
             user_id,
@@ -157,11 +161,20 @@ if (process.env.DATABASE_URL) {
             content,
             is_blurred: is_blurred || 0,
             expires_at: expires_at || null,
+            status: status || 'sent',
             created_at: new Date().toISOString()
           };
           data.messages.push(newMsg);
           saveData();
           return { id: newMsg.id, changes: 1 };
+        }
+        if (sql.includes('UPDATE messages SET status')) {
+          const status = params[0];
+          data.messages.forEach(m => {
+            if (m.status !== 'read') m.status = status;
+          });
+          saveData();
+          return { changes: 1 };
         }
         if (sql.includes('DELETE FROM messages')) {
           const id = params[0];
