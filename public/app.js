@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let activeRecipient = null; // null = Global Channel, { id, username, avatar } = Direct Message
+  let unreadCounts = {}; // { [userId]: count }
+  let totalUnreadDM = 0;
   let isPrivacyBlurActive = false;
   let ws = null;
   let selectedAvatar = '⚡';
@@ -59,6 +61,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageInput = document.getElementById('messageInput');
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
+
+  // Request Desktop Notification Permission
+  const requestNotificationPermission = () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  };
+
+  const showDesktopNotification = (senderName, messageText) => {
+    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+      new Notification(`New DM from @${senderName}`, {
+        body: messageText,
+        icon: '/favicon.ico'
+      });
+    }
+  };
 
   // Privacy Blur Toggle
   if (privacyBlurBtn) {
@@ -284,6 +302,12 @@ document.addEventListener('DOMContentLoaded', () => {
       welcomeTitle.textContent = 'Welcome to SChat!';
       welcomeSubtitle.textContent = 'End-to-end real-time messaging active across mobile & desktop.';
     } else {
+      // Clear unread count for this recipient
+      if (unreadCounts[activeRecipient.id]) {
+        unreadCounts[activeRecipient.id] = 0;
+      }
+      updateUnreadBadgesUI();
+
       const userEl = document.querySelector(`.online-user-item[data-user-id="${activeRecipient.id}"]`);
       if (userEl) userEl.classList.add('active');
 
@@ -306,6 +330,35 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMessageHistory();
   };
 
+  const updateUnreadBadgesUI = () => {
+    totalUnreadDM = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+
+    // Update document title
+    if (totalUnreadDM > 0) {
+      document.title = `(${totalUnreadDM}) New DM — SChat`;
+    } else {
+      document.title = 'SChat — Real-Time Messaging Platform';
+    }
+
+    // Update user list items
+    for (const [userId, count] of Object.entries(unreadCounts)) {
+      const userItem = document.querySelector(`.online-user-item[data-user-id="${userId}"]`);
+      if (userItem) {
+        let badgeEl = userItem.querySelector('.unread-badge');
+        if (count > 0) {
+          if (!badgeEl) {
+            badgeEl = document.createElement('span');
+            badgeEl.className = 'unread-badge';
+            userItem.appendChild(badgeEl);
+          }
+          badgeEl.textContent = count;
+        } else if (badgeEl) {
+          badgeEl.remove();
+        }
+      }
+    }
+  };
+
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
@@ -315,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authView.classList.add('hidden');
     chatView.classList.remove('hidden');
 
+    requestNotificationPermission();
     await loadMessageHistory();
     connectWebSocket();
   };
@@ -343,7 +397,6 @@ document.addEventListener('DOMContentLoaded', () => {
         data.messages.forEach(renderMessage);
         scrollToBottom();
 
-        // Mark read if active DM tab
         if (activeRecipient && ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({
             type: 'mark_read',
@@ -396,13 +449,18 @@ document.addEventListener('DOMContentLoaded', () => {
             renderMessage(data);
             scrollToBottom();
 
-            // Mark read immediately if we are currently viewing this DM
             if (activeRecipient && Number(data.user_id) === Number(activeRecipient.id)) {
               ws.send(JSON.stringify({
                 type: 'mark_read',
                 sender_id: activeRecipient.id
               }));
             }
+          } else if (data.recipient_id && Number(data.recipient_id) === Number(currentUser.id)) {
+            // Incoming DM for another tab: Increment unread counter!
+            const senderId = Number(data.user_id);
+            unreadCounts[senderId] = (unreadCounts[senderId] || 0) + 1;
+            updateUnreadBadgesUI();
+            showDesktopNotification(data.username, data.content);
           }
 
           if (Number(data.user_id) !== Number(currentUser.id)) {
@@ -481,7 +539,6 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msgUniqueId}">🗑️</button>` 
       : '';
 
-    // Checkmark status html for outgoing messages
     let statusIconHtml = '';
     if (isOutgoing) {
       const status = msg.status || 'sent';
@@ -574,9 +631,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.className = `online-user-item ${activeRecipient && Number(activeRecipient.id) === Number(u.id) ? 'active' : ''}`;
       li.dataset.userId = u.id;
+
+      const unreadCount = unreadCounts[u.id] || 0;
+      const unreadBadgeHtml = unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : '';
+
       li.innerHTML = `
         <span class="u-avatar">${u.avatar || '⚡'}</span>
         <span class="u-name">${escapeHtml(u.username)}</span>
+        ${unreadBadgeHtml}
       `;
 
       li.addEventListener('click', () => {

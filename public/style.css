@@ -1292,3 +1292,21 @@ body {
   color: var(--secondary-glow) !important;
   text-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
 }
+
+/* Unread DM Badge Counter */
+.unread-badge {
+  background: var(--danger-color);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 12px;
+  margin-left: auto;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+  animation: pulseBadge 1.5s infinite alternate;
+}
+
+@keyframes pulseBadge {
+  0% { transform: scale(1); box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); }
+  100% { transform: scale(1.1); box-shadow: 0 0 14px rgba(239, 68, 68, 0.8); }
+}
