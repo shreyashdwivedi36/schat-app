@@ -12,6 +12,8 @@ A full-stack, real-time messaging application engineered with **Node.js**, **Exp
 - **Real-Time Messaging**: Built on persistent WebSocket connections (`ws`) for instant two-way message delivery.
 - **Live Presence & Typing Indicators**: Dynamic online user count, user presence tracking, and real-time dancing-dot typing indicators.
 - **Message Management**: Users can delete their own sent messages with real-time broadcast removal across all connected clients.
+- **Message Delivery Status & Read Receipts**: Real-time status checkmarks (`✓` Sent, `✓✓` Delivered, `✓✓` Read).
+- **Privacy Blur & Self-Destruct Timer**: Toggleable Gaussian privacy blur (`👁️`) and customizable self-destruct timers (`⏱️ 10s`, `1m`, `5m`, `1h`).
 - **Dark & Light Mode**: Customizable UI theme toggle with persistent state saved in browser storage.
 - **User Authentication & Security**: Secure signup and login powered by JSON Web Tokens (JWT) and Bcrypt password hashing.
 - **Responsive Glassmorphism UI**:
@@ -67,9 +69,6 @@ docker run -p 3000:3000 schat-app
 
 ---
 
-## 📄 Author & License
-
-Developed and maintained by **Shreyash Dwivedi** ([@shreyashdwivedi36](https://github.com/shreyashdwivedi36)).  
 ## 📄 Author & Copyright
 
 Developed and owned by **Shreyash Dwivedi** ([@shreyashdwivedi36](https://github.com/shreyashdwivedi36)).  

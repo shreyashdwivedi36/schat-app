@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let activeRecipient = null; // null = Global Channel, { id, username, avatar } = Direct Message
-  let unreadCounts = {}; // { [userId]: count }
+  let unreadCounts = {};
   let totalUnreadDM = 0;
   let isPrivacyBlurActive = false;
   let ws = null;
@@ -61,6 +61,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const messageInput = document.getElementById('messageInput');
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
+
+  // About Owner & Options Modal Elements
+  const aboutModal = document.getElementById('aboutModal');
+  const closeAboutBtn = document.getElementById('closeAboutBtn');
+  const authAboutBtn = document.getElementById('authAboutBtn');
+  const sidebarAboutBtn = document.getElementById('sidebarAboutBtn');
+  const headerAboutBtn = document.getElementById('headerAboutBtn');
+  const optionsMenuBtn = document.getElementById('optionsMenuBtn');
+
+  const openAboutModal = () => {
+    if (aboutModal) aboutModal.classList.remove('hidden');
+  };
+
+  const closeAboutModal = () => {
+    if (aboutModal) aboutModal.classList.add('hidden');
+  };
+
+  if (authAboutBtn) authAboutBtn.addEventListener('click', openAboutModal);
+  if (sidebarAboutBtn) sidebarAboutBtn.addEventListener('click', openAboutModal);
+  if (headerAboutBtn) headerAboutBtn.addEventListener('click', openAboutModal);
+  if (optionsMenuBtn) optionsMenuBtn.addEventListener('click', openAboutModal);
+  if (closeAboutBtn) closeAboutBtn.addEventListener('click', closeAboutModal);
+  if (aboutModal) {
+    aboutModal.addEventListener('click', (e) => {
+      if (e.target === aboutModal) closeAboutModal();
+    });
+  }
 
   // Request Desktop Notification Permission
   const requestNotificationPermission = () => {
@@ -302,7 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
       welcomeTitle.textContent = 'Welcome to SChat!';
       welcomeSubtitle.textContent = 'End-to-end real-time messaging active across mobile & desktop.';
     } else {
-      // Clear unread count for this recipient
       if (unreadCounts[activeRecipient.id]) {
         unreadCounts[activeRecipient.id] = 0;
       }
@@ -317,7 +343,6 @@ document.addEventListener('DOMContentLoaded', () => {
       welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
       welcomeSubtitle.textContent = `Private end-to-end communication channel.`;
 
-      // Emit Mark Read event for this user's DMs
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
           type: 'mark_read',
@@ -333,14 +358,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateUnreadBadgesUI = () => {
     totalUnreadDM = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
-    // Update document title
     if (totalUnreadDM > 0) {
       document.title = `(${totalUnreadDM}) New DM — SChat`;
     } else {
       document.title = 'SChat — Real-Time Messaging Platform';
     }
 
-    // Update user list items
     for (const [userId, count] of Object.entries(unreadCounts)) {
       const userItem = document.querySelector(`.online-user-item[data-user-id="${userId}"]`);
       if (userItem) {
@@ -456,7 +479,6 @@ document.addEventListener('DOMContentLoaded', () => {
               }));
             }
           } else if (data.recipient_id && Number(data.recipient_id) === Number(currentUser.id)) {
-            // Incoming DM for another tab: Increment unread counter!
             const senderId = Number(data.user_id);
             unreadCounts[senderId] = (unreadCounts[senderId] || 0) + 1;
             updateUnreadBadgesUI();

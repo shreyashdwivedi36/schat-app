@@ -1310,3 +1310,282 @@ body {
   0% { transform: scale(1); box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); }
   100% { transform: scale(1.1); box-shadow: 0 0 14px rgba(239, 68, 68, 0.8); }
 }
+
+/* Auth Footer Owner Credit */
+.auth-owner-credit {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+.owner-link-btn {
+  background: none;
+  border: none;
+  color: var(--primary-accent);
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  font-family: var(--font-family);
+}
+
+.owner-link-btn:hover {
+  color: var(--text-main);
+}
+
+/* Sidebar Footer Owner Badge */
+.sidebar-owner-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.owner-badge-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--input-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-family);
+  font-size: 0.78rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all var(--transition-fast);
+}
+
+.owner-badge-btn:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--primary-accent);
+  color: var(--text-main);
+}
+
+.owner-badge-btn strong {
+  color: var(--primary-glow);
+}
+
+/* About SChat Owner Modal */
+.about-modal {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(12px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  padding: 28px;
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  animation: zoomIn 0.3s var(--transition-bounce);
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 32px;
+  height: 32px;
+  background: var(--input-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.modal-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--danger-color);
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.modal-logo {
+  font-size: 2.2rem;
+  margin-bottom: 6px;
+}
+
+.modal-header h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.modal-version {
+  font-size: 0.75rem;
+  color: var(--primary-accent);
+  font-weight: 600;
+}
+
+.owner-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid var(--primary-accent);
+  border-radius: 16px;
+  margin-bottom: 18px;
+}
+
+.owner-icon {
+  font-size: 2rem;
+}
+
+.owner-badge-card h3 {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.owner-badge-card p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.modal-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 20px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.info-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.info-val {
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.info-link {
+  color: var(--secondary-glow);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.info-link:hover {
+  text-decoration: underline;
+}
+
+.modal-copyright {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  border-top: 1px solid var(--panel-border);
+  padding-top: 14px;
+}
+
+/* Options Gear Button */
+.options-btn {
+  font-size: 1.1rem;
+}
+
+.owner-avatar-icon {
+  width: 44px;
+  height: 44px;
+  background: rgba(139, 92, 246, 0.25);
+  border: 1px solid var(--primary-accent);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+/* Social Buttons in Options Modal */
+.social-links-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.social-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.social-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.linkedin-btn {
+  background: #0a66c2;
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(10, 102, 194, 0.3);
+}
+
+.linkedin-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(10, 102, 194, 0.5);
+}
+
+.github-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-border);
+  color: var(--text-main);
+}
+
+.github-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Tech Stack Pills */
+.tech-stack-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.tech-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: var(--input-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  color: var(--text-muted);
+}
