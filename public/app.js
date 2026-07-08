@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let unreadCounts = {};
   let totalUnreadDM = 0;
   let isPrivacyBlurActive = false;
+  let deferredPrompt = null;
   let ws = null;
   let selectedAvatar = '⚡';
   let soundEnabled = true;
@@ -16,7 +17,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
+  // Register PWA Service Worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        console.log('⚡ PWA ServiceWorker registered successfully:', reg.scope);
+      }).catch((err) => {
+        console.error('ServiceWorker registration failed:', err);
+      });
+    });
+  }
+
   // DOM Elements
+  const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (pwaInstallBtn) {
+      pwaInstallBtn.classList.remove('hidden');
+    }
+  });
+
+  if (pwaInstallBtn) {
+    pwaInstallBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User PWA Install outcome: ${outcome}`);
+      deferredPrompt = null;
+      pwaInstallBtn.classList.add('hidden');
+    });
+  }
+
   const authView = document.getElementById('authView');
   const chatView = document.getElementById('chatView');
   const loginForm = document.getElementById('loginForm');
@@ -100,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
       new Notification(`New DM from @${senderName}`, {
         body: messageText,
-        icon: '/favicon.ico'
+        icon: '/icon-192.png'
       });
     }
   };

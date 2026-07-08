@@ -1589,3 +1589,21 @@ body {
   border-radius: 20px;
   color: var(--text-muted);
 }
+
+/* PWA Install Button */
+.pwa-install-btn {
+  width: auto !important;
+  padding: 0 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+  animation: pulseGlow 2s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.4); }
+  100% { box-shadow: 0 0 20px rgba(34, 211, 238, 0.7); }
+}
