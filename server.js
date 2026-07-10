@@ -265,6 +265,8 @@ wss.on('connection', (ws, req) => {
         avatar: currentUser.avatar,
         onlineUsers: getOnlineUsersList()
       });
+    } else {
+      ws.send(JSON.stringify({ type: 'auth_error', message: 'Token expired or invalid.' }));
     }
   }
 
@@ -272,10 +274,14 @@ wss.on('connection', (ws, req) => {
     try {
       const data = JSON.parse(messageBuffer.toString());
 
+      if (data.type === 'ping') {
+        return ws.send(JSON.stringify({ type: 'pong' }));
+      }
+
       if (data.type === 'auth') {
         const decoded = verifyToken(data.token);
         if (!decoded) {
-          ws.send(JSON.stringify({ type: 'error', message: 'Authentication failed.' }));
+          ws.send(JSON.stringify({ type: 'auth_error', message: 'Authentication failed.' }));
           return ws.close();
         }
 
@@ -299,7 +305,7 @@ wss.on('connection', (ws, req) => {
       }
 
       if (!currentUser) {
-        return ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized WebSocket message.' }));
+        return ws.send(JSON.stringify({ type: 'auth_error', message: 'Unauthorized WebSocket message.' }));
       }
 
       if (data.type === 'chat_message') {
@@ -315,7 +321,6 @@ wss.on('connection', (ws, req) => {
           expiresAtIso = new Date(Date.now() + timerSeconds * 1000).toISOString();
         }
 
-        // Determine status: 'delivered' if recipient is online, else 'sent'
         const initialStatus = (recipientId && isUserOnline(recipientId)) ? 'delivered' : 'sent';
         let insertedId = Date.now();
 

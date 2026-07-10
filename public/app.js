@@ -11,13 +11,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let isPrivacyBlurActive = false;
   let deferredPrompt = null;
   let ws = null;
+  let pingInterval = null;
   let selectedAvatar = '⚡';
   let soundEnabled = true;
   let typingTimeout = null;
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
-  // Register PWA Service Worker with Auto-Reload on Update
+  // Register PWA Service Worker with Auto-Reload
   if ('serviceWorker' in navigator) {
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -339,17 +340,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  logoutBtn.addEventListener('click', () => {
+  const performLogout = () => {
     localStorage.removeItem('schat_token');
     localStorage.removeItem('schat_user');
     authToken = null;
     currentUser = null;
+    if (pingInterval) clearInterval(pingInterval);
     if (ws) ws.close();
 
     chatView.classList.add('hidden');
     authView.classList.remove('hidden');
     closeSidebar();
-  });
+  };
+
+  logoutBtn.addEventListener('click', performLogout);
 
   // Channel & DM Tab Switching
   globalChannelBtn.addEventListener('click', () => {
@@ -446,6 +450,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
+
+      if (res.status === 401 || res.status === 403) {
+        // Expired token on mobile device: force fresh login
+        performLogout();
+        showAlert('Session expired. Please sign in again.', 'error');
+        return;
+      }
+
       if (!res.ok) return;
 
       const data = await res.json();
@@ -477,10 +489,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}?token=${encodeURIComponent(authToken)}`;
 
+    if (ws) {
+      try { ws.close(); } catch(e){}
+    }
+
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       console.log('⚡ Connected to SChat WebSocket Server');
+      
+      // Start ping heartbeat interval to keep mobile WebSocket alive
+      if (pingInterval) clearInterval(pingInterval);
+      pingInterval = setInterval(() => {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }));
+        }
+      }, 20000);
+
       if (activeRecipient) {
         ws.send(JSON.stringify({
           type: 'mark_read',
@@ -492,6 +517,12 @@ document.addEventListener('DOMContentLoaded', () => {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+
+        if (data.type === 'auth_error') {
+          performLogout();
+          showAlert('Authentication failed. Please sign in again.', 'error');
+          return;
+        }
 
         if (data.type === 'auth_success') {
           updateOnlineUsers(data.onlineUsers);
@@ -549,6 +580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     ws.onclose = () => {
+      if (pingInterval) clearInterval(pingInterval);
       setTimeout(() => { if (authToken) connectWebSocket(); }, 3000);
     };
   };
@@ -715,7 +747,12 @@ document.addEventListener('DOMContentLoaded', () => {
   messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const content = messageInput.value.trim();
-    if (!content || !ws || ws.readyState !== WebSocket.OPEN) return;
+
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      showAlert('Connecting to server... Please try sending again in a moment.', 'error');
+      connectWebSocket();
+      return;
+    }
 
     const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
 
