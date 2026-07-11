@@ -406,7 +406,7 @@ wss.on('connection', (ws, req) => {
     }
   });
 
-  ws.onclose = () => {
+  ws.on('close', () => {
     if (currentUser) {
       clients.delete(ws);
       broadcast({
