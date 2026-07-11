@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let activeRecipient = null; // null = Global Channel, { id, username, avatar } = Direct Message
+  let activeReply = null; // null or { id, username, text }
   let unreadCounts = {};
   let totalUnreadDM = 0;
   let isPrivacyBlurActive = false;
@@ -18,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
-  // Register PWA Service Worker with Auto-Reload
+  // Register PWA Service Worker
   if ('serviceWorker' in navigator) {
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -99,6 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const privacyBlurBtn = document.getElementById('privacyBlurBtn');
   const timerSelect = document.getElementById('timerSelect');
 
+  const replyPreviewBar = document.getElementById('replyPreviewBar');
+  const replyUserLabel = document.getElementById('replyUserLabel');
+  const replyTextSnippet = document.getElementById('replyTextSnippet');
+  const cancelReplyBtn = document.getElementById('cancelReplyBtn');
+
   const messageForm = document.getElementById('messageForm');
   const messageInput = document.getElementById('messageInput');
   const emojiBtn = document.getElementById('emojiBtn');
@@ -129,6 +135,28 @@ document.addEventListener('DOMContentLoaded', () => {
     aboutModal.addEventListener('click', (e) => {
       if (e.target === aboutModal) closeAboutModal();
     });
+  }
+
+  // Reply Mode UI Controls
+  const setReplyState = (msg) => {
+    if (!msg) {
+      activeReply = null;
+      if (replyPreviewBar) replyPreviewBar.classList.add('hidden');
+      return;
+    }
+    activeReply = {
+      id: msg.id,
+      username: msg.username || 'User',
+      text: msg.content || ''
+    };
+    if (replyUserLabel) replyUserLabel.textContent = `Replying to @${activeReply.username}`;
+    if (replyTextSnippet) replyTextSnippet.textContent = activeReply.text;
+    if (replyPreviewBar) replyPreviewBar.classList.remove('hidden');
+    messageInput.focus();
+  };
+
+  if (cancelReplyBtn) {
+    cancelReplyBtn.addEventListener('click', () => setReplyState(null));
   }
 
   // Request Desktop Notification Permission
@@ -362,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const switchChatTab = (recipient) => {
     activeRecipient = recipient;
+    setReplyState(null);
 
     document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
     globalChannelBtn.classList.remove('active');
@@ -452,7 +481,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (res.status === 401 || res.status === 403) {
-        // Expired token on mobile device: force fresh login
         performLogout();
         showAlert('Session expired. Please sign in again.', 'error');
         return;
@@ -498,7 +526,6 @@ document.addEventListener('DOMContentLoaded', () => {
     ws.onopen = () => {
       console.log('⚡ Connected to SChat WebSocket Server');
       
-      // Start ping heartbeat interval to keep mobile WebSocket alive
       if (pingInterval) clearInterval(pingInterval);
       pingInterval = setInterval(() => {
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -634,6 +661,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msgUniqueId}">🗑️</button>` 
       : '';
 
+    const replyBtnHtml = `<button class="msg-reply-btn" title="Reply to Message">↩️</button>`;
+
     let statusIconHtml = '';
     if (isOutgoing) {
       const status = msg.status || 'sent';
@@ -664,6 +693,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isBlurredClass = msg.is_blurred ? 'blurred' : '';
 
+    // Render Quoted Reply Box if this message is a reply
+    let replyBoxHtml = '';
+    if (msg.reply_to_text) {
+      replyBoxHtml = `
+        <div class="msg-reply-box">
+          <div class="msg-reply-user">↩️ Quoting @${escapeHtml(msg.reply_to_user || 'User')}</div>
+          <div class="msg-reply-content">${escapeHtml(msg.reply_to_text)}</div>
+        </div>
+      `;
+    }
+
     msgCard.innerHTML = `
       <div class="msg-avatar">${msg.avatar || '⚡'}</div>
       <div class="msg-body">
@@ -672,9 +712,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="msg-time">${timeFormatted}</span>
           ${statusIconHtml}
           ${timerBadgeHtml}
+          ${replyBtnHtml}
           ${deleteBtnHtml}
         </div>
-        <div class="msg-bubble ${isBlurredClass}">${escapeHtml(msg.content || '')}</div>
+        <div class="msg-bubble ${isBlurredClass}">
+          ${replyBoxHtml}
+          ${escapeHtml(msg.content || '')}
+        </div>
       </div>
     `;
 
@@ -690,6 +734,14 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         deleteMessage(msg.id);
+      });
+    }
+
+    const replyBtn = msgCard.querySelector('.msg-reply-btn');
+    if (replyBtn) {
+      replyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setReplyState(msg);
       });
     }
 
@@ -761,10 +813,14 @@ document.addEventListener('DOMContentLoaded', () => {
       recipient_id: activeRecipient ? activeRecipient.id : null,
       content: content,
       is_blurred: isPrivacyBlurActive ? 1 : 0,
-      timer_seconds: timerSeconds
+      timer_seconds: timerSeconds,
+      reply_to_id: activeReply ? activeReply.id : null,
+      reply_to_user: activeReply ? activeReply.username : null,
+      reply_to_text: activeReply ? activeReply.text : null
     }));
 
     messageInput.value = '';
+    setReplyState(null);
     emojiPicker.classList.add('hidden');
     playSound('send');
 

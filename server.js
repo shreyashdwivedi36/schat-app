@@ -137,13 +137,13 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
 
     if (recipientId) {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100',
+        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100',
         [req.user.id, recipientId, recipientId, req.user.id]
       );
       return res.json({ messages });
     } else {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100'
+        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100'
       );
       return res.json({ messages });
     }
@@ -315,6 +315,9 @@ wss.on('connection', (ws, req) => {
         const recipientId = data.recipient_id ? parseInt(data.recipient_id, 10) : null;
         const isBlurred = data.is_blurred ? 1 : 0;
         const timerSeconds = data.timer_seconds ? parseInt(data.timer_seconds, 10) : 0;
+        const replyToId = data.reply_to_id ? parseInt(data.reply_to_id, 10) : null;
+        const replyToUser = data.reply_to_user || null;
+        const replyToText = data.reply_to_text || null;
 
         let expiresAtIso = null;
         if (timerSeconds > 0) {
@@ -326,8 +329,8 @@ wss.on('connection', (ws, req) => {
 
         try {
           const result = await db.run(
-            'INSERT INTO messages (user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-            [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content, isBlurred, expiresAtIso, initialStatus]
+            'INSERT INTO messages (user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content, isBlurred, expiresAtIso, initialStatus, replyToId, replyToUser, replyToText]
           );
           if (result && result.id) insertedId = result.id;
         } catch (dbErr) {
@@ -345,6 +348,9 @@ wss.on('connection', (ws, req) => {
           is_blurred: isBlurred,
           expires_at: expiresAtIso,
           status: initialStatus,
+          reply_to_id: replyToId,
+          reply_to_user: replyToUser,
+          reply_to_text: replyToText,
           created_at: new Date().toISOString()
         };
 
@@ -400,7 +406,7 @@ wss.on('connection', (ws, req) => {
     }
   });
 
-  ws.on('close', () => {
+  ws.onclose = () => {
     if (currentUser) {
       clients.delete(ws);
       broadcast({

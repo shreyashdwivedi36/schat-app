@@ -1557,3 +1557,112 @@ body {
     padding: 14px;
   }
 }
+
+/* Reply Preview Bar above Input */
+.reply-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(139, 92, 246, 0.15);
+  border-left: 3px solid var(--primary-accent);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  animation: fadeIn 0.2s ease;
+}
+
+.reply-preview-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+}
+
+.reply-icon {
+  font-size: 1rem;
+  color: var(--primary-accent);
+}
+
+.reply-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reply-user-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--primary-glow);
+}
+
+.reply-text-snippet {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cancel-reply-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 4px;
+  border-radius: 6px;
+  transition: all var(--transition-fast);
+}
+
+.cancel-reply-btn:hover {
+  color: var(--danger-color);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Quoted Text Box Inside Message Bubble */
+.msg-reply-box {
+  background: rgba(0, 0, 0, 0.15);
+  border-left: 3px solid var(--primary-glow);
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+}
+
+.msg-reply-user {
+  font-weight: 700;
+  color: var(--secondary-glow);
+  font-size: 0.72rem;
+  margin-bottom: 2px;
+}
+
+.msg-reply-content {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msg-reply-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.5;
+  transition: all var(--transition-fast);
+  padding: 2px 4px;
+  border-radius: 6px;
+  margin-left: 4px;
+}
+
+.message-card.outgoing .msg-reply-btn {
+  margin-right: 4px;
+  margin-left: 0;
+}
+
+.msg-reply-btn:hover {
+  opacity: 1;
+  color: var(--primary-accent);
+  background: rgba(139, 92, 246, 0.15);
+}

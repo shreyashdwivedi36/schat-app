@@ -29,6 +29,9 @@ if (process.env.DATABASE_URL) {
       is_blurred INTEGER DEFAULT 0,
       expires_at TIMESTAMP DEFAULT NULL,
       status VARCHAR(20) DEFAULT 'sent',
+      reply_to_id INTEGER DEFAULT NULL,
+      reply_to_user VARCHAR(255) DEFAULT NULL,
+      reply_to_text TEXT DEFAULT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (user_id) REFERENCES users (id)
     );
@@ -36,8 +39,11 @@ if (process.env.DATABASE_URL) {
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_blurred INTEGER DEFAULT 0;
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP DEFAULT NULL;
     ALTER TABLE messages ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'sent';
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER DEFAULT NULL;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_user VARCHAR(255) DEFAULT NULL;
+    ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_text TEXT DEFAULT NULL;
   `).then(() => {
-    console.log('Connected to PostgreSQL Database with status column.');
+    console.log('Connected to PostgreSQL Database with reply columns.');
   }).catch(err => {
     console.error('PostgreSQL Init Error:', err);
   });
@@ -104,6 +110,9 @@ if (process.env.DATABASE_URL) {
           is_blurred INTEGER DEFAULT 0,
           expires_at DATETIME DEFAULT NULL,
           status TEXT DEFAULT 'sent',
+          reply_to_id INTEGER DEFAULT NULL,
+          reply_to_user TEXT DEFAULT NULL,
+          reply_to_text TEXT DEFAULT NULL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id)
         )
@@ -112,6 +121,9 @@ if (process.env.DATABASE_URL) {
       db.run(`ALTER TABLE messages ADD COLUMN is_blurred INTEGER DEFAULT 0`, () => {});
       db.run(`ALTER TABLE messages ADD COLUMN expires_at DATETIME DEFAULT NULL`, () => {});
       db.run(`ALTER TABLE messages ADD COLUMN status TEXT DEFAULT 'sent'`, () => {});
+      db.run(`ALTER TABLE messages ADD COLUMN reply_to_id INTEGER DEFAULT NULL`, () => {});
+      db.run(`ALTER TABLE messages ADD COLUMN reply_to_user TEXT DEFAULT NULL`, () => {});
+      db.run(`ALTER TABLE messages ADD COLUMN reply_to_text TEXT DEFAULT NULL`, () => {});
     });
 
     dbInstance = {
@@ -151,7 +163,7 @@ if (process.env.DATABASE_URL) {
           return { id: newUser.id, changes: 1 };
         }
         if (sql.includes('INSERT INTO messages')) {
-          const [user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status] = params;
+          const [user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text] = params;
           const newMsg = {
             id: data.messages.length + 1,
             user_id,
@@ -162,6 +174,9 @@ if (process.env.DATABASE_URL) {
             is_blurred: is_blurred || 0,
             expires_at: expires_at || null,
             status: status || 'sent',
+            reply_to_id: reply_to_id || null,
+            reply_to_user: reply_to_user || null,
+            reply_to_text: reply_to_text || null,
             created_at: new Date().toISOString()
           };
           data.messages.push(newMsg);

@@ -147,7 +147,7 @@
       <!-- Mobile Drawer Overlay Backdrop -->
       <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
-      <!-- About & System Modal Popup -->
+      <!-- About & Options System Modal Popup -->
       <div id="aboutModal" class="about-modal hidden">
         <div class="modal-card">
           <button id="closeAboutBtn" class="modal-close-btn" title="Close">✕</button>
@@ -317,6 +317,18 @@
             <span class="emoji-item">🙌</span>
             <span class="emoji-item">⚡</span>
             <span class="emoji-item">💬</span>
+          </div>
+
+          <!-- Reply Quoted Text Preview Bar -->
+          <div id="replyPreviewBar" class="reply-preview-bar hidden">
+            <div class="reply-preview-info">
+              <span class="reply-icon">↩️</span>
+              <div class="reply-text-wrapper">
+                <span id="replyUserLabel" class="reply-user-label">Replying to @username</span>
+                <span id="replyTextSnippet" class="reply-text-snippet">Message content...</span>
+              </div>
+            </div>
+            <button type="button" id="cancelReplyBtn" class="cancel-reply-btn" title="Cancel Reply">✕</button>
           </div>
 
           <!-- Feature Controls Bar (Blur & Timer) -->
