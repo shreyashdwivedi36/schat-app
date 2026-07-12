@@ -17,16 +17,37 @@ try {
 const app = express();
 const server = http.createServer(app);
 
-app.use(cors());
-app.use(express.json());
+// CORS Policy Configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
+app.use(cors({
+  origin: allowedOrigins,
+  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Input Sanitization & Validation Helpers
+function sanitizeString(str, maxLen = 2000) {
+  if (typeof str !== 'string') return '';
+  return str.trim().slice(0, maxLen);
+}
+
+function isValidTimerValue(seconds) {
+  const allowedTimers = [0, 10, 60, 300, 3600];
+  return allowedTimers.includes(Number(seconds));
+}
 
 // REST Endpoints
 
 // Register User
 app.post('/api/register', async (req, res) => {
   try {
-    const { username, email, password, avatar } = req.body;
+    const username = sanitizeString(req.body.username, 50);
+    const email = sanitizeString(req.body.email, 255);
+    const password = req.body.password;
+    const avatar = sanitizeString(req.body.avatar, 10) || '⚡';
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required.' });
@@ -51,18 +72,17 @@ app.post('/api/register', async (req, res) => {
     }
 
     const hashedPassword = hashPassword(password);
-    const selectedAvatar = avatar || '⚡';
 
     const result = await db.run(
       'INSERT INTO users (username, email, password, avatar) VALUES (?, ?, ?, ?)',
-      [username, email, hashedPassword, selectedAvatar]
+      [username, email, hashedPassword, avatar]
     );
 
     const newUser = {
       id: result.id,
       username,
       email,
-      avatar: selectedAvatar
+      avatar
     };
 
     const token = generateToken(newUser);
@@ -81,7 +101,8 @@ app.post('/api/register', async (req, res) => {
 // Login User
 app.post('/api/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const username = sanitizeString(req.body.username, 255);
+    const password = req.body.password;
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required.' });
@@ -153,10 +174,14 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
   }
 });
 
-// Delete Message REST API
+// Delete Message REST API with strict authorization check
 app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   try {
     const messageId = parseInt(req.params.id, 10);
+    if (isNaN(messageId)) {
+      return res.status(400).json({ error: 'Invalid message ID.' });
+    }
+
     const msg = await db.get('SELECT * FROM messages WHERE id = ?', [messageId]);
 
     if (!msg) {
@@ -164,7 +189,7 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
     }
 
     if (msg.user_id !== req.user.id) {
-      return res.status(403).json({ error: 'You can only delete your own messages.' });
+      return res.status(403).json({ error: 'Forbidden: You can only delete your own messages.' });
     }
 
     await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
@@ -309,15 +334,15 @@ wss.on('connection', (ws, req) => {
       }
 
       if (data.type === 'chat_message') {
-        const content = (data.content || '').trim();
+        const content = sanitizeString(data.content, 2000);
         if (!content) return;
 
-        const recipientId = data.recipient_id ? parseInt(data.recipient_id, 10) : null;
+        const recipientId = (data.recipient_id && !isNaN(data.recipient_id)) ? parseInt(data.recipient_id, 10) : null;
         const isBlurred = data.is_blurred ? 1 : 0;
-        const timerSeconds = data.timer_seconds ? parseInt(data.timer_seconds, 10) : 0;
-        const replyToId = data.reply_to_id ? parseInt(data.reply_to_id, 10) : null;
-        const replyToUser = data.reply_to_user || null;
-        const replyToText = data.reply_to_text || null;
+        const timerSeconds = isValidTimerValue(data.timer_seconds) ? parseInt(data.timer_seconds, 10) : 0;
+        const replyToId = (data.reply_to_id && !isNaN(data.reply_to_id)) ? parseInt(data.reply_to_id, 10) : null;
+        const replyToUser = sanitizeString(data.reply_to_user, 50) || null;
+        const replyToText = sanitizeString(data.reply_to_text, 200) || null;
 
         let expiresAtIso = null;
         if (timerSeconds > 0) {
@@ -363,7 +388,7 @@ wss.on('connection', (ws, req) => {
           broadcast(msgPayload);
         }
       } else if (data.type === 'mark_read') {
-        const senderId = data.sender_id ? parseInt(data.sender_id, 10) : null;
+        const senderId = (data.sender_id && !isNaN(data.sender_id)) ? parseInt(data.sender_id, 10) : null;
         try {
           if (senderId) {
             await db.run('UPDATE messages SET status = ? WHERE user_id = ? AND recipient_id = ? AND status != ?', ['read', senderId, currentUser.id, 'read']);
@@ -376,17 +401,26 @@ wss.on('connection', (ws, req) => {
           }
         } catch (e) {}
       } else if (data.type === 'delete_message') {
+        // STRICT AUTHORIZATION CHECK: Verify message owner before deleting!
         const messageId = parseInt(data.messageId, 10);
-        try {
-          await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
-        } catch (e) {}
+        if (isNaN(messageId)) return;
 
-        broadcast({
-          type: 'delete_message',
-          messageId: messageId
-        });
+        try {
+          const msg = await db.get('SELECT user_id FROM messages WHERE id = ?', [messageId]);
+          if (msg && msg.user_id === currentUser.id) {
+            await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
+            broadcast({
+              type: 'delete_message',
+              messageId: messageId
+            });
+          } else {
+            ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: You can only delete your own messages.' }));
+          }
+        } catch (e) {
+          console.error('WS Delete Authorization Error:', e);
+        }
       } else if (data.type === 'typing') {
-        const recipientId = data.recipient_id ? parseInt(data.recipient_id, 10) : null;
+        const recipientId = (data.recipient_id && !isNaN(data.recipient_id)) ? parseInt(data.recipient_id, 10) : null;
         const typingPayload = {
           type: 'typing',
           user_id: currentUser.id,

@@ -78,27 +78,44 @@ if (process.env.DATABASE_URL) {
     }
   };
 } else {
-  // Pure JSON File fallback for zero-dependency local dev
+  // File-backed JSON database fallback for zero-dependency local dev
   const fallbackPath = path.join(__dirname, 'db_fallback.json');
-  let data = { users: [], messages: [] };
+  let data = { users: [], messages: [], lastUserId: 0, lastMsgId: 0 };
+
   if (fs.existsSync(fallbackPath)) {
-    try { data = JSON.parse(fs.readFileSync(fallbackPath, 'utf8')); } catch (e) {}
+    try {
+      const raw = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
+      data.users = raw.users || [];
+      data.messages = raw.messages || [];
+      data.lastUserId = raw.lastUserId || data.users.length;
+      data.lastMsgId = raw.lastMsgId || data.messages.length;
+    } catch (e) {}
   }
+
   const saveData = () => fs.writeFileSync(fallbackPath, JSON.stringify(data, null, 2), 'utf8');
 
   dbInstance = {
     async run(sql, params = []) {
       if (sql.includes('INSERT INTO users')) {
         const [username, email, password, avatar] = params;
-        const newUser = { id: data.users.length + 1, username, email, password, avatar: avatar || '⚡', created_at: new Date().toISOString() };
+        data.lastUserId += 1;
+        const newUser = {
+          id: data.lastUserId,
+          username,
+          email,
+          password,
+          avatar: avatar || '⚡',
+          created_at: new Date().toISOString()
+        };
         data.users.push(newUser);
         saveData();
         return { id: newUser.id, changes: 1 };
       }
       if (sql.includes('INSERT INTO messages')) {
         const [user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text] = params;
+        data.lastMsgId += 1;
         const newMsg = {
-          id: data.messages.length + 1,
+          id: data.lastMsgId,
           user_id,
           recipient_id: recipient_id || null,
           username,
@@ -117,18 +134,23 @@ if (process.env.DATABASE_URL) {
         return { id: newMsg.id, changes: 1 };
       }
       if (sql.includes('UPDATE messages SET status')) {
-        const status = params[0];
+        const [newStatus, senderId, recipientId] = params;
+        let count = 0;
         data.messages.forEach(m => {
-          if (m.status !== 'read') m.status = status;
+          if (m.user_id === senderId && m.recipient_id === recipientId && m.status !== 'read') {
+            m.status = newStatus;
+            count++;
+          }
         });
         saveData();
-        return { changes: 1 };
+        return { changes: count };
       }
       if (sql.includes('DELETE FROM messages')) {
         const id = params[0];
+        const initialLen = data.messages.length;
         data.messages = data.messages.filter(m => m.id !== id);
         saveData();
-        return { changes: 1 };
+        return { changes: initialLen - data.messages.length };
       }
     },
     async get(sql, params = []) {
