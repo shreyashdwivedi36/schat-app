@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', () => {
       roomTitle.textContent = 'Global Channel';
       roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Realtime Active';
       welcomeTitle.textContent = 'Welcome to SChat!';
-      welcomeSubtitle.textContent = 'End-to-end real-time messaging active across mobile & desktop.';
+      welcomeSubtitle.textContent = 'Real-time messaging active across mobile & desktop.';
     } else {
       if (unreadCounts[activeRecipient.id]) {
         unreadCounts[activeRecipient.id] = 0;
@@ -413,9 +413,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       roomAvatar.textContent = activeRecipient.avatar || '🔒';
       roomTitle.textContent = `DM with @${activeRecipient.username}`;
-      roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Private Encrypted DM';
+      roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Private Direct Message';
       welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
-      welcomeSubtitle.textContent = `Private end-to-end communication channel.`;
+      welcomeSubtitle.textContent = `Private communication channel.`;
 
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
@@ -493,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="welcome-banner">
           <div class="spark-icon">✨</div>
           <h3 id="welcomeTitle">${activeRecipient ? 'Direct Message with ' + activeRecipient.username : 'Welcome to SChat!'}</h3>
-          <p id="welcomeSubtitle">${activeRecipient ? 'Private communication channel.' : 'End-to-end real-time messaging active across mobile & desktop.'}</p>
+          <p id="welcomeSubtitle">${activeRecipient ? 'Private communication channel.' : 'Real-time messaging active across mobile & desktop.'}</p>
         </div>
       `;
 
@@ -693,7 +693,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isBlurredClass = msg.is_blurred ? 'blurred' : '';
 
-    // Render Quoted Reply Box if this message is a reply
     let replyBoxHtml = '';
     if (msg.reply_to_text) {
       replyBoxHtml = `
