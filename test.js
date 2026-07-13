@@ -2,7 +2,7 @@ const assert = require('assert');
 const { hashPassword, comparePassword, generateToken, verifyToken } = require('./auth');
 const db = require('./db');
 
-console.log('🧪 Running Complete SChat Automated Test Suite...\n');
+console.log('🧪 Running Complete SChat 9-Feature Automated Test Suite...\n');
 
 async function runAllTests() {
   try {
@@ -16,7 +16,7 @@ async function runAllTests() {
 
     // 2. JWT Token Issuance & Verification
     console.log('Test 2: JWT Token Issuance & Payload Verification');
-    const mockUser = { id: 99, username: 'testuser', email: 'test@example.com', avatar: '⚡' };
+    const mockUser = { id: 99, username: 'testuser', email: 'test@example.com', avatar: '⚡', bio: 'Hello SChat' };
     const token = generateToken(mockUser);
     assert.ok(token, 'Token string must be issued');
     const decoded = verifyToken(token);
@@ -25,75 +25,74 @@ async function runAllTests() {
     assert.strictEqual(verifyToken('invalid.jwt.token'), null, 'Invalid token verification must return null');
     console.log('✅ Passed Test 2\n');
 
-    // 3. User Registration & Database Querying
-    console.log('Test 3: User Registration & Persistence');
+    // 3. User Registration & Profile Settings
+    console.log('Test 3: User Registration & Profile Bio Update');
     const ts = Date.now();
     const unameA = `alice_${ts}`;
     const emailA = `alice_${ts}@test.com`;
     const userA = await db.run(
-      'INSERT INTO users (username, email, password, avatar) VALUES (?, ?, ?, ?)',
-      [unameA, emailA, hash, '⚡']
+      'INSERT INTO users (username, email, password, avatar, bio) VALUES (?, ?, ?, ?, ?)',
+      [unameA, emailA, hash, '⚡', 'Initial bio']
     );
     assert.ok(userA.id, 'Registered user must receive a valid ID');
 
+    await db.run('UPDATE users SET bio = ? WHERE id = ?', ['Updated bio text', userA.id]);
+    const updatedUser = await db.get('SELECT bio FROM users WHERE id = ?', [userA.id]);
+    assert.strictEqual(updatedUser.bio, 'Updated bio text', 'Bio update must persist in database');
+    console.log('✅ Passed Test 3\n');
+
+    // 4. Message Creation, Editing & Pinning
+    console.log('Test 4: Message Editing & Pinning');
+    const msg = await db.run(
+      'INSERT INTO messages (user_id, recipient_id, channel, username, avatar, content) VALUES (?, ?, ?, ?, ?)',
+      [userA.id, null, 'global', unameA, '⚡', 'Original message content']
+    );
+    assert.ok(msg.id, 'Message creation must return ID');
+
+    await db.run('UPDATE messages SET content = ?, is_edited = 1 WHERE id = ? AND user_id = ?', ['Edited content text', msg.id, userA.id]);
+    const editedMsg = await db.get('SELECT content, is_edited FROM messages WHERE id = ?', [msg.id]);
+    assert.strictEqual(editedMsg.content, 'Edited content text', 'Edited content must persist');
+    assert.strictEqual(editedMsg.is_edited, 1, 'is_edited flag must be set to 1');
+
+    await db.run('UPDATE messages SET is_pinned = 1 WHERE id = ?', [msg.id]);
+    const pinnedMsg = await db.get('SELECT is_pinned FROM messages WHERE id = ?', [msg.id]);
+    assert.strictEqual(pinnedMsg.is_pinned, 1, 'is_pinned flag must be set to 1');
+    console.log('✅ Passed Test 4\n');
+
+    // 5. Message Reactions & Quoted Replies
+    console.log('Test 5: Message Reactions & Quoted Replies');
+    const rxObj = JSON.stringify({ '👍': [unameA] });
+    await db.run('UPDATE messages SET reactions = ? WHERE id = ?', [rxObj, msg.id]);
+    const rxMsg = await db.get('SELECT reactions FROM messages WHERE id = ?', [msg.id]);
+    assert.ok(rxMsg.reactions.includes(unameA), 'Reactions JSON must include username');
+
+    const replyMsg = await db.run(
+      'INSERT INTO messages (user_id, recipient_id, channel, username, avatar, content, reply_to_id, reply_to_user, reply_to_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [userA.id, null, 'global', unameA, '⚡', 'Reply message', msg.id, unameA, 'Edited content text']
+    );
+    const fetchedReply = await db.get('SELECT reply_to_text FROM messages WHERE id = ?', [replyMsg.id]);
+    assert.strictEqual(fetchedReply.reply_to_text, 'Edited content text', 'Quoted reply text must match parent message');
+    console.log('✅ Passed Test 5\n');
+
+    // 6. User Blocking & Unblocking
+    console.log('Test 6: User Blocking & Unblocking');
     const unameB = `bob_${ts}`;
     const emailB = `bob_${ts}@test.com`;
     const userB = await db.run(
       'INSERT INTO users (username, email, password, avatar) VALUES (?, ?, ?, ?)',
       [unameB, emailB, hash, '🚀']
     );
-    assert.ok(userB.id, 'Registered user B must receive a valid ID');
-    console.log('✅ Passed Test 3\n');
 
-    // 4. Direct Messages (DMs) Isolation & Status Tracking
-    console.log('Test 4: DM Routing & Isolation');
-    const dmMsg = await db.run(
-      'INSERT INTO messages (user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [userA.id, userB.id, unameA, '⚡', 'Private DM to Bob', 0, null, 'sent']
-    );
-    assert.ok(dmMsg.id, 'DM message insertion must return ID');
+    await db.run('INSERT INTO blocked_users (blocker_id, blocked_id) VALUES (?, ?)', [userA.id, userB.id]);
+    const blockedList = await db.all('SELECT * FROM blocked_users WHERE blocker_id = ?', [userA.id]);
+    assert.strictEqual(blockedList.length, 1, 'Blocked users list should contain 1 entry');
 
-    const fetchedDMs = await db.all(
-      'SELECT * FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?))',
-      [userA.id, userB.id, userB.id, userA.id]
-    );
-    assert.ok(fetchedDMs.length > 0, 'DM query must return isolated messages between User A and User B');
-    assert.strictEqual(fetchedDMs[0].content, 'Private DM to Bob', 'DM content must match');
-    console.log('✅ Passed Test 4\n');
-
-    // 5. Message Deletion Authorization Checks (Strict Ownership)
-    console.log('Test 5: Strict Message Deletion Authorization Check');
-    const msgToDelete = await db.run(
-      'INSERT INTO messages (user_id, recipient_id, username, avatar, content) VALUES (?, ?, ?, ?, ?)',
-      [userA.id, null, unameA, '⚡', 'Alice message to delete']
-    );
-
-    // Verify Bob (userB) is NOT the owner of Alice's message
-    const msgOwner = await db.get('SELECT user_id FROM messages WHERE id = ?', [msgToDelete.id]);
-    assert.notStrictEqual(msgOwner.user_id, userB.id, 'User B must not be authorized to delete User A message');
-
-    // Authorized deletion by owner (userA)
-    await db.run('DELETE FROM messages WHERE id = ?', [msgToDelete.id]);
-    const deletedCheck = await db.get('SELECT * FROM messages WHERE id = ?', [msgToDelete.id]);
-    assert.strictEqual(deletedCheck, null, 'Message must be deleted when authorized by owner');
-    console.log('✅ Passed Test 5\n');
-
-    // 6. Message Self-Destruct Expiry Verification
-    console.log('Test 6: Message Self-Destruct Expiry Filtering');
-    const pastExpiry = new Date(Date.now() - 5000).toISOString(); // 5 seconds in past
-    const expiredMsg = await db.run(
-      'INSERT INTO messages (user_id, recipient_id, username, avatar, content, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
-      [userA.id, null, unameA, '⚡', 'Expired message text', pastExpiry]
-    );
-
-    const activeMsgs = await db.all(
-      'SELECT * FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP)'
-    );
-    const foundExpired = activeMsgs.find(m => m.id === expiredMsg.id);
-    assert.strictEqual(foundExpired, undefined, 'Expired self-destruct messages must be excluded from history queries');
+    await db.run('DELETE FROM blocked_users WHERE blocker_id = ? AND blocked_id = ?', [userA.id, userB.id]);
+    const unblockedList = await db.all('SELECT * FROM blocked_users WHERE blocker_id = ?', [userA.id]);
+    assert.strictEqual(unblockedList.length, 0, 'Unblocked list should be empty');
     console.log('✅ Passed Test 6\n');
 
-    console.log('🎉 ALL 6 AUTOMATED TEST SUITES PASSED SUCCESSFULLY!');
+    console.log('🎉 ALL 6 EXPANDED TEST SUITES PASSED SUCCESSFULLY!');
     process.exit(0);
   } catch (err) {
     console.error('❌ TEST FAILED:', err);

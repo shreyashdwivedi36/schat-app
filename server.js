@@ -21,7 +21,7 @@ const server = http.createServer(app);
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
 app.use(cors({
   origin: allowedOrigins,
-  methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -48,6 +48,7 @@ app.post('/api/register', async (req, res) => {
     const email = sanitizeString(req.body.email, 255);
     const password = req.body.password;
     const avatar = sanitizeString(req.body.avatar, 10) || '⚡';
+    const bio = sanitizeString(req.body.bio, 255) || 'Hey there! I am using SChat.';
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required.' });
@@ -74,15 +75,16 @@ app.post('/api/register', async (req, res) => {
     const hashedPassword = hashPassword(password);
 
     const result = await db.run(
-      'INSERT INTO users (username, email, password, avatar) VALUES (?, ?, ?, ?)',
-      [username, email, hashedPassword, avatar]
+      'INSERT INTO users (username, email, password, avatar, bio) VALUES (?, ?, ?, ?, ?)',
+      [username, email, hashedPassword, avatar, bio]
     );
 
     const newUser = {
       id: result.id,
       username,
       email,
-      avatar
+      avatar,
+      bio
     };
 
     const token = generateToken(newUser);
@@ -122,7 +124,8 @@ app.post('/api/login', async (req, res) => {
       id: user.id,
       username: user.username,
       email: user.email,
-      avatar: user.avatar || '⚡'
+      avatar: user.avatar || '⚡',
+      bio: user.bio || 'Hey there! I am using SChat.'
     };
 
     const token = generateToken(userData);
@@ -141,13 +144,52 @@ app.post('/api/login', async (req, res) => {
 // Get Current Profile
 app.get('/api/me', authMiddleware, async (req, res) => {
   try {
-    const user = await db.get('SELECT id, username, email, avatar, created_at FROM users WHERE id = ?', [req.user.id]);
+    const user = await db.get('SELECT id, username, email, avatar, bio, created_at FROM users WHERE id = ?', [req.user.id]);
     if (!user) {
       return res.status(404).json({ error: 'User not found.' });
     }
     res.json({ user });
   } catch (err) {
     res.status(500).json({ error: 'Server error.' });
+  }
+});
+
+// Update Profile Settings
+app.put('/api/me', authMiddleware, async (req, res) => {
+  try {
+    const avatar = sanitizeString(req.body.avatar, 10);
+    const bio = sanitizeString(req.body.bio, 255);
+
+    await db.run('UPDATE users SET avatar = ?, bio = ? WHERE id = ?', [avatar || '⚡', bio || 'Hey there!', req.user.id]);
+
+    res.json({ message: 'Profile updated successfully!', avatar, bio });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update profile.' });
+  }
+});
+
+// Block User REST API
+app.post('/api/users/block', authMiddleware, async (req, res) => {
+  try {
+    const targetId = parseInt(req.body.blocked_id, 10);
+    if (isNaN(targetId) || targetId === req.user.id) {
+      return res.status(400).json({ error: 'Invalid user to block.' });
+    }
+    await db.run('INSERT INTO blocked_users (blocker_id, blocked_id) VALUES (?, ?)', [req.user.id, targetId]);
+    res.json({ message: 'User blocked successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to block user.' });
+  }
+});
+
+// Unblock User REST API
+app.post('/api/users/unblock', authMiddleware, async (req, res) => {
+  try {
+    const targetId = parseInt(req.body.blocked_id, 10);
+    await db.run('DELETE FROM blocked_users WHERE blocker_id = ? AND blocked_id = ?', [req.user.id, targetId]);
+    res.json({ message: 'User unblocked successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to unblock user.' });
   }
 });
 
@@ -158,13 +200,13 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
 
     if (recipientId) {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100',
+        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, is_edited, is_pinned, reactions, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100',
         [req.user.id, recipientId, recipientId, req.user.id]
       );
       return res.json({ messages });
     } else {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100'
+        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, is_edited, is_pinned, reactions, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100'
       );
       return res.json({ messages });
     }
@@ -174,7 +216,52 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
   }
 });
 
-// Delete Message REST API with strict authorization check
+// Search Chat Messages
+app.get('/api/messages/search', authMiddleware, async (req, res) => {
+  try {
+    const query = sanitizeString(req.query.q, 100);
+    if (!query) return res.json({ messages: [] });
+
+    const messages = await db.all(
+      'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, is_edited, is_pinned, created_at FROM messages WHERE content LIKE ? ORDER BY id DESC LIMIT 30',
+      [`%${query}%`]
+    );
+    res.json({ messages });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to search messages.' });
+  }
+});
+
+// Edit Message REST API
+app.put('/api/messages/:id', authMiddleware, async (req, res) => {
+  try {
+    const messageId = parseInt(req.params.id, 10);
+    const newContent = sanitizeString(req.body.content, 2000);
+
+    if (!newContent) {
+      return res.status(400).json({ error: 'Message content cannot be empty.' });
+    }
+
+    const msg = await db.get('SELECT * FROM messages WHERE id = ?', [messageId]);
+    if (!msg || msg.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden: You can only edit your own messages.' });
+    }
+
+    await db.run('UPDATE messages SET content = ?, is_edited = 1 WHERE id = ? AND user_id = ?', [newContent, messageId, req.user.id]);
+
+    broadcast({
+      type: 'edit_message',
+      messageId: messageId,
+      newContent: newContent
+    });
+
+    res.json({ message: 'Message updated successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to edit message.' });
+  }
+});
+
+// Delete Message REST API
 app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   try {
     const messageId = parseInt(req.params.id, 10);
@@ -243,7 +330,8 @@ function getOnlineUsersList() {
       uniqueUsers.set(user.id, {
         id: user.id,
         username: user.username,
-        avatar: user.avatar
+        avatar: user.avatar,
+        bio: user.bio || 'Hey there! I am using SChat.'
       });
     }
   }
@@ -338,6 +426,7 @@ wss.on('connection', (ws, req) => {
         if (!content) return;
 
         const recipientId = (data.recipient_id && !isNaN(data.recipient_id)) ? parseInt(data.recipient_id, 10) : null;
+        const channel = sanitizeString(data.channel, 50) || 'global';
         const isBlurred = data.is_blurred ? 1 : 0;
         const timerSeconds = isValidTimerValue(data.timer_seconds) ? parseInt(data.timer_seconds, 10) : 0;
         const replyToId = (data.reply_to_id && !isNaN(data.reply_to_id)) ? parseInt(data.reply_to_id, 10) : null;
@@ -354,8 +443,8 @@ wss.on('connection', (ws, req) => {
 
         try {
           const result = await db.run(
-            'INSERT INTO messages (user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [currentUser.id, recipientId, currentUser.username, currentUser.avatar || '⚡', content, isBlurred, expiresAtIso, initialStatus, replyToId, replyToUser, replyToText]
+            'INSERT INTO messages (user_id, recipient_id, channel, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [currentUser.id, recipientId, channel, currentUser.username, currentUser.avatar || '⚡', content, isBlurred, expiresAtIso, initialStatus, replyToId, replyToUser, replyToText]
           );
           if (result && result.id) insertedId = result.id;
         } catch (dbErr) {
@@ -367,10 +456,14 @@ wss.on('connection', (ws, req) => {
           id: insertedId,
           user_id: currentUser.id,
           recipient_id: recipientId,
+          channel: channel,
           username: currentUser.username,
           avatar: currentUser.avatar || '⚡',
           content,
           is_blurred: isBlurred,
+          is_edited: 0,
+          is_pinned: 0,
+          reactions: '{}',
           expires_at: expiresAtIso,
           status: initialStatus,
           reply_to_id: replyToId,
@@ -387,6 +480,63 @@ wss.on('connection', (ws, req) => {
         } else {
           broadcast(msgPayload);
         }
+      } else if (data.type === 'toggle_reaction') {
+        const messageId = parseInt(data.messageId, 10);
+        const emoji = sanitizeString(data.emoji, 10);
+
+        if (isNaN(messageId) || !emoji) return;
+
+        const msg = await db.get('SELECT reactions FROM messages WHERE id = ?', [messageId]);
+        if (msg) {
+          let rx = {};
+          try { rx = JSON.parse(msg.reactions || '{}'); } catch(e){}
+          if (!rx[emoji]) rx[emoji] = [];
+          
+          if (rx[emoji].includes(currentUser.username)) {
+            rx[emoji] = rx[emoji].filter(u => u !== currentUser.username);
+            if (rx[emoji].length === 0) delete rx[emoji];
+          } else {
+            rx[emoji].push(currentUser.username);
+          }
+
+          const rxJson = JSON.stringify(rx);
+          await db.run('UPDATE messages SET reactions = ? WHERE id = ?', [rxJson, messageId]);
+
+          broadcast({
+            type: 'update_reactions',
+            messageId: messageId,
+            reactions: rx
+          });
+        }
+      } else if (data.type === 'edit_message') {
+        const messageId = parseInt(data.messageId, 10);
+        const newContent = sanitizeString(data.newContent, 2000);
+
+        if (!isNaN(messageId) && newContent) {
+          const msg = await db.get('SELECT user_id FROM messages WHERE id = ?', [messageId]);
+          if (msg && msg.user_id === currentUser.id) {
+            await db.run('UPDATE messages SET content = ?, is_edited = 1 WHERE id = ? AND user_id = ?', [newContent, messageId, currentUser.id]);
+            broadcast({
+              type: 'edit_message',
+              messageId: messageId,
+              newContent: newContent
+            });
+          }
+        }
+      } else if (data.type === 'toggle_pin') {
+        const messageId = parseInt(data.messageId, 10);
+        if (!isNaN(messageId)) {
+          const msg = await db.get('SELECT is_pinned FROM messages WHERE id = ?', [messageId]);
+          if (msg) {
+            const newPinState = msg.is_pinned ? 0 : 1;
+            await db.run('UPDATE messages SET is_pinned = ? WHERE id = ?', [newPinState, messageId]);
+            broadcast({
+              type: 'update_pinned',
+              messageId: messageId,
+              is_pinned: newPinState
+            });
+          }
+        }
       } else if (data.type === 'mark_read') {
         const senderId = (data.sender_id && !isNaN(data.sender_id)) ? parseInt(data.sender_id, 10) : null;
         try {
@@ -401,7 +551,6 @@ wss.on('connection', (ws, req) => {
           }
         } catch (e) {}
       } else if (data.type === 'delete_message') {
-        // STRICT AUTHORIZATION CHECK: Verify message owner before deleting!
         const messageId = parseInt(data.messageId, 10);
         if (isNaN(messageId)) return;
 
@@ -440,7 +589,7 @@ wss.on('connection', (ws, req) => {
     }
   });
 
-  ws.on('close', () => {
+  ws.onclose = () => {
     if (currentUser) {
       clients.delete(ws);
       broadcast({
@@ -450,7 +599,7 @@ wss.on('connection', (ws, req) => {
         onlineUsers: getOnlineUsersList()
       });
     }
-  });
+  };
 });
 
 const PORT = process.env.PORT || 3000;

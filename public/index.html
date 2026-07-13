@@ -20,7 +20,7 @@
 </head>
 <body>
   <!-- Animated Background Canvas & Particles -->
-  <div class="bg-gradient-container">
+  <div class="bg-gradient-container" aria-hidden="true">
     <div class="gradient-orb orb-1"></div>
     <div class="gradient-orb orb-2"></div>
     <div class="gradient-orb orb-3"></div>
@@ -30,10 +30,10 @@
   <div id="app" class="app-container">
     
     <!-- ================= AUTH CONTAINER ================= -->
-    <div id="authView" class="auth-wrapper">
+    <div id="authView" class="auth-wrapper" role="main">
       <div class="brand-header">
         <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
@@ -43,7 +43,7 @@
 
       <div class="auth-card-container">
         <!-- Alert Banner -->
-        <div id="authAlert" class="alert-banner hidden"></div>
+        <div id="authAlert" class="alert-banner hidden" role="alert"></div>
 
         <!-- LOGIN FORM -->
         <form id="loginForm" class="auth-form active">
@@ -53,7 +53,7 @@
           <div class="input-group">
             <label for="loginUsername">Username or Email</label>
             <div class="input-wrapper">
-              <span class="input-icon">👤</span>
+              <span class="input-icon" aria-hidden="true">👤</span>
               <input type="text" id="loginUsername" placeholder="e.g. shreyash" required autocomplete="username">
             </div>
           </div>
@@ -61,9 +61,9 @@
           <div class="input-group">
             <label for="loginPassword">Password</label>
             <div class="input-wrapper">
-              <span class="input-icon">🔒</span>
+              <span class="input-icon" aria-hidden="true">🔒</span>
               <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
-              <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+              <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
             </div>
           </div>
 
@@ -100,7 +100,7 @@
           <div class="input-group">
             <label for="regUsername">Username</label>
             <div class="input-wrapper">
-              <span class="input-icon">👤</span>
+              <span class="input-icon" aria-hidden="true">👤</span>
               <input type="text" id="regUsername" placeholder="e.g. shreyash" required autocomplete="username">
             </div>
           </div>
@@ -108,7 +108,7 @@
           <div class="input-group">
             <label for="regEmail">Email Address</label>
             <div class="input-wrapper">
-              <span class="input-icon">✉️</span>
+              <span class="input-icon" aria-hidden="true">✉️</span>
               <input type="email" id="regEmail" placeholder="e.g. shreyash@example.com" required autocomplete="email">
             </div>
           </div>
@@ -116,9 +116,9 @@
           <div class="input-group">
             <label for="regPassword">Password</label>
             <div class="input-wrapper">
-              <span class="input-icon">🔒</span>
+              <span class="input-icon" aria-hidden="true">🔒</span>
               <input type="password" id="regPassword" placeholder="Minimum 6 characters" required autocomplete="new-password">
-              <button type="button" class="toggle-pwd-btn" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
+              <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
             </div>
           </div>
 
@@ -142,19 +142,19 @@
 
 
     <!-- ================= CHAT MAIN VIEW ================= -->
-    <div id="chatView" class="chat-wrapper hidden">
+    <div id="chatView" class="chat-wrapper hidden" role="main">
       
       <!-- Mobile Drawer Overlay Backdrop -->
-      <div id="sidebarOverlay" class="sidebar-overlay"></div>
+      <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
 
-      <!-- About & Options System Modal Popup -->
-      <div id="aboutModal" class="about-modal hidden">
+      <!-- About & System Modal Popup -->
+      <div id="aboutModal" class="about-modal hidden" role="dialog" aria-labelledby="aboutModalTitle">
         <div class="modal-card">
-          <button id="closeAboutBtn" class="modal-close-btn" title="Close">✕</button>
+          <button id="closeAboutBtn" class="modal-close-btn" aria-label="Close dialog">✕</button>
           
           <div class="modal-header">
             <div class="modal-logo">💬</div>
-            <h2>About SChat</h2>
+            <h2 id="aboutModalTitle">About SChat</h2>
             <span class="modal-version">v1.0.0 Production System</span>
           </div>
 
@@ -171,14 +171,14 @@
             <!-- Social & Portfolio Links -->
             <div class="social-links-grid">
               <a href="https://www.linkedin.com/in/shreyash-dwivedi-0b11a2255/" target="_blank" rel="noopener" class="social-btn linkedin-btn">
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/>
                 </svg>
                 <span>Connect on LinkedIn</span>
               </a>
 
               <a href="https://github.com/shreyashdwivedi36" target="_blank" rel="noopener" class="social-btn github-btn">
-                <svg viewBox="0 0 24 24" fill="currentColor">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M12 2A10 10 0 0 0 2 12c0 4.42 2.87 8.17 6.84 9.5.5.08.66-.23.66-.5v-1.69c-2.77.6-3.36-1.34-3.36-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.87 1.52 2.34 1.07 2.91.83.1-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.92 0-1.11.38-2 1.03-2.71-.1-.25-.45-1.29.1-2.64 0 0 .84-.27 2.75 1.02.79-.22 1.65-.33 2.5-.33.85 0 1.71.11 2.5.33 1.91-1.29 2.75-1.02 2.75-1.02.55 1.35.2 2.39.1 2.64.65.71 1.03 1.6 1.03 2.71 0 3.82-2.34 4.66-4.57 4.91.36.31.69.92.69 1.85V21c0 .27.16.59.67.5C19.14 20.16 22 16.42 22 12A10 10 0 0 0 12 2z"/>
                 </svg>
                 <span>GitHub Profile</span>
@@ -192,31 +192,49 @@
         </div>
       </div>
 
+      <!-- Profile Settings Modal -->
+      <div id="profileModal" class="about-modal hidden" role="dialog" aria-labelledby="profileModalTitle">
+        <div class="modal-card">
+          <button id="closeProfileBtn" class="modal-close-btn" aria-label="Close profile modal">✕</button>
+          <div class="modal-header">
+            <h2>Profile Settings</h2>
+            <span class="modal-version">Customize your account</span>
+          </div>
+          <form id="profileForm" class="modal-body">
+            <div class="input-group">
+              <label>Status Bio</label>
+              <input type="text" id="profileBioInput" placeholder="Set status bio..." maxLength="255">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:14px;">Save Settings</button>
+          </form>
+        </div>
+      </div>
+
       <!-- Sidebar (Collapsible Drawer on Mobile) -->
-      <aside id="chatSidebar" class="chat-sidebar">
+      <aside id="chatSidebar" class="chat-sidebar" role="navigation" aria-label="Sidebar navigation">
         <div class="sidebar-header">
           <div class="brand-mini">
             <div class="logo-icon-sm">💬</div>
             <h2>SChat</h2>
           </div>
           <div class="sidebar-top-actions">
-            <button id="themeModeBtn" class="icon-btn" title="Toggle Light/Dark Theme">🌙</button>
-            <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound">🔊</button>
-            <button id="closeSidebarBtn" class="icon-btn mobile-only-btn" title="Close Menu">✕</button>
+            <button id="themeModeBtn" class="icon-btn" title="Toggle Light/Dark Theme" aria-label="Toggle theme">🌙</button>
+            <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound" aria-label="Toggle sound">🔊</button>
+            <button id="closeSidebarBtn" class="icon-btn mobile-only-btn" title="Close Menu" aria-label="Close menu">✕</button>
           </div>
         </div>
 
         <!-- Current User Profile Card -->
-        <div class="current-user-card">
+        <div class="current-user-card" id="myProfileCard">
           <div class="user-avatar-wrapper">
             <span id="myAvatar" class="avatar-badge">⚡</span>
             <span class="status-indicator online"></span>
           </div>
           <div class="user-info">
             <h3 id="myUsername">Username</h3>
-            <span class="status-label">Online</span>
+            <span id="myBio" class="status-label">Online</span>
           </div>
-          <button id="logoutBtn" class="icon-btn logout-btn" title="Sign Out">
+          <button id="logoutBtn" class="icon-btn logout-btn" title="Sign Out" aria-label="Sign out">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
@@ -230,7 +248,7 @@
           <div class="section-title">
             <span>CHANNELS</span>
           </div>
-          <div id="globalChannelBtn" class="channel-item active">
+          <div id="globalChannelBtn" class="channel-item active" role="button" tabindex="0">
             <span class="channel-icon">🌐</span>
             <span class="channel-name">Global Chat</span>
           </div>
@@ -238,8 +256,8 @@
 
         <!-- Search Bar -->
         <div class="sidebar-search">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="filterInput" placeholder="Filter users or messages...">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <input type="text" id="filterInput" placeholder="Search (Ctrl + K)..." aria-label="Search users or messages">
         </div>
 
         <!-- Active Channels / Online Users -->
@@ -265,9 +283,9 @@
       <!-- Main Chat Container -->
       <main class="chat-main">
         <!-- Chat Header -->
-        <header class="chat-header">
+        <header class="chat-header" role="banner">
           <div class="room-info">
-            <button id="mobileSidebarToggle" class="icon-btn mobile-toggle-btn" title="Open Users Menu">
+            <button id="mobileSidebarToggle" class="icon-btn mobile-toggle-btn" title="Open Users Menu" aria-label="Open sidebar menu">
               👥
             </button>
             <div id="roomAvatar" class="room-avatar">💬</div>
@@ -277,14 +295,25 @@
             </div>
           </div>
           <div class="chat-header-actions">
-            <button id="pwaInstallBtn" class="icon-btn pwa-install-btn hidden" title="Install SChat as Desktop/Mobile Web App">📲 Install</button>
-            <button id="headerAboutBtn" class="icon-btn" title="About System & Creator">ℹ️</button>
-            <button id="headerThemeBtn" class="icon-btn" title="Toggle Light/Dark Theme">🌙</button>
+            <button id="exportChatBtn" class="icon-btn" title="Export Chat History as Text File" aria-label="Export chat history">📥 Export</button>
+            <button id="pwaInstallBtn" class="icon-btn pwa-install-btn hidden" title="Install SChat App" aria-label="Install App">📲 Install</button>
+            <button id="optionsMenuBtn" class="icon-btn options-btn" title="App Options & System Info" aria-label="System info">⚙️</button>
+            <button id="headerThemeBtn" class="icon-btn" title="Toggle Theme" aria-label="Toggle theme">🌙</button>
           </div>
         </header>
 
+        <!-- Pinned Messages Banner -->
+        <div id="pinnedBanner" class="pinned-banner hidden">
+          <span class="pinned-icon">📌</span>
+          <div class="pinned-text-wrapper">
+            <span class="pinned-label">PINNED MESSAGE</span>
+            <span id="pinnedTextSnippet" class="pinned-text-snippet">Pinned content...</span>
+          </div>
+          <button id="unpinBtn" class="unpin-btn" title="Unpin Message">✕</button>
+        </div>
+
         <!-- Message History Feed -->
-        <div id="messagesFeed" class="messages-feed">
+        <div id="messagesFeed" class="messages-feed" role="log" aria-live="polite">
           <div class="welcome-banner">
             <div class="spark-icon">✨</div>
             <h3 id="welcomeTitle">Welcome to SChat!</h3>
@@ -350,9 +379,9 @@
           </div>
 
           <form id="messageForm" class="message-input-form">
-            <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji">😊</button>
-            <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required>
-            <button type="submit" id="sendBtn" class="send-btn" title="Send Message">
+            <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji" aria-label="Add emoji">😊</button>
+            <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required aria-label="Type a message">
+            <button type="submit" id="sendBtn" class="send-btn" title="Send Message" aria-label="Send message">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>

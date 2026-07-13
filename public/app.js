@@ -38,6 +38,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Keyboard Shortcuts (Accessibility & Speed)
+  document.addEventListener('keydown', (e) => {
+    // Ctrl + K or Cmd + K: Focus Search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      if (filterInput) filterInput.focus();
+    }
+    // Esc: Close any open modal
+    if (e.key === 'Escape') {
+      closeAboutModal();
+      closeProfileModal();
+      if (emojiPicker) emojiPicker.classList.add('hidden');
+    }
+  });
+
   // DOM Elements
   const pwaInstallBtn = document.getElementById('pwaInstallBtn');
 
@@ -72,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const myAvatarEl = document.getElementById('myAvatar');
   const myUsernameEl = document.getElementById('myUsername');
+  const myBioEl = document.getElementById('myBio');
   const logoutBtn = document.getElementById('logoutBtn');
   const soundToggleBtn = document.getElementById('soundToggleBtn');
   const themeModeBtn = document.getElementById('themeModeBtn');
@@ -97,6 +113,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const typingBanner = document.getElementById('typingBanner');
   const typingText = document.getElementById('typingText');
 
+  const pinnedBanner = document.getElementById('pinnedBanner');
+  const pinnedTextSnippet = document.getElementById('pinnedTextSnippet');
+  const unpinBtn = document.getElementById('unpinBtn');
+  const exportChatBtn = document.getElementById('exportChatBtn');
+
   const privacyBlurBtn = document.getElementById('privacyBlurBtn');
   const timerSelect = document.getElementById('timerSelect');
 
@@ -110,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
 
-  // About Owner & Options Modal Elements
+  // Modals
   const aboutModal = document.getElementById('aboutModal');
   const closeAboutBtn = document.getElementById('closeAboutBtn');
   const authAboutBtn = document.getElementById('authAboutBtn');
@@ -118,13 +139,51 @@ document.addEventListener('DOMContentLoaded', () => {
   const headerAboutBtn = document.getElementById('headerAboutBtn');
   const optionsMenuBtn = document.getElementById('optionsMenuBtn');
 
-  const openAboutModal = () => {
-    if (aboutModal) aboutModal.classList.remove('hidden');
-  };
+  const profileModal = document.getElementById('profileModal');
+  const myProfileCard = document.getElementById('myProfileCard');
+  const closeProfileBtn = document.getElementById('closeProfileBtn');
+  const profileForm = document.getElementById('profileForm');
+  const profileBioInput = document.getElementById('profileBioInput');
 
-  const closeAboutModal = () => {
-    if (aboutModal) aboutModal.classList.add('hidden');
+  const openAboutModal = () => { if (aboutModal) aboutModal.classList.remove('hidden'); };
+  const closeAboutModal = () => { if (aboutModal) aboutModal.classList.add('hidden'); };
+
+  const openProfileModal = () => {
+    if (profileModal) {
+      if (profileBioInput && currentUser) profileBioInput.value = currentUser.bio || '';
+      profileModal.classList.remove('hidden');
+    }
   };
+  const closeProfileModal = () => { if (profileModal) profileModal.classList.add('hidden'); };
+
+  if (myProfileCard) myProfileCard.addEventListener('click', (e) => {
+    if (e.target.closest('#logoutBtn')) return;
+    openProfileModal();
+  });
+  if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
+
+  if (profileForm) {
+    profileForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const newBio = profileBioInput.value.trim();
+      try {
+        const res = await fetch('/api/me', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ bio: newBio, avatar: currentUser.avatar })
+        });
+        if (res.ok) {
+          currentUser.bio = newBio;
+          localStorage.setItem('schat_user', JSON.stringify(currentUser));
+          if (myBioEl) myBioEl.textContent = newBio || 'Online';
+          closeProfileModal();
+        }
+      } catch (err) {}
+    });
+  }
 
   if (authAboutBtn) authAboutBtn.addEventListener('click', openAboutModal);
   if (sidebarAboutBtn) sidebarAboutBtn.addEventListener('click', openAboutModal);
@@ -134,6 +193,36 @@ document.addEventListener('DOMContentLoaded', () => {
   if (aboutModal) {
     aboutModal.addEventListener('click', (e) => {
       if (e.target === aboutModal) closeAboutModal();
+    });
+  }
+
+  // Export Chat Feature (.txt file download)
+  if (exportChatBtn) {
+    exportChatBtn.addEventListener('click', () => {
+      const cards = document.querySelectorAll('.message-card');
+      if (cards.length === 0) return alert('No messages to export.');
+
+      let exportText = `========================================\n`;
+      exportText += `SChat Export: ${activeRecipient ? 'DM with ' + activeRecipient.username : 'Global Channel'}\n`;
+      exportText += `Exported At: ${new Date().toLocaleString()}\n`;
+      exportText += `========================================\n\n`;
+
+      cards.forEach(card => {
+        const author = card.querySelector('.msg-author')?.textContent || 'User';
+        const time = card.querySelector('.msg-time')?.textContent || '';
+        const content = card.querySelector('.msg-bubble')?.textContent || '';
+        exportText += `[${time}] ${author}: ${content.trim()}\n`;
+      });
+
+      const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `SChat_Export_${activeRecipient ? activeRecipient.username : 'Global'}_${Date.now()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     });
   }
 
@@ -461,6 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     myAvatarEl.textContent = currentUser.avatar || '⚡';
     myUsernameEl.textContent = currentUser.username;
+    if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
 
     authView.classList.add('hidden');
     chatView.classList.remove('hidden');
@@ -594,6 +684,33 @@ document.addEventListener('DOMContentLoaded', () => {
               icon.classList.add('read');
             });
           }
+        } else if (data.type === 'edit_message') {
+          const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
+          if (card) {
+            const bubble = card.querySelector('.msg-bubble');
+            if (bubble) {
+              bubble.textContent = data.newContent;
+              let editedTag = card.querySelector('.edited-badge');
+              if (!editedTag) {
+                editedTag = document.createElement('span');
+                editedTag.className = 'edited-badge';
+                editedTag.textContent = '(edited)';
+                card.querySelector('.msg-header').appendChild(editedTag);
+              }
+            }
+          }
+        } else if (data.type === 'update_reactions') {
+          updateMessageReactionsDOM(data.messageId, data.reactions);
+        } else if (data.type === 'update_pinned') {
+          if (data.is_pinned) {
+            const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
+            if (card && pinnedBanner) {
+              pinnedTextSnippet.textContent = card.querySelector('.msg-bubble')?.textContent || 'Pinned message';
+              pinnedBanner.classList.remove('hidden');
+            }
+          } else if (pinnedBanner) {
+            pinnedBanner.classList.add('hidden');
+          }
         } else if (data.type === 'delete_message') {
           removeMessageFromDOM(data.messageId);
         } else if (data.type === 'presence') {
@@ -632,6 +749,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const editMessage = (messageId, currentContent) => {
+    const newContent = prompt('Edit your message:', currentContent);
+    if (!newContent || newContent.trim() === currentContent) return;
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'edit_message',
+        messageId: messageId,
+        newContent: newContent.trim()
+      }));
+    }
+  };
+
+  const toggleReaction = (messageId, emoji) => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'toggle_reaction',
+        messageId: messageId,
+        emoji: emoji
+      }));
+    }
+  };
+
+  const togglePinMessage = (messageId) => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({
+        type: 'toggle_pin',
+        messageId: messageId
+      }));
+    }
+  };
+
+  const updateMessageReactionsDOM = (messageId, reactionsObj) => {
+    const card = document.querySelector(`.message-card[data-msg-id="${messageId}"]`);
+    if (!card) return;
+
+    let rxContainer = card.querySelector('.reactions-container');
+    if (!rxContainer) {
+      rxContainer = document.createElement('div');
+      rxContainer.className = 'reactions-container';
+      card.querySelector('.msg-body').appendChild(rxContainer);
+    }
+
+    rxContainer.innerHTML = '';
+    for (const [emoji, users] of Object.entries(reactionsObj || {})) {
+      if (users && users.length > 0) {
+        const badge = document.createElement('div');
+        badge.className = `reaction-badge ${users.includes(currentUser.username) ? 'active' : ''}`;
+        badge.title = `Reacted by ${users.join(', ')}`;
+        badge.innerHTML = `<span>${emoji}</span> <span class="reaction-count">${users.length}</span>`;
+        badge.addEventListener('click', () => toggleReaction(messageId, emoji));
+        rxContainer.appendChild(badge);
+      }
+    }
+  };
+
   const removeMessageFromDOM = (messageId) => {
     const card = document.querySelector(`.message-card[data-msg-id="${messageId}"]`);
     if (card) {
@@ -661,6 +834,11 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msgUniqueId}">🗑️</button>` 
       : '';
 
+    const editBtnHtml = isOutgoing 
+      ? `<button class="msg-action-btn msg-edit-btn" title="Edit Message">✏️</button>` 
+      : '';
+
+    const pinBtnHtml = `<button class="msg-action-btn msg-pin-btn" title="Pin Message">📌</button>`;
     const replyBtnHtml = `<button class="msg-reply-btn" title="Reply to Message">↩️</button>`;
 
     let statusIconHtml = '';
@@ -692,6 +870,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const isBlurredClass = msg.is_blurred ? 'blurred' : '';
+    const editedBadgeHtml = msg.is_edited ? `<span class="edited-badge">(edited)</span>` : '';
 
     let replyBoxHtml = '';
     if (msg.reply_to_text) {
@@ -711,7 +890,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="msg-time">${timeFormatted}</span>
           ${statusIconHtml}
           ${timerBadgeHtml}
+          ${editedBadgeHtml}
           ${replyBtnHtml}
+          ${pinBtnHtml}
+          ${editBtnHtml}
           ${deleteBtnHtml}
         </div>
         <div class="msg-bubble ${isBlurredClass}">
@@ -736,6 +918,22 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    const editBtn = msgCard.querySelector('.msg-edit-btn');
+    if (editBtn && msg.id) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        editMessage(msg.id, msg.content);
+      });
+    }
+
+    const pinBtn = msgCard.querySelector('.msg-pin-btn');
+    if (pinBtn && msg.id) {
+      pinBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePinMessage(msg.id);
+      });
+    }
+
     const replyBtn = msgCard.querySelector('.msg-reply-btn');
     if (replyBtn) {
       replyBtn.addEventListener('click', (e) => {
@@ -745,7 +943,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     messagesFeed.appendChild(msgCard);
+
+    if (msg.reactions) {
+      let rx = {};
+      try { rx = typeof msg.reactions === 'string' ? JSON.parse(msg.reactions) : msg.reactions; } catch(e){}
+      updateMessageReactionsDOM(msg.id, rx);
+    }
+
+    if (msg.is_pinned && pinnedBanner) {
+      pinnedTextSnippet.textContent = msg.content;
+      pinnedBanner.classList.remove('hidden');
+    }
   };
+
+  if (unpinBtn) {
+    unpinBtn.addEventListener('click', () => {
+      if (pinnedBanner) pinnedBanner.classList.add('hidden');
+    });
+  }
 
   const escapeHtml = (str) => {
     return str.replace(/[&<>'"]/g, 

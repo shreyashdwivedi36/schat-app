@@ -1666,3 +1666,108 @@ body {
   color: var(--primary-accent);
   background: rgba(139, 92, 246, 0.15);
 }
+
+/* Pinned Message Banner */
+.pinned-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(34, 211, 238, 0.12);
+  border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.pinned-icon {
+  font-size: 1rem;
+}
+
+.pinned-text-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  flex: 1;
+  margin: 0 10px;
+}
+
+.pinned-label {
+  font-weight: 800;
+  color: var(--secondary-glow);
+  font-size: 0.72rem;
+  letter-spacing: 0.5px;
+}
+
+.pinned-text-snippet {
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unpin-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* Emoji Reactions on Message Cards */
+.reactions-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.reaction-badge {
+  background: var(--input-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.reaction-badge.active, .reaction-badge:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--primary-accent);
+}
+
+.reaction-count {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* Edit & Pin Action Buttons */
+.msg-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.5;
+  transition: all var(--transition-fast);
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
+.msg-action-btn:hover {
+  opacity: 1;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.edited-badge {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  font-style: italic;
+  margin-left: 4px;
+}

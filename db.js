@@ -19,18 +19,28 @@ if (process.env.DATABASE_URL) {
           email VARCHAR(255) UNIQUE NOT NULL,
           password VARCHAR(255) NOT NULL,
           avatar VARCHAR(50) DEFAULT '⚡',
+          bio VARCHAR(255) DEFAULT 'Hey there! I am using SChat.',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
-      `);
-      await pool.query(`
+        CREATE TABLE IF NOT EXISTS channels (
+          id SERIAL PRIMARY KEY,
+          name VARCHAR(50) UNIQUE NOT NULL,
+          description TEXT DEFAULT '',
+          created_by INTEGER DEFAULT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
         CREATE TABLE IF NOT EXISTS messages (
           id SERIAL PRIMARY KEY,
           user_id INTEGER NOT NULL,
           recipient_id INTEGER DEFAULT NULL,
+          channel VARCHAR(50) DEFAULT 'global',
           username VARCHAR(255) NOT NULL,
           avatar VARCHAR(50) DEFAULT '⚡',
           content TEXT NOT NULL,
           is_blurred INTEGER DEFAULT 0,
+          is_edited INTEGER DEFAULT 0,
+          is_pinned INTEGER DEFAULT 0,
+          reactions TEXT DEFAULT '{}',
           expires_at TIMESTAMP DEFAULT NULL,
           status VARCHAR(20) DEFAULT 'sent',
           reply_to_id INTEGER DEFAULT NULL,
@@ -39,15 +49,27 @@ if (process.env.DATABASE_URL) {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id)
         );
+        CREATE TABLE IF NOT EXISTS blocked_users (
+          id SERIAL PRIMARY KEY,
+          blocker_id INTEGER NOT NULL,
+          blocked_id INTEGER NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(blocker_id, blocked_id)
+        );
       `);
+      try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(255) DEFAULT 'Hey there! I am using SChat.';`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS recipient_id INTEGER DEFAULT NULL;`); } catch(e){}
+      try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel VARCHAR(50) DEFAULT 'global';`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_blurred INTEGER DEFAULT 0;`); } catch(e){}
+      try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_edited INTEGER DEFAULT 0;`); } catch(e){}
+      try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_pinned INTEGER DEFAULT 0;`); } catch(e){}
+      try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reactions TEXT DEFAULT '{}';`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'sent';`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_user VARCHAR(255) DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_text TEXT DEFAULT NULL;`); } catch(e){}
-      console.log('Connected to PostgreSQL Database cleanly.');
+      console.log('Connected to PostgreSQL Database cleanly with all 9 features.');
     } catch (err) {
       console.error('PostgreSQL Init Error:', err);
     }
@@ -78,17 +100,20 @@ if (process.env.DATABASE_URL) {
     }
   };
 } else {
-  // File-backed JSON database fallback for zero-dependency local dev
+  // Pure JSON File fallback for zero-dependency local dev
   const fallbackPath = path.join(__dirname, 'db_fallback.json');
-  let data = { users: [], messages: [], lastUserId: 0, lastMsgId: 0 };
+  let data = { users: [], messages: [], channels: [], blocked_users: [], lastUserId: 0, lastMsgId: 0, lastChanId: 0 };
 
   if (fs.existsSync(fallbackPath)) {
     try {
       const raw = JSON.parse(fs.readFileSync(fallbackPath, 'utf8'));
       data.users = raw.users || [];
       data.messages = raw.messages || [];
+      data.channels = raw.channels || [];
+      data.blocked_users = raw.blocked_users || [];
       data.lastUserId = raw.lastUserId || data.users.length;
       data.lastMsgId = raw.lastMsgId || data.messages.length;
+      data.lastChanId = raw.lastChanId || data.channels.length;
     } catch (e) {}
   }
 
@@ -97,7 +122,7 @@ if (process.env.DATABASE_URL) {
   dbInstance = {
     async run(sql, params = []) {
       if (sql.includes('INSERT INTO users')) {
-        const [username, email, password, avatar] = params;
+        const [username, email, password, avatar, bio] = params;
         data.lastUserId += 1;
         const newUser = {
           id: data.lastUserId,
@@ -105,6 +130,7 @@ if (process.env.DATABASE_URL) {
           email,
           password,
           avatar: avatar || '⚡',
+          bio: bio || 'Hey there! I am using SChat.',
           created_at: new Date().toISOString()
         };
         data.users.push(newUser);
@@ -112,16 +138,20 @@ if (process.env.DATABASE_URL) {
         return { id: newUser.id, changes: 1 };
       }
       if (sql.includes('INSERT INTO messages')) {
-        const [user_id, recipient_id, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text] = params;
+        const [user_id, recipient_id, channel, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text] = params;
         data.lastMsgId += 1;
         const newMsg = {
           id: data.lastMsgId,
           user_id,
           recipient_id: recipient_id || null,
+          channel: channel || 'global',
           username,
           avatar: avatar || '⚡',
           content,
           is_blurred: is_blurred || 0,
+          is_edited: 0,
+          is_pinned: 0,
+          reactions: '{}',
           expires_at: expires_at || null,
           status: status || 'sent',
           reply_to_id: reply_to_id || null,
@@ -133,17 +163,59 @@ if (process.env.DATABASE_URL) {
         saveData();
         return { id: newMsg.id, changes: 1 };
       }
-      if (sql.includes('UPDATE messages SET status')) {
-        const [newStatus, senderId, recipientId] = params;
-        let count = 0;
-        data.messages.forEach(m => {
-          if (m.user_id === senderId && m.recipient_id === recipientId && m.status !== 'read') {
-            m.status = newStatus;
-            count++;
-          }
-        });
+      if (sql.includes('UPDATE messages SET content = ?')) {
+        const [content, id, user_id] = params;
+        const msg = data.messages.find(m => m.id === id && m.user_id === user_id);
+        if (msg) {
+          msg.content = content;
+          msg.is_edited = 1;
+          saveData();
+          return { changes: 1 };
+        }
+        return { changes: 0 };
+      }
+      if (sql.includes('UPDATE messages SET reactions = ?')) {
+        const [reactions, id] = params;
+        const msg = data.messages.find(m => m.id === id);
+        if (msg) {
+          msg.reactions = reactions;
+          saveData();
+          return { changes: 1 };
+        }
+        return { changes: 0 };
+      }
+      if (sql.includes('UPDATE messages SET is_pinned = ?')) {
+        const [is_pinned, id] = params;
+        const msg = data.messages.find(m => m.id === id);
+        if (msg) {
+          msg.is_pinned = is_pinned;
+          saveData();
+          return { changes: 1 };
+        }
+        return { changes: 0 };
+      }
+      if (sql.includes('INSERT INTO blocked_users')) {
+        const [blocker_id, blocked_id] = params;
+        data.blocked_users.push({ id: data.blocked_users.length + 1, blocker_id, blocked_id });
         saveData();
-        return { changes: count };
+        return { changes: 1 };
+      }
+      if (sql.includes('DELETE FROM blocked_users')) {
+        const [blocker_id, blocked_id] = params;
+        data.blocked_users = data.blocked_users.filter(b => !(b.blocker_id === blocker_id && b.blocked_id === blocked_id));
+        saveData();
+        return { changes: 1 };
+      }
+      if (sql.includes('UPDATE users SET')) {
+        const [avatar, bio, id] = params;
+        const u = data.users.find(user => user.id === id);
+        if (u) {
+          if (avatar) u.avatar = avatar;
+          if (bio) u.bio = bio;
+          saveData();
+          return { changes: 1 };
+        }
+        return { changes: 0 };
       }
       if (sql.includes('DELETE FROM messages')) {
         const id = params[0];
@@ -161,9 +233,16 @@ if (process.env.DATABASE_URL) {
       return null;
     },
     async all(sql, params = []) {
+      if (sql.includes('FROM blocked_users')) {
+        const blocker_id = params[0];
+        return data.blocked_users.filter(b => b.blocker_id === blocker_id);
+      }
       if (sql.includes('FROM messages')) {
         const nowIso = new Date().toISOString();
         let validMsgs = data.messages.filter(m => !m.expires_at || m.expires_at > nowIso);
+        if (sql.includes('is_pinned = 1')) {
+          return validMsgs.filter(m => m.is_pinned === 1);
+        }
         if (params.length === 4) {
           const [u1, u2] = params;
           return validMsgs.filter(m => (m.user_id === u1 && m.recipient_id === u2) || (m.user_id === u2 && m.recipient_id === u1));
