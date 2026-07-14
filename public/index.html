@@ -7,7 +7,7 @@
   
   <!-- PWA Meta Tags & Manifest -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#8b5cf6">
+  <meta name="theme-color" content="#09090b">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Animated Background Canvas & Particles -->
+  <!-- Ambient Motion Background -->
   <div class="bg-gradient-container" aria-hidden="true">
     <div class="gradient-orb orb-1"></div>
     <div class="gradient-orb orb-2"></div>
@@ -295,9 +295,9 @@
             </div>
           </div>
           <div class="chat-header-actions">
-            <button id="exportChatBtn" class="icon-btn" title="Export Chat History as Text File" aria-label="Export chat history">📥 Export</button>
+            <button id="exportChatBtn" class="icon-btn" title="Export Chat History" aria-label="Export chat">📥 Export</button>
             <button id="pwaInstallBtn" class="icon-btn pwa-install-btn hidden" title="Install SChat App" aria-label="Install App">📲 Install</button>
-            <button id="optionsMenuBtn" class="icon-btn options-btn" title="App Options & System Info" aria-label="System info">⚙️</button>
+            <button id="headerAboutBtn" class="icon-btn" title="About System & Creator" aria-label="System info">ℹ️</button>
             <button id="headerThemeBtn" class="icon-btn" title="Toggle Theme" aria-label="Toggle theme">🌙</button>
           </div>
         </header>
@@ -317,7 +317,7 @@
           <div class="welcome-banner">
             <div class="spark-icon">✨</div>
             <h3 id="welcomeTitle">Welcome to SChat!</h3>
-            <p id="welcomeSubtitle">End-to-end real-time messaging active across mobile & desktop.</p>
+            <p id="welcomeSubtitle">Real-time messaging active across mobile & desktop.</p>
           </div>
           <!-- Messages dynamically rendered here -->
         </div>
