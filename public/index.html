@@ -7,7 +7,7 @@
   
   <!-- PWA Meta Tags & Manifest -->
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#09090b">
+  <meta name="theme-color" content="#7c3aed">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -19,12 +19,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Ambient Motion Background -->
-  <div class="bg-gradient-container" aria-hidden="true">
-    <div class="gradient-orb orb-1"></div>
-    <div class="gradient-orb orb-2"></div>
-    <div class="gradient-orb orb-3"></div>
-    <div class="grid-overlay"></div>
+
+  <!-- Top Announcement Bar (MotionSites Style) -->
+  <div class="top-announcement-bar">
+    <span>⚡ SChat v1.0 Production Release — Real-Time WebSockets Platform Active</span>
   </div>
 
   <div id="app" class="app-container">
@@ -32,11 +30,7 @@
     <!-- ================= AUTH CONTAINER ================= -->
     <div id="authView" class="auth-wrapper" role="main">
       <div class="brand-header">
-        <div class="logo-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-          </svg>
-        </div>
+        <div class="pill-tag-header">FRESH DEPLOYMENT</div>
         <h1 class="brand-title">SChat<span class="dot">.</span></h1>
         <p class="brand-subtitle">Real-Time Messaging Platform</p>
       </div>
@@ -67,8 +61,8 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-glow" id="loginBtn">
-            <span class="btn-text">Sign In</span>
+          <button type="submit" class="btn btn-primary btn-pill" id="loginBtn">
+            <span class="btn-text">Sign In →</span>
             <span class="btn-loader hidden"></span>
           </button>
 
@@ -122,8 +116,8 @@
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-glow" id="registerBtn">
-            <span class="btn-text">Register & Join</span>
+          <button type="submit" class="btn btn-primary btn-pill" id="registerBtn">
+            <span class="btn-text">Register & Join →</span>
             <span class="btn-loader hidden"></span>
           </button>
 
@@ -205,7 +199,7 @@
               <label>Status Bio</label>
               <input type="text" id="profileBioInput" placeholder="Set status bio..." maxLength="255">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:14px;">Save Settings</button>
+            <button type="submit" class="btn btn-primary btn-pill" style="margin-top:14px;">Save Settings</button>
           </form>
         </div>
       </div>
@@ -218,8 +212,8 @@
             <h2>SChat</h2>
           </div>
           <div class="sidebar-top-actions">
-            <button id="themeModeBtn" class="icon-btn" title="Toggle Light/Dark Theme" aria-label="Toggle theme">🌙</button>
-            <button id="soundToggleBtn" class="icon-btn" title="Toggle Sound" aria-label="Toggle sound">🔊</button>
+            <button id="themeModeBtn" class="icon-btn btn-pill-icon" title="Toggle Light/Dark Theme" aria-label="Toggle theme">🌙</button>
+            <button id="soundToggleBtn" class="icon-btn btn-pill-icon" title="Toggle Sound" aria-label="Toggle sound">🔊</button>
             <button id="closeSidebarBtn" class="icon-btn mobile-only-btn" title="Close Menu" aria-label="Close menu">✕</button>
           </div>
         </div>
@@ -295,10 +289,10 @@
             </div>
           </div>
           <div class="chat-header-actions">
-            <button id="exportChatBtn" class="icon-btn" title="Export Chat History" aria-label="Export chat">📥 Export</button>
-            <button id="pwaInstallBtn" class="icon-btn pwa-install-btn hidden" title="Install SChat App" aria-label="Install App">📲 Install</button>
-            <button id="headerAboutBtn" class="icon-btn" title="About System & Creator" aria-label="System info">ℹ️</button>
-            <button id="headerThemeBtn" class="icon-btn" title="Toggle Theme" aria-label="Toggle theme">🌙</button>
+            <button id="exportChatBtn" class="btn-action-pill" title="Export Chat History" aria-label="Export chat">📥 Export</button>
+            <button id="pwaInstallBtn" class="btn-action-pill btn-pill-accent hidden" title="Install SChat App" aria-label="Install App">📲 Install App</button>
+            <button id="headerAboutBtn" class="icon-btn btn-pill-icon" title="About System & Creator" aria-label="System info">ℹ️</button>
+            <button id="headerThemeBtn" class="icon-btn btn-pill-icon" title="Toggle Theme" aria-label="Toggle theme">🌙</button>
           </div>
         </header>
 
@@ -362,11 +356,11 @@
 
           <!-- Feature Controls Bar (Blur & Timer) -->
           <div class="input-controls-bar">
-            <button type="button" id="privacyBlurBtn" class="control-toggle-btn" title="Toggle Privacy Blur on next message">
+            <button type="button" id="privacyBlurBtn" class="control-toggle-btn btn-pill-tag" title="Toggle Privacy Blur on next message">
               <span class="control-icon">👁️</span> <span class="control-text">Blur Off</span>
             </button>
 
-            <div class="control-select-wrapper">
+            <div class="control-select-wrapper btn-pill-tag">
               <span class="control-icon">⏱️</span>
               <select id="timerSelect" class="control-select" title="Self-Destruct Timer">
                 <option value="0">Timer Off</option>
@@ -381,7 +375,7 @@
           <form id="messageForm" class="message-input-form">
             <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji" aria-label="Add emoji">😊</button>
             <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required aria-label="Type a message">
-            <button type="submit" id="sendBtn" class="send-btn" title="Send Message" aria-label="Send message">
+            <button type="submit" id="sendBtn" class="send-btn btn-circle-send" title="Send Message" aria-label="Send message">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
