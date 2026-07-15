@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SChat — Real-Time Messaging Platform</title>
+  <title>SChat — Real-Time 3D Motion Messaging Platform</title>
   
   <!-- PWA Meta Tags & Manifest -->
   <link rel="manifest" href="manifest.json">
@@ -17,10 +17,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
+  <!-- Three.js 3D WebGL Motion Engine CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
   <!-- Cache-Busting Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=v4_clean">
+  <link rel="stylesheet" href="style.css?v=v5_3d_motion">
 </head>
 <body>
+
+  <!-- 3D Interactive WebGL Motion Canvas -->
+  <canvas id="bg3dCanvas" aria-hidden="true"></canvas>
 
   <div id="app" class="app-container">
     
@@ -390,6 +396,6 @@
 
   </div>
 
-  <script src="app.js?v=v4_clean"></script>
+  <script src="app.js?v=v5_3d_motion"></script>
 </body>
 </html>

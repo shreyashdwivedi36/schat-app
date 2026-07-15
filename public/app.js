@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
+  // Initialize Three.js 3D Interactive WebGL Motion Engine
+  init3DMotionBackground();
+
   // Register PWA Service Worker
   if ('serviceWorker' in navigator) {
     let refreshing = false;
@@ -1104,3 +1107,86 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeChatSession();
   }
 });
+
+// ================= THREE.JS 3D WEBGL MOTION ENGINE =================
+function init3DMotionBackground() {
+  const canvas = document.getElementById('bg3dCanvas');
+  if (!canvas || typeof THREE === 'undefined') return;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 400;
+
+  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Create 3D Particle Mesh Constellation
+  const particleCount = 700;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
+
+  const color1 = new THREE.Color(0x8b5cf6); // Purple
+  const color2 = new THREE.Color(0x06b6d4); // Cyan
+
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 1200;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 1200;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 1200;
+
+    const mixedColor = color1.clone().lerp(color2, Math.random());
+    colors[i * 3] = mixedColor.r;
+    colors[i * 3 + 1] = mixedColor.g;
+    colors[i * 3 + 2] = mixedColor.b;
+  }
+
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+  const material = new THREE.PointsMaterial({
+    size: 4,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending
+  });
+
+  const particleSystem = new THREE.Points(geometry, material);
+  scene.add(particleSystem);
+
+  // Mouse Interactive Motion Tracking
+  let mouseX = 0;
+  let mouseY = 0;
+  let targetX = 0;
+  let targetY = 0;
+
+  document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX - window.innerWidth / 2) * 0.0008;
+    mouseY = (e.clientY - window.innerHeight / 2) * 0.0008;
+  });
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  function animate3D() {
+    requestAnimationFrame(animate3D);
+
+    targetX += (mouseX - targetX) * 0.05;
+    targetY += (mouseY - targetY) * 0.05;
+
+    particleSystem.rotation.y += 0.0012 + targetX * 0.2;
+    particleSystem.rotation.x += 0.0008 + targetY * 0.2;
+
+    camera.position.x += (targetX * 200 - camera.position.x) * 0.05;
+    camera.position.y += (-targetY * 200 - camera.position.y) * 0.05;
+    camera.lookAt(scene.position);
+
+    renderer.render(scene, camera);
+  }
+
+  animate3D();
+}
