@@ -678,6 +678,7 @@ body {
   background: var(--header-bg);
   backdrop-filter: blur(24px);
   min-height: 60px;
+  position: relative;
 }
 
 .room-info {
@@ -727,40 +728,72 @@ body {
 }
 
 .chat-header-actions {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
-.hdr-btn {
-  background: var(--input-bg);
-  border: 1px solid var(--panel-border);
-  color: var(--text-muted);
-  font-family: var(--font-family);
-  font-size: 0.82rem;
-  font-weight: 700;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  display: inline-flex;
+/* LIQUID GLASS POPOVER DROPDOWN MENU */
+.liquid-glass-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 220px;
+  background: rgba(18, 22, 40, 0.88);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: liquidPopIn 0.25s var(--spring-easing);
+  transform-origin: top right;
+}
+
+@keyframes liquidPopIn {
+  0% { opacity: 0; transform: scale(0.85) translateY(-10px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dropdown-item {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.hdr-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: var(--text-muted);
-  color: var(--text-main);
+.dropdown-item:hover {
+  background: rgba(139, 92, 246, 0.22);
+  color: #ffffff;
 }
 
-.hdr-btn.pwa-btn {
-  background: var(--primary-accent) !important;
-  color: #ffffff !important;
-  border-color: var(--primary-glow) !important;
+.dropdown-icon {
+  font-size: 1rem;
+}
+
+.dropdown-label {
+  flex: 1;
+}
+
+.dropdown-badge {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
 }
 
 .pulse-dot {
@@ -901,7 +934,7 @@ body {
   border-top-right-radius: 4px;
 }
 
-/* Hover-Only Action Toolbar (Clean & Minimalist) */
+/* Hover Action Toolbar */
 .msg-action-btn, .msg-reply-btn, .msg-delete-btn {
   background: var(--input-bg) !important;
   border: 1px solid var(--panel-border) !important;
@@ -1215,7 +1248,7 @@ body {
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(10px);
-  z-index: 200;
+  z-index: 300;
   display: flex;
   align-items: center;
   justify-content: center;

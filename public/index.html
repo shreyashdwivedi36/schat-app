@@ -21,7 +21,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <!-- Cache-Busting Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=v6_postlogin_polish">
+  <link rel="stylesheet" href="style.css?v=v7_liquid_glass_dropdown">
 </head>
 <body>
 
@@ -295,11 +295,31 @@
               <p id="roomSubtitle" class="room-subtitle"><span class="pulse-dot"></span> Realtime Active</p>
             </div>
           </div>
+
+          <!-- Single Options Setting Button & Liquid Glass Popover -->
           <div class="chat-header-actions">
-            <button id="exportChatBtn" class="hdr-btn" title="Export Chat History" aria-label="Export chat">📥 Export</button>
-            <button id="pwaInstallBtn" class="hdr-btn pwa-btn hidden" title="Install SChat App" aria-label="Install App">📲 Install</button>
-            <button id="headerAboutBtn" class="icon-btn" title="About System & Creator" aria-label="System info">ℹ️</button>
-            <button id="headerThemeBtn" class="icon-btn" title="Toggle Theme" aria-label="Toggle theme">🌙</button>
+            <button id="optionsMenuBtn" class="icon-btn options-btn" title="App Settings & Options" aria-label="Open options menu">⚙️</button>
+            
+            <!-- Liquid Glass Popover Dropdown -->
+            <div id="optionsDropdown" class="liquid-glass-dropdown hidden" role="menu">
+              <div class="dropdown-item" id="dropdownThemeBtn" role="menuitem">
+                <span class="dropdown-icon" id="dropdownThemeIcon">🌙</span>
+                <span class="dropdown-label">Theme Mode</span>
+                <span id="dropdownThemeValue" class="dropdown-badge">Dark</span>
+              </div>
+              <div class="dropdown-item" id="dropdownExportBtn" role="menuitem">
+                <span class="dropdown-icon">📥</span>
+                <span class="dropdown-label">Export Chat History</span>
+              </div>
+              <div class="dropdown-item hidden" id="dropdownPwaBtn" role="menuitem">
+                <span class="dropdown-icon">📲</span>
+                <span class="dropdown-label">Install Web App</span>
+              </div>
+              <div class="dropdown-item" id="dropdownAboutBtn" role="menuitem">
+                <span class="dropdown-icon">ℹ️</span>
+                <span class="dropdown-label">About SChat</span>
+              </div>
+            </div>
           </div>
         </header>
 
@@ -396,6 +416,6 @@
 
   </div>
 
-  <script src="app.js?v=v6_postlogin_polish"></script>
+  <script src="app.js?v=v7_liquid_glass_dropdown"></script>
 </body>
 </html>

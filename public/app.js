@@ -43,40 +43,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Keyboard Shortcuts (Accessibility & Speed)
   document.addEventListener('keydown', (e) => {
-    // Ctrl + K or Cmd + K: Focus Search
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();
       if (filterInput) filterInput.focus();
     }
-    // Esc: Close any open modal
     if (e.key === 'Escape') {
       closeAboutModal();
       closeProfileModal();
+      closeOptionsDropdown();
       if (emojiPicker) emojiPicker.classList.add('hidden');
     }
   });
 
   // DOM Elements
   const pwaInstallBtn = document.getElementById('pwaInstallBtn');
+  const dropdownPwaBtn = document.getElementById('dropdownPwaBtn');
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    if (pwaInstallBtn) {
-      pwaInstallBtn.classList.remove('hidden');
-    }
+    if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
+    if (dropdownPwaBtn) dropdownPwaBtn.classList.remove('hidden');
   });
 
-  if (pwaInstallBtn) {
-    pwaInstallBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      console.log(`User PWA Install outcome: ${outcome}`);
-      deferredPrompt = null;
-      pwaInstallBtn.classList.add('hidden');
-    });
-  }
+  const triggerPwaInstall = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User PWA Install outcome: ${outcome}`);
+    deferredPrompt = null;
+    if (pwaInstallBtn) pwaInstallBtn.classList.add('hidden');
+    if (dropdownPwaBtn) dropdownPwaBtn.classList.add('hidden');
+  };
+
+  if (pwaInstallBtn) pwaInstallBtn.addEventListener('click', triggerPwaInstall);
+  if (dropdownPwaBtn) dropdownPwaBtn.addEventListener('click', () => {
+    triggerPwaInstall();
+    closeOptionsDropdown();
+  });
 
   const authView = document.getElementById('authView');
   const chatView = document.getElementById('chatView');
@@ -134,19 +138,45 @@ document.addEventListener('DOMContentLoaded', () => {
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
 
-  // Modals
+  // Modals & Liquid Glass Options Dropdown
   const aboutModal = document.getElementById('aboutModal');
   const closeAboutBtn = document.getElementById('closeAboutBtn');
   const authAboutBtn = document.getElementById('authAboutBtn');
   const sidebarAboutBtn = document.getElementById('sidebarAboutBtn');
   const headerAboutBtn = document.getElementById('headerAboutBtn');
+  
   const optionsMenuBtn = document.getElementById('optionsMenuBtn');
+  const optionsDropdown = document.getElementById('optionsDropdown');
+  const dropdownThemeBtn = document.getElementById('dropdownThemeBtn');
+  const dropdownThemeIcon = document.getElementById('dropdownThemeIcon');
+  const dropdownThemeValue = document.getElementById('dropdownThemeValue');
+  const dropdownExportBtn = document.getElementById('dropdownExportBtn');
+  const dropdownAboutBtn = document.getElementById('dropdownAboutBtn');
 
   const profileModal = document.getElementById('profileModal');
   const myProfileCard = document.getElementById('myProfileCard');
   const closeProfileBtn = document.getElementById('closeProfileBtn');
   const profileForm = document.getElementById('profileForm');
   const profileBioInput = document.getElementById('profileBioInput');
+
+  const toggleOptionsDropdown = () => {
+    if (optionsDropdown) optionsDropdown.classList.toggle('hidden');
+  };
+
+  const closeOptionsDropdown = () => {
+    if (optionsDropdown) optionsDropdown.classList.add('hidden');
+  };
+
+  if (optionsMenuBtn) optionsMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleOptionsDropdown();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (optionsDropdown && !optionsDropdown.contains(e.target) && e.target !== optionsMenuBtn) {
+      closeOptionsDropdown();
+    }
+  });
 
   const openAboutModal = () => { if (aboutModal) aboutModal.classList.remove('hidden'); };
   const closeAboutModal = () => { if (aboutModal) aboutModal.classList.add('hidden'); };
@@ -191,7 +221,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (authAboutBtn) authAboutBtn.addEventListener('click', openAboutModal);
   if (sidebarAboutBtn) sidebarAboutBtn.addEventListener('click', openAboutModal);
   if (headerAboutBtn) headerAboutBtn.addEventListener('click', openAboutModal);
-  if (optionsMenuBtn) optionsMenuBtn.addEventListener('click', openAboutModal);
+  if (dropdownAboutBtn) dropdownAboutBtn.addEventListener('click', () => {
+    openAboutModal();
+    closeOptionsDropdown();
+  });
   if (closeAboutBtn) closeAboutBtn.addEventListener('click', closeAboutModal);
   if (aboutModal) {
     aboutModal.addEventListener('click', (e) => {
@@ -199,35 +232,39 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Export Chat Feature (.txt file download)
-  if (exportChatBtn) {
-    exportChatBtn.addEventListener('click', () => {
-      const cards = document.querySelectorAll('.message-card');
-      if (cards.length === 0) return alert('No messages to export.');
+  // Export Chat Functionality
+  const executeExportChat = () => {
+    const cards = document.querySelectorAll('.message-card');
+    if (cards.length === 0) return alert('No messages to export.');
 
-      let exportText = `========================================\n`;
-      exportText += `SChat Export: ${activeRecipient ? 'DM with ' + activeRecipient.username : 'Global Channel'}\n`;
-      exportText += `Exported At: ${new Date().toLocaleString()}\n`;
-      exportText += `========================================\n\n`;
+    let exportText = `========================================\n`;
+    exportText += `SChat Export: ${activeRecipient ? 'DM with ' + activeRecipient.username : 'Global Channel'}\n`;
+    exportText += `Exported At: ${new Date().toLocaleString()}\n`;
+    exportText += `========================================\n\n`;
 
-      cards.forEach(card => {
-        const author = card.querySelector('.msg-author')?.textContent || 'User';
-        const time = card.querySelector('.msg-time')?.textContent || '';
-        const content = card.querySelector('.msg-bubble')?.textContent || '';
-        exportText += `[${time}] ${author}: ${content.trim()}\n`;
-      });
-
-      const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `SChat_Export_${activeRecipient ? activeRecipient.username : 'Global'}_${Date.now()}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    cards.forEach(card => {
+      const author = card.querySelector('.msg-author')?.textContent || 'User';
+      const time = card.querySelector('.msg-time')?.textContent || '';
+      const content = card.querySelector('.msg-bubble')?.textContent || '';
+      exportText += `[${time}] ${author}: ${content.trim()}\n`;
     });
-  }
+
+    const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SChat_Export_${activeRecipient ? activeRecipient.username : 'Global'}_${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  if (exportChatBtn) exportChatBtn.addEventListener('click', executeExportChat);
+  if (dropdownExportBtn) dropdownExportBtn.addEventListener('click', () => {
+    executeExportChat();
+    closeOptionsDropdown();
+  });
 
   // Reply Mode UI Controls
   const setReplyState = (msg) => {
@@ -286,8 +323,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.setAttribute('data-theme', currentTheme);
     localStorage.setItem('schat_theme', currentTheme);
     const icon = currentTheme === 'dark' ? '🌙' : '☀️';
+    const label = currentTheme === 'dark' ? 'Dark' : 'Light';
     if (themeModeBtn) themeModeBtn.textContent = icon;
     if (headerThemeBtn) headerThemeBtn.textContent = icon;
+    if (dropdownThemeIcon) dropdownThemeIcon.textContent = icon;
+    if (dropdownThemeValue) dropdownThemeValue.textContent = label;
   };
 
   const toggleTheme = () => {
@@ -298,6 +338,10 @@ document.addEventListener('DOMContentLoaded', () => {
   updateThemeUI();
   if (themeModeBtn) themeModeBtn.addEventListener('click', toggleTheme);
   if (headerThemeBtn) headerThemeBtn.addEventListener('click', toggleTheme);
+  if (dropdownThemeBtn) dropdownThemeBtn.addEventListener('click', () => {
+    toggleTheme();
+    closeOptionsDropdown();
+  });
 
   // Mobile Sidebar Drawer
   const openSidebar = () => {
