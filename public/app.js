@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => authAlert.classList.add('hidden'), 4000);
   };
 
-  switchToRegisterBtn.addEventListener('click', () => {
+  if (switchToRegisterBtn) switchToRegisterBtn.addEventListener('click', () => {
     loginForm.classList.remove('active');
     loginForm.classList.add('hidden');
     registerForm.classList.remove('hidden');
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  switchToLoginBtn.addEventListener('click', () => {
+  if (switchToLoginBtn) switchToLoginBtn.addEventListener('click', () => {
     registerForm.classList.remove('active');
     registerForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  avatarPicker.addEventListener('click', (e) => {
+  if (avatarPicker) avatarPicker.addEventListener('click', (e) => {
     const opt = e.target.closest('.avatar-opt');
     if (!opt) return;
     avatarPicker.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  registerForm.addEventListener('submit', async (e) => {
+  if (registerForm) registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  loginForm.addEventListener('submit', async (e) => {
+  if (loginForm) loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
@@ -517,10 +517,10 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebar();
   };
 
-  logoutBtn.addEventListener('click', performLogout);
+  if (logoutBtn) logoutBtn.addEventListener('click', performLogout);
 
   // Channel & DM Tab Switching
-  globalChannelBtn.addEventListener('click', () => {
+  if (globalChannelBtn) globalChannelBtn.addEventListener('click', () => {
     switchChatTab(null);
   });
 
@@ -595,12 +595,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
-    myAvatarEl.textContent = currentUser.avatar || '⚡';
-    myUsernameEl.textContent = currentUser.username;
+    if (myAvatarEl) myAvatarEl.textContent = currentUser.avatar || '⚡';
+    if (myUsernameEl) myUsernameEl.textContent = currentUser.username;
     if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
 
-    authView.classList.add('hidden');
-    chatView.classList.remove('hidden');
+    if (authView) authView.classList.add('hidden');
+    if (chatView) chatView.classList.remove('hidden');
 
     requestNotificationPermission();
     await loadMessageHistory();
@@ -1057,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  messageForm.addEventListener('submit', (e) => {
+  if (messageForm) messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const content = messageInput.value.trim();
 
@@ -1092,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   });
 
-  messageInput.addEventListener('input', () => {
+  if (messageInput) messageInput.addEventListener('input', () => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     ws.send(JSON.stringify({
@@ -1124,18 +1124,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  emojiBtn.addEventListener('click', () => {
+  if (emojiBtn) emojiBtn.addEventListener('click', () => {
     emojiPicker.classList.toggle('hidden');
   });
 
-  emojiPicker.addEventListener('click', (e) => {
+  if (emojiPicker) emojiPicker.addEventListener('click', (e) => {
     if (e.target.classList.contains('emoji-item')) {
       messageInput.value += e.target.textContent;
       messageInput.focus();
     }
   });
 
-  filterInput.addEventListener('input', (e) => {
+  if (filterInput) filterInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.online-user-item').forEach(item => {
       const text = item.textContent.toLowerCase();
