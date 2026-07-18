@@ -1553,6 +1553,151 @@ body {
   color: var(--text-main);
 }
 
+/* Liquid glass hover system -------------------------------------------------
+   Keep the effect to pointer devices: touch users should not get "stuck" hover
+   states, while desktop controls gain a soft reflective surface and lift. */
+@media (hover: hover) and (pointer: fine) {
+  .auth-card-container,
+  .modal-card,
+  .my-profile-card,
+  .channel-item,
+  .online-user-item,
+  .message-card,
+  .message-input-form,
+  .control-toggle-btn,
+  .control-select-wrapper,
+  .icon-btn,
+  .input-action-btn,
+  .owner-badge-btn,
+  .social-btn,
+  .reaction-badge,
+  .dropdown-item {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .my-profile-card,
+  .channel-item,
+  .online-user-item,
+  .message-card,
+  .control-toggle-btn,
+  .control-select-wrapper,
+  .icon-btn,
+  .input-action-btn,
+  .owner-badge-btn,
+  .social-btn,
+  .reaction-badge,
+  .dropdown-item {
+    transition: transform 220ms var(--spring-easing), border-color 220ms ease,
+      background-color 220ms ease, box-shadow 220ms ease, filter 220ms ease;
+  }
+
+  .my-profile-card::before,
+  .channel-item::before,
+  .online-user-item::before,
+  .message-card::before,
+  .message-input-form::before,
+  .control-toggle-btn::before,
+  .control-select-wrapper::before,
+  .icon-btn::before,
+  .input-action-btn::before,
+  .owner-badge-btn::before,
+  .social-btn::before,
+  .reaction-badge::before,
+  .dropdown-item::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(115deg, rgba(255, 255, 255, 0.2), transparent 34%, transparent 66%, rgba(103, 232, 249, 0.13));
+    transform: translateX(-45%) skewX(-15deg);
+    transition: opacity 220ms ease, transform 500ms var(--spring-easing);
+  }
+
+  .my-profile-card > *,
+  .channel-item > *,
+  .online-user-item > *,
+  .message-card > *,
+  .message-input-form > *,
+  .control-toggle-btn > *,
+  .control-select-wrapper > *,
+  .icon-btn > *,
+  .input-action-btn > *,
+  .owner-badge-btn > *,
+  .social-btn > *,
+  .reaction-badge > *,
+  .dropdown-item > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .my-profile-card:hover,
+  .channel-item:hover,
+  .online-user-item:hover,
+  .message-card:hover,
+  .control-toggle-btn:hover,
+  .control-select-wrapper:hover,
+  .icon-btn:hover,
+  .input-action-btn:hover,
+  .owner-badge-btn:hover,
+  .social-btn:hover,
+  .reaction-badge:hover,
+  .dropdown-item:hover {
+    border-color: rgba(167, 139, 250, 0.52);
+    box-shadow: 0 10px 25px rgba(5, 8, 25, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    transform: translateY(-2px) scale(1.01);
+  }
+
+  .my-profile-card:hover::before,
+  .channel-item:hover::before,
+  .online-user-item:hover::before,
+  .message-card:hover::before,
+  .message-input-form:focus-within::before,
+  .control-toggle-btn:hover::before,
+  .control-select-wrapper:hover::before,
+  .icon-btn:hover::before,
+  .input-action-btn:hover::before,
+  .owner-badge-btn:hover::before,
+  .social-btn:hover::before,
+  .reaction-badge:hover::before,
+  .dropdown-item:hover::before {
+    opacity: 1;
+    transform: translateX(35%) skewX(-15deg);
+  }
+
+  .auth-card-container:hover,
+  .modal-card:hover,
+  .message-input-form:focus-within {
+    border-color: rgba(125, 211, 252, 0.34);
+    box-shadow: 0 18px 42px rgba(5, 8, 25, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.13);
+  }
+
+  .message-card.outgoing:hover {
+    transform: translateY(-2px) translateX(-2px) scale(1.01);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .my-profile-card,
+  .channel-item,
+  .online-user-item,
+  .message-card,
+  .message-input-form,
+  .control-toggle-btn,
+  .control-select-wrapper,
+  .icon-btn,
+  .input-action-btn,
+  .owner-badge-btn,
+  .social-btn,
+  .reaction-badge,
+  .dropdown-item {
+    transition: none !important;
+  }
+}
+
 .edited-badge {
   font-size: 0.68rem;
   color: var(--text-dim);
