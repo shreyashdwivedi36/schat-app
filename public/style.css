@@ -1722,6 +1722,38 @@ body {
   .mobile-toggle-btn { display: flex; }
   .mobile-only-btn { display: flex; }
 
+  /* On phones the options panel becomes part of the header instead of
+     floating over the conversation. This keeps pins and messages tappable. */
+  .chat-header {
+    transition: min-height 220ms var(--spring-easing), padding-bottom 220ms var(--spring-easing);
+  }
+
+  .chat-header.options-open {
+    min-height: 226px;
+    align-items: flex-start;
+  }
+
+  .chat-header.options-open .room-info {
+    padding-top: 9px;
+  }
+
+  .chat-header.options-open .chat-header-actions {
+    margin-top: 0;
+  }
+
+  .liquid-glass-dropdown {
+    top: 56px;
+    right: 0;
+    min-width: min(310px, calc(100vw - 32px));
+    border-radius: 16px;
+    padding: 6px;
+  }
+
+  .dropdown-item {
+    min-height: 46px;
+    padding: 11px 13px;
+  }
+
   .chat-sidebar {
     position: absolute;
     top: 0;
