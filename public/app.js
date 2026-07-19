@@ -160,15 +160,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileBioInput = document.getElementById('profileBioInput');
 
   const toggleOptionsDropdown = () => {
-    if (!optionsDropdown) return;
-    optionsDropdown.classList.toggle('hidden');
-    optionsDropdown.closest('.chat-header')?.classList.toggle('options-open', !optionsDropdown.classList.contains('hidden'));
+    if (optionsDropdown) optionsDropdown.classList.toggle('hidden');
   };
 
   const closeOptionsDropdown = () => {
-    if (!optionsDropdown) return;
-    optionsDropdown.classList.add('hidden');
-    optionsDropdown.closest('.chat-header')?.classList.remove('options-open');
+    if (optionsDropdown) optionsDropdown.classList.add('hidden');
   };
 
   if (optionsMenuBtn) optionsMenuBtn.addEventListener('click', (e) => {

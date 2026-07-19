@@ -747,15 +747,14 @@ body {
   top: calc(100% + 10px);
   right: 0;
   min-width: 230px;
-  background: hsl(0 0% 0% / var(--glass-frost, 0.1));
-  -webkit-backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1.2));
-  backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1.2));
-  box-shadow: inset 0 0 2px 1px lab(100% 0 0 / .35), 
-              inset 0 0 10px 4px lab(100% 0 0 / .15), 
-              inset 0 4px 16px lab(5.32% 1.61 -5.88 / .05), 
-              inset 0 8px 24px lab(5.32% 1.61 -5.88 / .05), 
-              0 20px 50px rgba(0, 0, 0, 0.5);
-  border-radius: 20px;
+  background: linear-gradient(145deg, rgba(30, 35, 62, 0.82), rgba(12, 15, 30, 0.76));
+  -webkit-backdrop-filter: blur(22px) saturate(155%);
+  backdrop-filter: blur(22px) saturate(155%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2),
+              inset 0 -1px 0 rgba(255, 255, 255, 0.05),
+              0 18px 42px rgba(0, 0, 0, 0.38),
+              0 0 28px rgba(139, 92, 246, 0.12);
+  border-radius: 16px;
   padding: 8px;
   z-index: 300;
   display: flex;
@@ -763,7 +762,7 @@ body {
   gap: 4px;
   animation: liquidPopIn 0.25s var(--spring-easing);
   transform-origin: top right;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .glass-surface__filter {
@@ -1722,29 +1721,9 @@ body {
   .mobile-toggle-btn { display: flex; }
   .mobile-only-btn { display: flex; }
 
-  /* On phones the options panel becomes part of the header instead of
-     floating over the conversation. This keeps pins and messages tappable. */
-  .chat-header {
-    transition: min-height 220ms var(--spring-easing), padding-bottom 220ms var(--spring-easing);
-  }
-
-  .chat-header.options-open {
-    min-height: 226px;
-    align-items: flex-start;
-  }
-
-  .chat-header.options-open .room-info {
-    padding-top: 9px;
-  }
-
-  .chat-header.options-open .chat-header-actions {
-    margin-top: 0;
-  }
-
   .liquid-glass-dropdown {
-    top: 56px;
     right: 0;
-    min-width: min(310px, calc(100vw - 32px));
+    min-width: min(286px, calc(100vw - 28px));
     border-radius: 16px;
     padding: 6px;
   }
