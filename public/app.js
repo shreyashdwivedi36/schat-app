@@ -3,7 +3,16 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Application State
   let authToken = localStorage.getItem('schat_token') || null;
-  let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
+  let currentUser = null;
+  try {
+    const storedUser = localStorage.getItem('schat_user');
+    if (storedUser && storedUser !== 'undefined' && storedUser !== 'null') {
+      currentUser = JSON.parse(storedUser);
+    }
+  } catch (e) {
+    currentUser = null;
+  }
+
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let activeRecipient = null; // null = Global Channel, { id, username, avatar } = Direct Message
   let activeReply = null; // null or { id, username, text }
@@ -173,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Keyboard Shortcuts (Accessibility)
+  // Keyboard Shortcuts
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();
@@ -461,7 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
       welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
       welcomeSubtitle.textContent = 'Encrypted 1-on-1 private real-time session.';
 
-      // Clear Unread
       delete unreadCounts[activeRecipient.id];
       updateOnlineUsers();
     }
@@ -485,7 +493,21 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
 
-      if (!res.ok) throw new Error('Failed to load message history');
+      if (!res.ok) {
+        if (res.status === 401) {
+          console.warn('Session expired or invalid token');
+          localStorage.removeItem('schat_token');
+          localStorage.removeItem('schat_user');
+          authToken = null;
+          currentUser = null;
+          if (ws) ws.close();
+          authView.classList.remove('hidden');
+          chatView.classList.add('hidden');
+          showAlert('Session expired. Please sign in again.', 'error');
+          return;
+        }
+        throw new Error('Failed to load message history');
+      }
       const data = await res.json();
       renderMessageFeed(data.messages || []);
     } catch (err) {
@@ -511,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const appendMessageCard = (msg) => {
-    const isOutgoing = Number(msg.user_id) === Number(currentUser.id);
+    const isOutgoing = Number(msg.user_id) === Number(currentUser ? currentUser.id : 0);
     const card = document.createElement('div');
     card.className = `message-card ${isOutgoing ? 'outgoing' : 'incoming'} 3d-tilt-card`;
     card.dataset.msgId = msg.id;
@@ -587,6 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // WebSocket Connection Lifecycle
   const connectWebSocket = () => {
+    if (!authToken) return;
     if (ws) ws.close();
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -627,17 +650,17 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (data.type === 'presence') {
       updateOnlineUsers(data.onlineUsers || []);
     } else if (data.type === 'new_message') {
+      const currentUserId = currentUser ? currentUser.id : 0;
       const isForCurrentRoom = activeRecipient 
-        ? ((Number(data.user_id) === Number(activeRecipient.id) && Number(data.recipient_id) === Number(currentUser.id)) ||
-           (Number(data.user_id) === Number(currentUser.id) && Number(data.recipient_id) === Number(activeRecipient.id)))
+        ? ((Number(data.user_id) === Number(activeRecipient.id) && Number(data.recipient_id) === Number(currentUserId)) ||
+           (Number(data.user_id) === Number(currentUserId) && Number(data.recipient_id) === Number(activeRecipient.id)))
         : (!data.recipient_id);
 
       if (isForCurrentRoom) {
         appendMessageCard(data);
         scrollToBottom();
-        if (Number(data.user_id) !== Number(currentUser.id)) playSound('receive');
-      } else if (data.recipient_id && Number(data.recipient_id) === Number(currentUser.id)) {
-        // Unread DM
+        if (Number(data.user_id) !== Number(currentUserId)) playSound('receive');
+      } else if (data.recipient_id && Number(data.recipient_id) === Number(currentUserId)) {
         unreadCounts[data.user_id] = (unreadCounts[data.user_id] || 0) + 1;
         playSound('receive');
       }
@@ -650,8 +673,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateOnlineUsers = (users = []) => {
-    const otherUsers = users.filter(u => Number(u.id) !== Number(currentUser.id));
-    onlineCountBadge.textContent = otherUsers.length;
+    if (!onlineUsersList) return;
+    const currentUserId = currentUser ? currentUser.id : 0;
+    const otherUsers = users.filter(u => Number(u.id) !== Number(currentUserId));
+    if (onlineCountBadge) onlineCountBadge.textContent = otherUsers.length;
     onlineUsersList.innerHTML = '';
 
     if (otherUsers.length === 0) {
@@ -684,10 +709,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // Auth Handler Forms
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
+    const loginBtn = document.getElementById('loginBtn');
+    const usernameInput = document.getElementById('loginUsername');
+    const passwordInput = document.getElementById('loginPassword');
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!username || !password) {
+      showAlert('Please enter both username/email and password.', 'error');
+      return;
+    }
 
     try {
+      if (loginBtn) {
+        loginBtn.disabled = true;
+        const txt = loginBtn.querySelector('.btn-text');
+        if (txt) txt.textContent = 'Authenticating...';
+      }
+
       const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -695,7 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
+      if (!res.ok) throw new Error(data.error || 'Invalid credentials');
 
       authToken = data.token;
       currentUser = data.user;
@@ -706,16 +746,34 @@ document.addEventListener('DOMContentLoaded', () => {
       initializeChatSession();
     } catch (err) {
       showAlert(err.message, 'error');
+    } finally {
+      if (loginBtn) {
+        loginBtn.disabled = false;
+        const txt = loginBtn.querySelector('.btn-text');
+        if (txt) txt.textContent = 'Sign In';
+      }
     }
   });
 
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const registerBtn = document.getElementById('registerBtn');
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
 
+    if (!username || !email || !password) {
+      showAlert('Please fill in all required fields.', 'error');
+      return;
+    }
+
     try {
+      if (registerBtn) {
+        registerBtn.disabled = true;
+        const txt = registerBtn.querySelector('.btn-text');
+        if (txt) txt.textContent = 'Creating Account...';
+      }
+
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -734,14 +792,20 @@ document.addEventListener('DOMContentLoaded', () => {
       initializeChatSession();
     } catch (err) {
       showAlert(err.message, 'error');
+    } finally {
+      if (registerBtn) {
+        registerBtn.disabled = false;
+        const txt = registerBtn.querySelector('.btn-text');
+        if (txt) txt.textContent = 'Register & Join';
+      }
     }
   });
 
   const initializeChatSession = () => {
     if (!currentUser) return;
-    myAvatarEl.textContent = currentUser.avatar || '⚡';
-    myUsernameEl.textContent = currentUser.username;
-    myBioEl.textContent = currentUser.bio || 'Click to edit bio...';
+    if (myAvatarEl) myAvatarEl.textContent = currentUser.avatar || '⚡';
+    if (myUsernameEl) myUsernameEl.textContent = currentUser.username;
+    if (myBioEl) myBioEl.textContent = currentUser.bio || 'Click to edit bio...';
 
     authView.classList.add('hidden');
     chatView.classList.remove('hidden');
@@ -818,9 +882,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const handleTypingEvent = (data) => {
+    const currentUserId = currentUser ? currentUser.id : 0;
     const isRelevantTyping = activeRecipient 
-      ? (Number(data.user_id) === Number(activeRecipient.id) && Number(data.recipient_id) === Number(currentUser.id))
-      : (!data.recipient_id && Number(data.user_id) !== Number(currentUser.id));
+      ? (Number(data.user_id) === Number(activeRecipient.id) && Number(data.recipient_id) === Number(currentUserId))
+      : (!data.recipient_id && Number(data.user_id) !== Number(currentUserId));
 
     if (isRelevantTyping && data.isTyping) {
       typingText.textContent = `${data.username} is typing...`;
