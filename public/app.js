@@ -1,4 +1,4 @@
-// SChat Realtime Animated Chat App Core Frontend Logic
+// SChat Ultra-Premium 3D Motion Chat Engine
 
 document.addEventListener('DOMContentLoaded', () => {
   // Application State
@@ -19,8 +19,140 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
-  // Initialize Three.js 3D Interactive WebGL Motion Engine
-  init3DMotionBackground();
+  // ================= 3D WEBGL MOTION ENGINE (Three.js) =================
+  const init3DMotionEngine = () => {
+    const canvas = document.getElementById('bg3dCanvas');
+    if (!canvas || typeof THREE === 'undefined') return;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 40;
+
+    // Interactive Floating Particle Flow Grid
+    const particleCount = 1200;
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(particleCount * 3);
+    const colors = new Float32Array(particleCount * 3);
+    const originalY = new Float32Array(particleCount);
+
+    const colorA = new THREE.Color(0x8b5cf6); // Purple Glow
+    const colorB = new THREE.Color(0x06b6d4); // Cyan Glow
+
+    for (let i = 0; i < particleCount; i++) {
+      const x = (Math.random() - 0.5) * 120;
+      const y = (Math.random() - 0.5) * 80;
+      const z = (Math.random() - 0.5) * 80;
+
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
+      originalY[i] = y;
+
+      const mixedColor = colorA.clone().lerp(colorB, Math.random());
+      colors[i * 3] = mixedColor.r;
+      colors[i * 3 + 1] = mixedColor.g;
+      colors[i * 3 + 2] = mixedColor.b;
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    // Particle Material Shader Point Texture Simulation
+    const canvasTexture = document.createElement('canvas');
+    canvasTexture.width = 16;
+    canvasTexture.height = 16;
+    const ctx = canvasTexture.getContext('2d');
+    const grad = ctx.createRadialGradient(8, 8, 0, 8, 8, 8);
+    grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 16, 16);
+
+    const pTexture = new THREE.CanvasTexture(canvasTexture);
+
+    const material = new THREE.PointsMaterial({
+      size: 1.2,
+      vertexColors: true,
+      map: pTexture,
+      transparent: true,
+      opacity: 0.85,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false
+    });
+
+    const particles = new THREE.Points(geometry, material);
+    scene.add(particles);
+
+    // Mouse Parallax Motion Tracking
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    window.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    // Animation Loop
+    let clock = new THREE.Clock();
+    const animate = () => {
+      requestAnimationFrame(animate);
+      const elapsedTime = clock.getElapsedTime();
+
+      // Smooth Parallax Interpolation
+      targetX += (mouseX - targetX) * 0.05;
+      targetY += (mouseY - targetY) * 0.05;
+
+      camera.position.x = targetX * 8;
+      camera.position.y = -targetY * 8;
+      camera.lookAt(scene.position);
+
+      // Particle Wave Displacement Motion
+      const pos = geometry.attributes.position.array;
+      for (let i = 0; i < particleCount; i++) {
+        const x = pos[i * 3];
+        pos[i * 3 + 1] = originalY[i] + Math.sin(elapsedTime * 1.5 + x * 0.1) * 2.5;
+      }
+      geometry.attributes.position.needsUpdate = true;
+
+      particles.rotation.y = elapsedTime * 0.04;
+
+      renderer.render(scene, camera);
+    };
+
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  };
+
+  init3DMotionEngine();
+
+  // ================= 3D TILT CARDS PARALLAX EFFECT =================
+  const init3DTiltCards = () => {
+    document.querySelectorAll('.3d-tilt-card').forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        card.style.transform = `perspective(1000px) rotateX(${-y / 15}deg) rotateY(${x / 15}deg) translateZ(10px)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)`;
+      });
+    });
+  };
+
+  init3DTiltCards();
 
   // Register PWA Service Worker
   if ('serviceWorker' in navigator) {
@@ -34,14 +166,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js').then((reg) => {
-        console.log('⚡ PWA ServiceWorker registered successfully:', reg.scope);
+        console.log('⚡ PWA ServiceWorker registered:', reg.scope);
       }).catch((err) => {
         console.error('ServiceWorker registration failed:', err);
       });
     });
   }
 
-  // Keyboard Shortcuts (Accessibility & Speed)
+  // Keyboard Shortcuts (Accessibility)
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();
@@ -50,37 +182,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Escape') {
       closeAboutModal();
       closeProfileModal();
-      closeOptionsDropdown();
       if (emojiPicker) emojiPicker.classList.add('hidden');
     }
   });
 
   // DOM Elements
   const pwaInstallBtn = document.getElementById('pwaInstallBtn');
-  const dropdownPwaBtn = document.getElementById('dropdownPwaBtn');
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
     if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
-    if (dropdownPwaBtn) dropdownPwaBtn.classList.remove('hidden');
   });
 
-  const triggerPwaInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User PWA Install outcome: ${outcome}`);
-    deferredPrompt = null;
-    if (pwaInstallBtn) pwaInstallBtn.classList.add('hidden');
-    if (dropdownPwaBtn) dropdownPwaBtn.classList.add('hidden');
-  };
-
-  if (pwaInstallBtn) pwaInstallBtn.addEventListener('click', triggerPwaInstall);
-  if (dropdownPwaBtn) dropdownPwaBtn.addEventListener('click', () => {
-    triggerPwaInstall();
-    closeOptionsDropdown();
-  });
+  if (pwaInstallBtn) {
+    pwaInstallBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA Install outcome: ${outcome}`);
+      deferredPrompt = null;
+      pwaInstallBtn.classList.add('hidden');
+    });
+  }
 
   const authView = document.getElementById('authView');
   const chatView = document.getElementById('chatView');
@@ -138,45 +262,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const emojiBtn = document.getElementById('emojiBtn');
   const emojiPicker = document.getElementById('emojiPicker');
 
-  // Modals & Liquid Glass Options Dropdown
+  // Modals
   const aboutModal = document.getElementById('aboutModal');
   const closeAboutBtn = document.getElementById('closeAboutBtn');
   const authAboutBtn = document.getElementById('authAboutBtn');
   const sidebarAboutBtn = document.getElementById('sidebarAboutBtn');
   const headerAboutBtn = document.getElementById('headerAboutBtn');
-  
-  const optionsMenuBtn = document.getElementById('optionsMenuBtn');
-  const optionsDropdown = document.getElementById('optionsDropdown');
-  const dropdownThemeBtn = document.getElementById('dropdownThemeBtn');
-  const dropdownThemeIcon = document.getElementById('dropdownThemeIcon');
-  const dropdownThemeValue = document.getElementById('dropdownThemeValue');
-  const dropdownExportBtn = document.getElementById('dropdownExportBtn');
-  const dropdownAboutBtn = document.getElementById('dropdownAboutBtn');
 
   const profileModal = document.getElementById('profileModal');
   const myProfileCard = document.getElementById('myProfileCard');
   const closeProfileBtn = document.getElementById('closeProfileBtn');
   const profileForm = document.getElementById('profileForm');
   const profileBioInput = document.getElementById('profileBioInput');
-
-  const toggleOptionsDropdown = () => {
-    if (optionsDropdown) optionsDropdown.classList.toggle('hidden');
-  };
-
-  const closeOptionsDropdown = () => {
-    if (optionsDropdown) optionsDropdown.classList.add('hidden');
-  };
-
-  if (optionsMenuBtn) optionsMenuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleOptionsDropdown();
-  });
-
-  document.addEventListener('click', (e) => {
-    if (optionsDropdown && !optionsDropdown.contains(e.target) && e.target !== optionsMenuBtn) {
-      closeOptionsDropdown();
-    }
-  });
 
   const openAboutModal = () => { if (aboutModal) aboutModal.classList.remove('hidden'); };
   const closeAboutModal = () => { if (aboutModal) aboutModal.classList.add('hidden'); };
@@ -189,182 +286,41 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const closeProfileModal = () => { if (profileModal) profileModal.classList.add('hidden'); };
 
-  if (myProfileCard) myProfileCard.addEventListener('click', (e) => {
-    if (e.target.closest('#logoutBtn')) return;
-    openProfileModal();
-  });
-  if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
-
-  if (profileForm) {
-    profileForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const newBio = profileBioInput.value.trim();
-      try {
-        const res = await fetch('/api/me', {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({ bio: newBio, avatar: currentUser.avatar })
-        });
-        if (res.ok) {
-          currentUser.bio = newBio;
-          localStorage.setItem('schat_user', JSON.stringify(currentUser));
-          if (myBioEl) myBioEl.textContent = newBio || 'Online';
-          closeProfileModal();
-        }
-      } catch (err) {}
-    });
-  }
-
   if (authAboutBtn) authAboutBtn.addEventListener('click', openAboutModal);
   if (sidebarAboutBtn) sidebarAboutBtn.addEventListener('click', openAboutModal);
   if (headerAboutBtn) headerAboutBtn.addEventListener('click', openAboutModal);
-  if (dropdownAboutBtn) dropdownAboutBtn.addEventListener('click', () => {
-    openAboutModal();
-    closeOptionsDropdown();
-  });
   if (closeAboutBtn) closeAboutBtn.addEventListener('click', closeAboutModal);
-  if (aboutModal) {
-    aboutModal.addEventListener('click', (e) => {
-      if (e.target === aboutModal) closeAboutModal();
-    });
-  }
 
-  // Export Chat Functionality
-  const executeExportChat = () => {
-    const cards = document.querySelectorAll('.message-card');
-    if (cards.length === 0) return alert('No messages to export.');
+  if (myProfileCard) myProfileCard.addEventListener('click', openProfileModal);
+  if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
 
-    let exportText = `========================================\n`;
-    exportText += `SChat Export: ${activeRecipient ? 'DM with ' + activeRecipient.username : 'Global Channel'}\n`;
-    exportText += `Exported At: ${new Date().toLocaleString()}\n`;
-    exportText += `========================================\n\n`;
+  // Context Menu Handling
+  const msgContextMenu = document.getElementById('msgContextMenu');
+  let selectedContextMsgId = null;
 
-    cards.forEach(card => {
-      const author = card.querySelector('.msg-author')?.textContent || 'User';
-      const time = card.querySelector('.msg-time')?.textContent || '';
-      const content = card.querySelector('.msg-bubble')?.textContent || '';
-      exportText += `[${time}] ${author}: ${content.trim()}\n`;
-    });
-
-    const blob = new Blob([exportText], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `SChat_Export_${activeRecipient ? activeRecipient.username : 'Global'}_${Date.now()}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  if (exportChatBtn) exportChatBtn.addEventListener('click', executeExportChat);
-  if (dropdownExportBtn) dropdownExportBtn.addEventListener('click', () => {
-    executeExportChat();
-    closeOptionsDropdown();
-  });
-
-  // Reply Mode UI Controls
-  const setReplyState = (msg) => {
-    if (!msg) {
-      activeReply = null;
-      if (replyPreviewBar) replyPreviewBar.classList.add('hidden');
-      return;
-    }
-    activeReply = {
-      id: msg.id,
-      username: msg.username || 'User',
-      text: msg.content || ''
-    };
-    if (replyUserLabel) replyUserLabel.textContent = `Replying to @${activeReply.username}`;
-    if (replyTextSnippet) replyTextSnippet.textContent = activeReply.text;
-    if (replyPreviewBar) replyPreviewBar.classList.remove('hidden');
-    messageInput.focus();
-  };
-
-  if (cancelReplyBtn) {
-    cancelReplyBtn.addEventListener('click', () => setReplyState(null));
-  }
-
-  // Request Desktop Notification Permission
-  const requestNotificationPermission = () => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+  const showContextMenu = (e, msgId) => {
+    e.preventDefault();
+    selectedContextMsgId = msgId;
+    if (msgContextMenu) {
+      msgContextMenu.style.left = `${Math.min(e.clientX, window.innerWidth - 200)}px`;
+      msgContextMenu.style.top = `${Math.min(e.clientY, window.innerHeight - 200)}px`;
+      msgContextMenu.classList.remove('hidden');
     }
   };
 
-  const showDesktopNotification = (senderName, messageText) => {
-    if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
-      new Notification(`New DM from @${senderName}`, {
-        body: messageText,
-        icon: '/icon-192.png'
-      });
-    }
+  const hideContextMenu = () => {
+    if (msgContextMenu) msgContextMenu.classList.add('hidden');
   };
 
-  // Privacy Blur Toggle
-  if (privacyBlurBtn) {
-    privacyBlurBtn.addEventListener('click', () => {
-      isPrivacyBlurActive = !isPrivacyBlurActive;
-      if (isPrivacyBlurActive) {
-        privacyBlurBtn.classList.add('active');
-        privacyBlurBtn.querySelector('.control-text').textContent = 'Blur On';
-      } else {
-        privacyBlurBtn.classList.remove('active');
-        privacyBlurBtn.querySelector('.control-text').textContent = 'Blur Off';
-      }
-    });
-  }
+  document.addEventListener('click', hideContextMenu);
 
-  // Theme Switcher
-  const updateThemeUI = () => {
-    document.documentElement.setAttribute('data-theme', currentTheme);
-    localStorage.setItem('schat_theme', currentTheme);
-    const icon = currentTheme === 'dark' ? '🌙' : '☀️';
-    const label = currentTheme === 'dark' ? 'Dark' : 'Light';
-    if (themeModeBtn) themeModeBtn.textContent = icon;
-    if (headerThemeBtn) headerThemeBtn.textContent = icon;
-    if (dropdownThemeIcon) dropdownThemeIcon.textContent = icon;
-    if (dropdownThemeValue) dropdownThemeValue.textContent = label;
-  };
-
-  const toggleTheme = () => {
-    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    updateThemeUI();
-  };
-
-  updateThemeUI();
-  if (themeModeBtn) themeModeBtn.addEventListener('click', toggleTheme);
-  if (headerThemeBtn) headerThemeBtn.addEventListener('click', toggleTheme);
-  if (dropdownThemeBtn) dropdownThemeBtn.addEventListener('click', () => {
-    toggleTheme();
-    closeOptionsDropdown();
-  });
-
-  // Mobile Sidebar Drawer
-  const openSidebar = () => {
-    chatSidebar.classList.add('open');
-    sidebarOverlay.classList.add('active');
-  };
-
-  const closeSidebar = () => {
-    chatSidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('active');
-  };
-
-  if (mobileSidebarToggle) mobileSidebarToggle.addEventListener('click', openSidebar);
-  if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
-  if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
-
-  // Web Audio Synthesizer
+  // Audio Synthesizer Engine
   const playSound = (type) => {
     if (!soundEnabled) return;
     try {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContext) return;
-      const ctx = new AudioContext();
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
 
@@ -373,65 +329,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (type === 'send') {
         osc.frequency.setValueAtTime(440, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.1);
-      } else if (type === 'receive') {
-        osc.frequency.setValueAtTime(600, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.15);
         osc.start();
         osc.stop(ctx.currentTime + 0.15);
-      } else if (type === 'delete') {
-        osc.frequency.setValueAtTime(300, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.12);
+      } else if (type === 'receive') {
+        osc.frequency.setValueAtTime(600, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.2);
         gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+        gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.2);
         osc.start();
-        osc.stop(ctx.currentTime + 0.12);
+        osc.stop(ctx.currentTime + 0.2);
       }
     } catch (e) {}
   };
-
-  window.togglePasswordVisibility = (inputId, btn) => {
-    const input = document.getElementById(inputId);
-    input.type = input.type === 'password' ? 'text' : 'password';
-    btn.textContent = input.type === 'password' ? '👁️' : '🔒';
-  };
-
-  const showAlert = (message, type = 'error') => {
-    authAlert.textContent = message;
-    authAlert.className = `alert-banner ${type}`;
-    authAlert.classList.remove('hidden');
-    setTimeout(() => authAlert.classList.add('hidden'), 4000);
-  };
-
-  switchToRegisterBtn.addEventListener('click', () => {
-    loginForm.classList.remove('active');
-    loginForm.classList.add('hidden');
-    registerForm.classList.remove('hidden');
-    registerForm.classList.add('active');
-    authAlert.classList.add('hidden');
-  });
-
-  switchToLoginBtn.addEventListener('click', () => {
-    registerForm.classList.remove('active');
-    registerForm.classList.add('hidden');
-    loginForm.classList.remove('hidden');
-    loginForm.classList.add('active');
-    authAlert.classList.add('hidden');
-  });
-
-  avatarPicker.addEventListener('click', (e) => {
-    const opt = e.target.closest('.avatar-opt');
-    if (!opt) return;
-    avatarPicker.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
-    opt.classList.add('selected');
-    selectedAvatar = opt.dataset.avatar;
-  });
 
   if (soundToggleBtn) {
     soundToggleBtn.addEventListener('click', () => {
@@ -440,589 +352,301 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  registerForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('regUsername').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
-
-    const btn = document.getElementById('registerBtn');
-    btn.disabled = true;
-
-    try {
-      const res = await fetch('/api/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password, avatar: selectedAvatar })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
-
-      authToken = data.token;
-      currentUser = data.user;
-      localStorage.setItem('schat_token', authToken);
-      localStorage.setItem('schat_user', JSON.stringify(currentUser));
-
-      showAlert('Account created successfully!', 'success');
-      setTimeout(initializeChatSession, 600);
-    } catch (err) {
-      showAlert(err.message, 'error');
-    } finally {
-      btn.disabled = false;
-    }
-  });
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-
-    const btn = document.getElementById('loginBtn');
-    btn.disabled = true;
-
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
-
-      authToken = data.token;
-      currentUser = data.user;
-      localStorage.setItem('schat_token', authToken);
-      localStorage.setItem('schat_user', JSON.stringify(currentUser));
-
-      initializeChatSession();
-    } catch (err) {
-      showAlert(err.message, 'error');
-    } finally {
-      btn.disabled = false;
-    }
-  });
-
-  const performLogout = () => {
-    localStorage.removeItem('schat_token');
-    localStorage.removeItem('schat_user');
-    authToken = null;
-    currentUser = null;
-    if (pingInterval) clearInterval(pingInterval);
-    if (ws) ws.close();
-
-    chatView.classList.add('hidden');
-    authView.classList.remove('hidden');
-    closeSidebar();
+  // Theme Toggle
+  const toggleTheme = () => {
+    currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    localStorage.setItem('schat_theme', currentTheme);
+    if (themeModeBtn) themeModeBtn.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
+    if (headerThemeBtn) headerThemeBtn.textContent = currentTheme === 'dark' ? '🌙' : '☀️';
   };
 
-  logoutBtn.addEventListener('click', performLogout);
+  if (themeModeBtn) themeModeBtn.addEventListener('click', toggleTheme);
+  if (headerThemeBtn) headerThemeBtn.addEventListener('click', toggleTheme);
 
-  // Channel & DM Tab Switching
-  globalChannelBtn.addEventListener('click', () => {
-    switchChatTab(null);
-  });
+  // Mobile Sidebar Controls
+  if (mobileSidebarToggle) {
+    mobileSidebarToggle.addEventListener('click', () => {
+      chatSidebar.classList.add('mobile-open');
+      sidebarOverlay.classList.add('active');
+    });
+  }
 
-  const switchChatTab = (recipient) => {
+  const closeSidebar = () => {
+    chatSidebar.classList.remove('mobile-open');
+    sidebarOverlay.classList.remove('active');
+  };
+
+  if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
+  if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+
+  // Auth Switcher
+  if (switchToRegisterBtn) {
+    switchToRegisterBtn.addEventListener('click', () => {
+      loginForm.classList.remove('active');
+      loginForm.classList.add('hidden');
+      registerForm.classList.remove('hidden');
+      registerForm.classList.add('active');
+    });
+  }
+
+  if (switchToLoginBtn) {
+    switchToLoginBtn.addEventListener('click', () => {
+      registerForm.classList.remove('active');
+      registerForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+      loginForm.classList.add('active');
+    });
+  }
+
+  if (avatarPicker) {
+    avatarPicker.addEventListener('click', (e) => {
+      if (e.target.classList.contains('avatar-opt')) {
+        document.querySelectorAll('.avatar-opt').forEach(opt => opt.classList.remove('selected'));
+        e.target.classList.add('selected');
+        selectedAvatar = e.target.dataset.avatar;
+      }
+    });
+  }
+
+  const showAlert = (msg, type = 'error') => {
+    if (!authAlert) return;
+    authAlert.textContent = msg;
+    authAlert.className = `alert-banner ${type}`;
+    authAlert.classList.remove('hidden');
+    setTimeout(() => {
+      authAlert.classList.add('hidden');
+    }, 4000);
+  };
+
+  // Helper Escape HTML
+  const escapeHtml = (str) => {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
+  // Switch Chat Tabs
+  const switchChatTab = (recipient = null) => {
     activeRecipient = recipient;
+    closeSidebar();
     setReplyState(null);
 
-    document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
-    globalChannelBtn.classList.remove('active');
-
     if (!activeRecipient) {
+      // Global Chat
       globalChannelBtn.classList.add('active');
-      roomAvatar.textContent = '💬';
+      document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
+      roomAvatar.textContent = '🌐';
       roomTitle.textContent = 'Global Channel';
-      roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Realtime Active';
+      roomSubtitle.textContent = 'Realtime Active Community';
       welcomeTitle.textContent = 'Welcome to SChat!';
-      welcomeSubtitle.textContent = 'Real-time messaging active across mobile & desktop.';
+      welcomeSubtitle.textContent = 'Global interactive workspace with 3D ambient motion and end-to-end speed.';
     } else {
-      if (unreadCounts[activeRecipient.id]) {
-        unreadCounts[activeRecipient.id] = 0;
-      }
-      updateUnreadBadgesUI();
-
-      const userEl = document.querySelector(`.online-user-item[data-user-id="${activeRecipient.id}"]`);
-      if (userEl) userEl.classList.add('active');
-
-      roomAvatar.textContent = activeRecipient.avatar || '🔒';
-      roomTitle.textContent = `DM with @${activeRecipient.username}`;
-      roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Private Direct Message';
-      welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
-      welcomeSubtitle.textContent = `Private communication channel.`;
-
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'mark_read',
-          sender_id: activeRecipient.id
-        }));
-      }
-    }
-
-    closeSidebar();
-    loadMessageHistory();
-  };
-
-  const updateUnreadBadgesUI = () => {
-    totalUnreadDM = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
-
-    if (totalUnreadDM > 0) {
-      document.title = `(${totalUnreadDM}) New DM — SChat`;
-    } else {
-      document.title = 'SChat — Real-Time Messaging Platform';
-    }
-
-    for (const [userId, count] of Object.entries(unreadCounts)) {
-      const userItem = document.querySelector(`.online-user-item[data-user-id="${userId}"]`);
-      if (userItem) {
-        let badgeEl = userItem.querySelector('.unread-badge');
-        if (count > 0) {
-          if (!badgeEl) {
-            badgeEl = document.createElement('span');
-            badgeEl.className = 'unread-badge';
-            userItem.appendChild(badgeEl);
-          }
-          badgeEl.textContent = count;
-        } else if (badgeEl) {
-          badgeEl.remove();
+      // DM Chat
+      globalChannelBtn.classList.remove('active');
+      document.querySelectorAll('.online-user-item').forEach(el => {
+        if (Number(el.dataset.userId) === Number(activeRecipient.id)) {
+          el.classList.add('active');
+        } else {
+          el.classList.remove('active');
         }
-      }
+      });
+      roomAvatar.textContent = activeRecipient.avatar || '⚡';
+      roomTitle.textContent = activeRecipient.username;
+      roomSubtitle.textContent = 'Private Direct Message';
+      welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
+      welcomeSubtitle.textContent = 'Encrypted 1-on-1 private real-time session.';
+
+      // Clear Unread
+      delete unreadCounts[activeRecipient.id];
+      updateOnlineUsers();
     }
+
+    fetchMessageHistory();
   };
 
-  const initializeChatSession = async () => {
-    if (!authToken || !currentUser) return;
+  if (globalChannelBtn) {
+    globalChannelBtn.addEventListener('click', () => switchChatTab(null));
+  }
 
-    myAvatarEl.textContent = currentUser.avatar || '⚡';
-    myUsernameEl.textContent = currentUser.username;
-    if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
-
-    authView.classList.add('hidden');
-    chatView.classList.remove('hidden');
-
-    requestNotificationPermission();
-    await loadMessageHistory();
-    connectWebSocket();
-  };
-
-  const loadMessageHistory = async () => {
+  // Fetch Message History
+  const fetchMessageHistory = async () => {
+    if (!authToken) return;
     try {
       const url = activeRecipient 
-        ? `/api/messages?recipient_id=${activeRecipient.id}` 
-        : '/api/messages';
+        ? `/api/messages?recipient_id=${activeRecipient.id}`
+        : `/api/messages`;
 
       const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
 
-      if (res.status === 401 || res.status === 403) {
-        performLogout();
-        showAlert('Session expired. Please sign in again.', 'error');
-        return;
-      }
-
-      if (!res.ok) return;
-
+      if (!res.ok) throw new Error('Failed to load message history');
       const data = await res.json();
-      messagesFeed.innerHTML = `
-        <div class="welcome-banner">
-          <div class="spark-icon">✨</div>
-          <h3 id="welcomeTitle">${activeRecipient ? 'Direct Message with ' + activeRecipient.username : 'Welcome to SChat!'}</h3>
-          <p id="welcomeSubtitle">${activeRecipient ? 'Private communication channel.' : 'Real-time messaging active across mobile & desktop.'}</p>
-        </div>
-      `;
-
-      if (data.messages && data.messages.length > 0) {
-        data.messages.forEach(renderMessage);
-        scrollToBottom();
-
-        if (activeRecipient && ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({
-            type: 'mark_read',
-            sender_id: activeRecipient.id
-          }));
-        }
-      }
+      renderMessageFeed(data.messages || []);
     } catch (err) {
-      console.error('Failed to load history:', err);
+      console.error('Fetch History Error:', err);
     }
   };
 
-  const connectWebSocket = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}?token=${encodeURIComponent(authToken)}`;
+  // Render Message Feed
+  const renderMessageFeed = (messages) => {
+    messagesFeed.innerHTML = `
+      <div class="feed-welcome-hero">
+        <div class="welcome-badge">✨ Motion 3D Active</div>
+        <h2>${welcomeTitle.textContent}</h2>
+        <p>${welcomeSubtitle.textContent}</p>
+      </div>
+    `;
 
-    if (ws) {
-      try { ws.close(); } catch(e){}
+    messages.forEach(msg => {
+      appendMessageCard(msg);
+    });
+
+    scrollToBottom();
+  };
+
+  const appendMessageCard = (msg) => {
+    const isOutgoing = Number(msg.user_id) === Number(currentUser.id);
+    const card = document.createElement('div');
+    card.className = `message-card ${isOutgoing ? 'outgoing' : 'incoming'} 3d-tilt-card`;
+    card.dataset.msgId = msg.id;
+
+    const formattedTime = new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    let replyHtml = '';
+    if (msg.reply_to_user && msg.reply_to_text) {
+      replyHtml = `
+        <div class="msg-reply-box">
+          <span class="msg-reply-author">↩️ @${escapeHtml(msg.reply_to_user)}</span>
+          <span class="msg-reply-text">${escapeHtml(msg.reply_to_text)}</span>
+        </div>
+      `;
     }
+
+    let blurredClass = msg.is_blurred ? 'blurred' : '';
+
+    card.innerHTML = `
+      <div class="msg-avatar">${msg.avatar || '⚡'}</div>
+      <div class="msg-content-wrap">
+        <div class="msg-meta">
+          <span class="msg-author">${escapeHtml(msg.username)}</span>
+          <span class="msg-time">${formattedTime}</span>
+        </div>
+        <div class="msg-bubble ${blurredClass}">
+          ${replyHtml}
+          <span class="msg-text">${escapeHtml(msg.content)}</span>
+        </div>
+      </div>
+    `;
+
+    const bubble = card.querySelector('.msg-bubble');
+    if (msg.is_blurred) {
+      bubble.addEventListener('click', () => {
+        bubble.classList.toggle('unmasked');
+      });
+    }
+
+    card.addEventListener('contextmenu', (e) => {
+      showContextMenu(e, msg.id);
+    });
+
+    messagesFeed.appendChild(card);
+  };
+
+  const scrollToBottom = () => {
+    messagesFeed.scrollTop = messagesFeed.scrollHeight;
+  };
+
+  // Quoted Reply State
+  const setReplyState = (replyObj) => {
+    activeReply = replyObj;
+    if (activeReply) {
+      replyUserLabel.textContent = `@${activeReply.username}`;
+      replyTextSnippet.textContent = activeReply.text;
+      replyPreviewBar.classList.remove('hidden');
+    } else {
+      replyPreviewBar.classList.add('hidden');
+    }
+  };
+
+  if (cancelReplyBtn) cancelReplyBtn.addEventListener('click', () => setReplyState(null));
+
+  // Privacy Blur Toggle
+  if (privacyBlurBtn) {
+    privacyBlurBtn.addEventListener('click', () => {
+      isPrivacyBlurActive = !isPrivacyBlurActive;
+      privacyBlurBtn.classList.toggle('active', isPrivacyBlurActive);
+      privacyBlurBtn.querySelector('.pill-label').textContent = isPrivacyBlurActive ? 'Blur On' : 'Blur Off';
+    });
+  }
+
+  // WebSocket Connection Lifecycle
+  const connectWebSocket = () => {
+    if (ws) ws.close();
+
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/?token=${authToken}`;
 
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('⚡ Connected to SChat WebSocket Server');
-      
-      if (pingInterval) clearInterval(pingInterval);
+      console.log('⚡ WebSocket Connected cleanly');
+      clearInterval(pingInterval);
       pingInterval = setInterval(() => {
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: 'ping' }));
         }
       }, 20000);
-
-      if (activeRecipient) {
-        ws.send(JSON.stringify({
-          type: 'mark_read',
-          sender_id: activeRecipient.id
-        }));
-      }
     };
 
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-
-        if (data.type === 'auth_error') {
-          performLogout();
-          showAlert('Authentication failed. Please sign in again.', 'error');
-          return;
-        }
-
-        if (data.type === 'auth_success') {
-          updateOnlineUsers(data.onlineUsers);
-        } else if (data.type === 'new_message') {
-          let isCurrentTab = false;
-
-          if (!activeRecipient) {
-            isCurrentTab = !data.recipient_id || data.recipient_id === 'null' || Number(data.recipient_id) === 0;
-          } else {
-            const msgSender = Number(data.user_id);
-            const msgTarget = Number(data.recipient_id);
-            const activeId = Number(activeRecipient.id);
-            const myId = Number(currentUser.id);
-
-            isCurrentTab = (msgSender === myId && msgTarget === activeId) || (msgSender === activeId && msgTarget === myId);
-          }
-
-          if (isCurrentTab) {
-            renderMessage(data);
-            scrollToBottom();
-
-            if (activeRecipient && Number(data.user_id) === Number(activeRecipient.id)) {
-              ws.send(JSON.stringify({
-                type: 'mark_read',
-                sender_id: activeRecipient.id
-              }));
-            }
-          } else if (data.recipient_id && Number(data.recipient_id) === Number(currentUser.id)) {
-            const senderId = Number(data.user_id);
-            unreadCounts[senderId] = (unreadCounts[senderId] || 0) + 1;
-            updateUnreadBadgesUI();
-            showDesktopNotification(data.username, data.content);
-          }
-
-          if (Number(data.user_id) !== Number(currentUser.id)) {
-            playSound('receive');
-          }
-        } else if (data.type === 'msg_status_update') {
-          if (data.status === 'read') {
-            document.querySelectorAll('.msg-status-icon').forEach(icon => {
-              icon.textContent = '✓✓';
-              icon.classList.add('read');
-            });
-          }
-        } else if (data.type === 'edit_message') {
-          const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
-          if (card) {
-            const bubble = card.querySelector('.msg-bubble');
-            if (bubble) {
-              bubble.textContent = data.newContent;
-              let editedTag = card.querySelector('.edited-badge');
-              if (!editedTag) {
-                editedTag = document.createElement('span');
-                editedTag.className = 'edited-badge';
-                editedTag.textContent = '(edited)';
-                card.querySelector('.msg-header').appendChild(editedTag);
-              }
-            }
-          }
-        } else if (data.type === 'update_reactions') {
-          updateMessageReactionsDOM(data.messageId, data.reactions);
-        } else if (data.type === 'update_pinned') {
-          if (data.is_pinned) {
-            const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
-            if (card && pinnedBanner) {
-              pinnedTextSnippet.textContent = card.querySelector('.msg-bubble')?.textContent || 'Pinned message';
-              pinnedBanner.classList.remove('hidden');
-            }
-          } else if (pinnedBanner) {
-            pinnedBanner.classList.add('hidden');
-          }
-        } else if (data.type === 'delete_message') {
-          removeMessageFromDOM(data.messageId);
-        } else if (data.type === 'presence') {
-          updateOnlineUsers(data.onlineUsers);
-        } else if (data.type === 'typing') {
-          handleTypingEvent(data);
-        }
+        handleWebSocketEvent(data);
       } catch (e) {
-        console.error('Error handling WS message:', e);
+        console.error('WS Payload Parse Error:', e);
       }
     };
 
     ws.onclose = () => {
-      if (pingInterval) clearInterval(pingInterval);
-      setTimeout(() => { if (authToken) connectWebSocket(); }, 3000);
+      console.warn('WebSocket Disconnected. Reconnecting in 3s...');
+      setTimeout(() => {
+        if (authToken) connectWebSocket();
+      }, 3000);
     };
   };
 
-  const deleteMessage = async (messageId) => {
-    try {
-      if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-          type: 'delete_message',
-          messageId: messageId
-        }));
-      } else {
-        await fetch(`/api/messages/${messageId}`, {
-          method: 'DELETE',
-          headers: { 'Authorization': `Bearer ${authToken}` }
-        });
+  const handleWebSocketEvent = (data) => {
+    if (data.type === 'auth_success') {
+      updateOnlineUsers(data.onlineUsers || []);
+    } else if (data.type === 'presence') {
+      updateOnlineUsers(data.onlineUsers || []);
+    } else if (data.type === 'new_message') {
+      const isForCurrentRoom = activeRecipient 
+        ? ((Number(data.user_id) === Number(activeRecipient.id) && Number(data.recipient_id) === Number(currentUser.id)) ||
+           (Number(data.user_id) === Number(currentUser.id) && Number(data.recipient_id) === Number(activeRecipient.id)))
+        : (!data.recipient_id);
+
+      if (isForCurrentRoom) {
+        appendMessageCard(data);
+        scrollToBottom();
+        if (Number(data.user_id) !== Number(currentUser.id)) playSound('receive');
+      } else if (data.recipient_id && Number(data.recipient_id) === Number(currentUser.id)) {
+        // Unread DM
+        unreadCounts[data.user_id] = (unreadCounts[data.user_id] || 0) + 1;
+        playSound('receive');
       }
-      removeMessageFromDOM(messageId);
-      playSound('delete');
-    } catch (err) {
-      console.error('Failed to delete message:', err);
+    } else if (data.type === 'typing') {
+      handleTypingEvent(data);
+    } else if (data.type === 'delete_message') {
+      const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
+      if (card) card.remove();
     }
-  };
-
-  const editMessage = (messageId, currentContent) => {
-    const newContent = prompt('Edit your message:', currentContent);
-    if (!newContent || newContent.trim() === currentContent) return;
-
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'edit_message',
-        messageId: messageId,
-        newContent: newContent.trim()
-      }));
-    }
-  };
-
-  const toggleReaction = (messageId, emoji) => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'toggle_reaction',
-        messageId: messageId,
-        emoji: emoji
-      }));
-    }
-  };
-
-  const togglePinMessage = (messageId) => {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'toggle_pin',
-        messageId: messageId
-      }));
-    }
-  };
-
-  const updateMessageReactionsDOM = (messageId, reactionsObj) => {
-    const card = document.querySelector(`.message-card[data-msg-id="${messageId}"]`);
-    if (!card) return;
-
-    let rxContainer = card.querySelector('.reactions-container');
-    if (!rxContainer) {
-      rxContainer = document.createElement('div');
-      rxContainer.className = 'reactions-container';
-      card.querySelector('.msg-body').appendChild(rxContainer);
-    }
-
-    rxContainer.innerHTML = '';
-    for (const [emoji, users] of Object.entries(reactionsObj || {})) {
-      if (users && users.length > 0) {
-        const badge = document.createElement('div');
-        badge.className = `reaction-badge ${users.includes(currentUser.username) ? 'active' : ''}`;
-        badge.title = `Reacted by ${users.join(', ')}`;
-        badge.innerHTML = `<span>${emoji}</span> <span class="reaction-count">${users.length}</span>`;
-        badge.addEventListener('click', () => toggleReaction(messageId, emoji));
-        rxContainer.appendChild(badge);
-      }
-    }
-  };
-
-  const removeMessageFromDOM = (messageId) => {
-    const card = document.querySelector(`.message-card[data-msg-id="${messageId}"]`);
-    if (card) {
-      card.classList.add('removing');
-      setTimeout(() => card.remove(), 300);
-    }
-  };
-
-  const renderMessage = (msg) => {
-    const msgUniqueId = msg.id || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
-
-    if (msg.id && document.querySelector(`.message-card[data-msg-id="${msg.id}"]`)) {
-      return;
-    }
-
-    const isOutgoing = Number(msg.user_id) === Number(currentUser.id);
-    const msgCard = document.createElement('div');
-    msgCard.className = `message-card ${isOutgoing ? 'outgoing' : 'incoming'}`;
-    msgCard.dataset.msgId = msgUniqueId;
-
-    const timeFormatted = new Date(msg.created_at || Date.now()).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-
-    const deleteBtnHtml = isOutgoing 
-      ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msgUniqueId}">🗑️</button>` 
-      : '';
-
-    const editBtnHtml = isOutgoing 
-      ? `<button class="msg-action-btn msg-edit-btn" title="Edit Message">✏️</button>` 
-      : '';
-
-    const pinBtnHtml = `<button class="msg-action-btn msg-pin-btn" title="Pin Message">📌</button>`;
-    const replyBtnHtml = `<button class="msg-reply-btn" title="Reply to Message">↩️</button>`;
-
-    let statusIconHtml = '';
-    if (isOutgoing) {
-      const status = msg.status || 'sent';
-      const checkSymbol = status === 'sent' ? '✓' : '✓✓';
-      const isReadClass = status === 'read' ? 'read' : (status === 'delivered' ? 'delivered' : 'sent');
-      statusIconHtml = `<span class="msg-status-icon ${isReadClass}">${checkSymbol}</span>`;
-    }
-
-    let timerBadgeHtml = '';
-    if (msg.expires_at) {
-      const remainingMs = new Date(msg.expires_at).getTime() - Date.now();
-      if (remainingMs > 0) {
-        const secondsLeft = Math.ceil(remainingMs / 1000);
-        timerBadgeHtml = `<span class="timer-badge" id="timerBadge_${msgUniqueId}">⏱️ ${secondsLeft}s</span>`;
-        
-        const timerInterval = setInterval(() => {
-          const updatedRemaining = new Date(msg.expires_at).getTime() - Date.now();
-          const badgeEl = document.getElementById(`timerBadge_${msgUniqueId}`);
-          if (updatedRemaining <= 0) {
-            clearInterval(timerInterval);
-            removeMessageFromDOM(msgUniqueId);
-          } else if (badgeEl) {
-            badgeEl.textContent = `⏱️ ${Math.ceil(updatedRemaining / 1000)}s`;
-          }
-        }, 1000);
-      }
-    }
-
-    const isBlurredClass = msg.is_blurred ? 'blurred' : '';
-    const editedBadgeHtml = msg.is_edited ? `<span class="edited-badge">(edited)</span>` : '';
-
-    let replyBoxHtml = '';
-    if (msg.reply_to_text) {
-      replyBoxHtml = `
-        <div class="msg-reply-box">
-          <div class="msg-reply-user">↩️ Quoting @${escapeHtml(msg.reply_to_user || 'User')}</div>
-          <div class="msg-reply-content">${escapeHtml(msg.reply_to_text)}</div>
-        </div>
-      `;
-    }
-
-    msgCard.innerHTML = `
-      <div class="msg-avatar">${msg.avatar || '⚡'}</div>
-      <div class="msg-body">
-        <div class="msg-header">
-          <span class="msg-author">${isOutgoing ? 'You' : (msg.username || 'User')}</span>
-          <span class="msg-time">${timeFormatted}</span>
-          ${statusIconHtml}
-          ${timerBadgeHtml}
-          ${editedBadgeHtml}
-          ${replyBtnHtml}
-          ${pinBtnHtml}
-          ${editBtnHtml}
-          ${deleteBtnHtml}
-        </div>
-        <div class="msg-bubble ${isBlurredClass}">
-          ${replyBoxHtml}
-          ${escapeHtml(msg.content || '')}
-        </div>
-      </div>
-    `;
-
-    const bubbleEl = msgCard.querySelector('.msg-bubble');
-    if (msg.is_blurred && bubbleEl) {
-      bubbleEl.addEventListener('click', () => {
-        bubbleEl.classList.toggle('unmasked');
-      });
-    }
-
-    const deleteBtn = msgCard.querySelector('.msg-delete-btn');
-    if (deleteBtn && msg.id) {
-      deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteMessage(msg.id);
-      });
-    }
-
-    const editBtn = msgCard.querySelector('.msg-edit-btn');
-    if (editBtn && msg.id) {
-      editBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        editMessage(msg.id, msg.content);
-      });
-    }
-
-    const pinBtn = msgCard.querySelector('.msg-pin-btn');
-    if (pinBtn && msg.id) {
-      pinBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        togglePinMessage(msg.id);
-      });
-    }
-
-    const replyBtn = msgCard.querySelector('.msg-reply-btn');
-    if (replyBtn) {
-      replyBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setReplyState(msg);
-      });
-    }
-
-    messagesFeed.appendChild(msgCard);
-
-    if (msg.reactions) {
-      let rx = {};
-      try { rx = typeof msg.reactions === 'string' ? JSON.parse(msg.reactions) : msg.reactions; } catch(e){}
-      updateMessageReactionsDOM(msg.id, rx);
-    }
-
-    if (msg.is_pinned && pinnedBanner) {
-      pinnedTextSnippet.textContent = msg.content;
-      pinnedBanner.classList.remove('hidden');
-    }
-  };
-
-  if (unpinBtn) {
-    unpinBtn.addEventListener('click', () => {
-      if (pinnedBanner) pinnedBanner.classList.add('hidden');
-    });
-  }
-
-  const escapeHtml = (str) => {
-    return str.replace(/[&<>'"]/g, 
-      tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-      }[tag] || tag)
-    );
-  };
-
-  const scrollToBottom = () => {
-    messagesFeed.scrollTop = messagesFeed.scrollHeight;
   };
 
   const updateOnlineUsers = (users = []) => {
@@ -1057,12 +681,94 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  // Auth Handler Forms
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value;
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+
+      authToken = data.token;
+      currentUser = data.user;
+
+      localStorage.setItem('schat_token', authToken);
+      localStorage.setItem('schat_user', JSON.stringify(currentUser));
+
+      initializeChatSession();
+    } catch (err) {
+      showAlert(err.message, 'error');
+    }
+  });
+
+  registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('regUsername').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
+
+    try {
+      const res = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password, avatar: selectedAvatar })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+
+      authToken = data.token;
+      currentUser = data.user;
+
+      localStorage.setItem('schat_token', authToken);
+      localStorage.setItem('schat_user', JSON.stringify(currentUser));
+
+      initializeChatSession();
+    } catch (err) {
+      showAlert(err.message, 'error');
+    }
+  });
+
+  const initializeChatSession = () => {
+    if (!currentUser) return;
+    myAvatarEl.textContent = currentUser.avatar || '⚡';
+    myUsernameEl.textContent = currentUser.username;
+    myBioEl.textContent = currentUser.bio || 'Click to edit bio...';
+
+    authView.classList.add('hidden');
+    chatView.classList.remove('hidden');
+
+    connectWebSocket();
+    fetchMessageHistory();
+  };
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('schat_token');
+      localStorage.removeItem('schat_user');
+      authToken = null;
+      currentUser = null;
+      if (ws) ws.close();
+      window.location.reload();
+    });
+  }
+
+  // Send Message Logic
   messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const content = messageInput.value.trim();
+    if (!content) return;
 
     if (!ws || ws.readyState !== WebSocket.OPEN) {
-      showAlert('Connecting to server... Please try sending again in a moment.', 'error');
+      showAlert('Connecting to server... Please try again.', 'error');
       connectWebSocket();
       return;
     }
@@ -1082,7 +788,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     messageInput.value = '';
     setReplyState(null);
-    emojiPicker.classList.add('hidden');
+    if (emojiPicker) emojiPicker.classList.add('hidden');
     playSound('send');
 
     ws.send(JSON.stringify({
@@ -1124,113 +830,48 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  emojiBtn.addEventListener('click', () => {
-    emojiPicker.classList.toggle('hidden');
-  });
-
-  emojiPicker.addEventListener('click', (e) => {
-    if (e.target.classList.contains('emoji-item')) {
-      messageInput.value += e.target.textContent;
-      messageInput.focus();
-    }
-  });
-
-  filterInput.addEventListener('input', (e) => {
-    const term = e.target.value.toLowerCase();
-    document.querySelectorAll('.online-user-item').forEach(item => {
-      const text = item.textContent.toLowerCase();
-      item.style.display = text.includes(term) ? 'flex' : 'none';
+  if (emojiBtn) {
+    emojiBtn.addEventListener('click', () => {
+      emojiPicker.classList.toggle('hidden');
     });
-    document.querySelectorAll('.message-card').forEach(card => {
-      const text = card.textContent.toLowerCase();
-      card.style.display = text.includes(term) ? 'flex' : 'none';
+  }
+
+  if (emojiPicker) {
+    emojiPicker.addEventListener('click', (e) => {
+      if (e.target.classList.contains('emoji-item')) {
+        messageInput.value += e.target.textContent;
+        messageInput.focus();
+      }
     });
-  });
+  }
+
+  if (filterInput) {
+    filterInput.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      document.querySelectorAll('.online-user-item').forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(term) ? 'flex' : 'none';
+      });
+      document.querySelectorAll('.message-card').forEach(card => {
+        const text = card.textContent.toLowerCase();
+        card.style.display = text.includes(term) ? 'flex' : 'none';
+      });
+    });
+  }
 
   if (authToken && currentUser) {
     initializeChatSession();
   }
 });
 
-// ================= THREE.JS 3D WEBGL MOTION ENGINE =================
-function init3DMotionBackground() {
-  const canvas = document.getElementById('bg3dCanvas');
-  if (!canvas || typeof THREE === 'undefined') return;
-
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 400;
-
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-  // Create 3D Particle Mesh Constellation
-  const particleCount = 700;
-  const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(particleCount * 3);
-  const colors = new Float32Array(particleCount * 3);
-
-  const color1 = new THREE.Color(0x8b5cf6); // Purple
-  const color2 = new THREE.Color(0x06b6d4); // Cyan
-
-  for (let i = 0; i < particleCount; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 1200;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 1200;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 1200;
-
-    const mixedColor = color1.clone().lerp(color2, Math.random());
-    colors[i * 3] = mixedColor.r;
-    colors[i * 3 + 1] = mixedColor.g;
-    colors[i * 3 + 2] = mixedColor.b;
+function togglePasswordVisibility(fieldId, btn) {
+  const input = document.getElementById(fieldId);
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    btn.textContent = '👁️';
   }
-
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-  const material = new THREE.PointsMaterial({
-    size: 4,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.8,
-    blending: THREE.AdditiveBlending
-  });
-
-  const particleSystem = new THREE.Points(geometry, material);
-  scene.add(particleSystem);
-
-  // Mouse Interactive Motion Tracking
-  let mouseX = 0;
-  let mouseY = 0;
-  let targetX = 0;
-  let targetY = 0;
-
-  document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX - window.innerWidth / 2) * 0.0008;
-    mouseY = (e.clientY - window.innerHeight / 2) * 0.0008;
-  });
-
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-
-  function animate3D() {
-    requestAnimationFrame(animate3D);
-
-    targetX += (mouseX - targetX) * 0.05;
-    targetY += (mouseY - targetY) * 0.05;
-
-    particleSystem.rotation.y += 0.0012 + targetX * 0.2;
-    particleSystem.rotation.x += 0.0008 + targetY * 0.2;
-
-    camera.position.x += (targetX * 200 - camera.position.x) * 0.05;
-    camera.position.y += (-targetY * 200 - camera.position.y) * 0.05;
-    camera.lookAt(scene.position);
-
-    renderer.render(scene, camera);
-  }
-
-  animate3D();
 }
