@@ -452,8 +452,9 @@ document.addEventListener('DOMContentLoaded', () => {
       roomAvatar.textContent = '🌐';
       roomTitle.textContent = 'Global Channel';
       roomSubtitle.textContent = 'Realtime Active Community';
-      welcomeTitle.textContent = 'Welcome to SChat!';
-      welcomeSubtitle.textContent = 'Global interactive workspace with 3D ambient motion and end-to-end speed.';
+
+      if (welcomeTitle) welcomeTitle.textContent = 'Welcome to SChat!';
+      if (welcomeSubtitle) welcomeSubtitle.textContent = 'Global interactive workspace with 3D ambient motion and end-to-end speed.';
     } else {
       // DM Chat
       globalChannelBtn.classList.remove('active');
@@ -467,8 +468,9 @@ document.addEventListener('DOMContentLoaded', () => {
       roomAvatar.textContent = activeRecipient.avatar || '⚡';
       roomTitle.textContent = activeRecipient.username;
       roomSubtitle.textContent = 'Private Direct Message';
-      welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
-      welcomeSubtitle.textContent = 'Encrypted 1-on-1 private real-time session.';
+
+      if (welcomeTitle) welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
+      if (welcomeSubtitle) welcomeSubtitle.textContent = 'Encrypted 1-on-1 private real-time session.';
 
       delete unreadCounts[activeRecipient.id];
       updateOnlineUsers();
@@ -517,11 +519,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render Message Feed
   const renderMessageFeed = (messages) => {
+    const wTitle = welcomeTitle ? welcomeTitle.textContent : 'Welcome to SChat!';
+    const wSub = welcomeSubtitle ? welcomeSubtitle.textContent : 'Global interactive workspace with 3D motion.';
+
     messagesFeed.innerHTML = `
       <div class="feed-welcome-hero">
         <div class="welcome-badge">✨ Motion 3D Active</div>
-        <h2>${welcomeTitle.textContent}</h2>
-        <p>${welcomeSubtitle.textContent}</p>
+        <h2>${escapeHtml(wTitle)}</h2>
+        <p>${escapeHtml(wSub)}</p>
       </div>
     `;
 
