@@ -33,8 +33,8 @@ try {
   };
 }
 
-// Stable JWT Secret for consistent authentication across server restarts and deployments
-const JWT_SECRET = process.env.JWT_SECRET || 'schat_stable_production_jwt_secret_key_2026_v9_secure';
+// Stable JWT Secret for consistent authentication across server restarts
+const JWT_SECRET = process.env.JWT_SECRET || 'schat_stable_production_jwt_secret_key_2026';
 
 function hashPassword(password) {
   return bcrypt.hashSync(password, 10);
