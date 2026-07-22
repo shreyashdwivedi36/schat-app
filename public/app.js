@@ -1153,134 +1153,177 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ================= THREE.JS 3D WEBGL MOTION ENGINE =================
-// ================= FLUID WEBGL MOTION DESIGN ENGINE =================
+// ================= FLUID WEBGL LIQUID MOTION ENGINE =================
+class TouchTexture {
+  constructor() {
+    self = this;
+    this.size = 128;
+    this.maxAge = 64;
+    this.radius = 0.15;
+    this.trail = [];
+    
+    this.canvas = document.createElement('canvas');
+    this.canvas.width = this.size;
+    this.canvas.height = this.size;
+    this.ctx = this.canvas.getContext('2d');
+    this.ctx.fillStyle = 'black';
+    this.ctx.fillRect(0, 0, this.size, this.size);
+    
+    this.texture = new THREE.CanvasTexture(this.canvas);
+  }
+
+  addTouch(point) {
+    let force = 0;
+    if (this.last) {
+      const dx = point.x - this.last.x;
+      const dy = point.y - this.last.y;
+      const dd = dx * dx + dy * dy;
+      force = Math.min(dd * 10000, 1.0);
+    }
+    this.last = { x: point.x, y: point.y };
+    this.trail.push({ x: point.x, y: point.y, age: 0, force: Math.max(force, 0.2) });
+  }
+
+  update() {
+    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+    this.ctx.fillRect(0, 0, this.size, this.size);
+
+    this.trail.forEach((point, i) => {
+      point.age++;
+      if (point.age > this.maxAge) {
+        this.trail.splice(i, 1);
+      } else {
+        const alpha = 1 - point.age / this.maxAge;
+        const pos = { x: point.x * this.size, y: (1 - point.y) * this.size };
+        const grad = this.ctx.createRadialGradient(
+          pos.x, pos.y, 0,
+          pos.x, pos.y, this.radius * this.size
+        );
+        grad.addColorStop(0, `rgba(255, 255, 255, ${alpha * point.force})`);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        
+        this.ctx.beginPath();
+        this.ctx.fillStyle = grad;
+        this.ctx.arc(pos.x, pos.y, this.radius * this.size, 0, Math.PI * 2);
+        this.ctx.fill();
+      }
+    });
+
+    this.texture.needsUpdate = true;
+  }
+}
+
 function init3DMotionBackground() {
   const canvas = document.getElementById('bg3dCanvas');
   if (!canvas || typeof THREE === 'undefined') return;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 120;
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+  camera.position.z = 10;
 
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
+  const renderer = new THREE.WebGLRenderer({
+    canvas: canvas,
+    alpha: true,
+    antialias: true,
+    powerPreference: "high-performance",
+    depth: false,
+    stencil: false
+  });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  // 1. Organic Fluid Wave Plane Mesh
-  const planeGeo = new THREE.PlaneGeometry(320, 220, 64, 64);
-  
+  const touchTexture = new TouchTexture();
+
   const uniforms = {
     uTime: { value: 0 },
-    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
     uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    uColor1: { value: new THREE.Color(0x8b5cf6) }, // Vibrant Accent Purple
-    uColor2: { value: new THREE.Color(0x06b6d4) }, // Vibrant Accent Cyan
-    uColor3: { value: new THREE.Color(0xec4899) }, // Neon Pink Ripple
-    uRipple: { value: 0 },
-    uRipplePos: { value: new THREE.Vector2(0.5, 0.5) }
+    uTouchTexture: { value: touchTexture.texture },
+    uColor1: { value: new THREE.Color(0x8b5cf6) }, // Purple Accent
+    uColor2: { value: new THREE.Color(0x06b6d4) }, // Cyan Accent
+    uColor3: { value: new THREE.Color(0xec4899) }, // Pink Accent
+    uColor4: { value: new THREE.Color(0x07080e) }, // Dark Base
+    uGrainIntensity: { value: 0.04 }
   };
 
   const vertexShader = `
-    uniform float uTime;
-    uniform vec2 uMouse;
-    uniform float uRipple;
-    uniform vec2 uRipplePos;
     varying vec2 vUv;
-    varying float vElevation;
-
     void main() {
       vUv = uv;
-      vec3 pos = position;
-
-      // Complex fluid wave displacement using trigonometric combinations
-      float wave1 = sin(pos.x * 0.05 + uTime * 0.8) * cos(pos.y * 0.05 + uTime * 0.6) * 4.5;
-      float wave2 = cos(pos.x * 0.08 - uTime * 0.5) * sin(pos.y * 0.08 + uTime * 0.7) * 3.5;
-      
-      // Cursor fluid distortion
-      float distMouse = distance(uv, uMouse);
-      float mouseDistortion = smoothstep(0.4, 0.0, distMouse) * 7.0 * sin(uTime * 2.5);
-
-      // Radial fluid shockwave ripple
-      float distRipple = distance(uv, uRipplePos);
-      float rippleWave = sin(distRipple * 30.0 - uTime * 8.0) * exp(-distRipple * 3.0) * uRipple * 10.0;
-
-      pos.z += wave1 + wave2 + mouseDistortion + rippleWave;
-      vElevation = pos.z;
-
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      gl_Position = vec4(position, 1.0);
     }
   `;
 
   const fragmentShader = `
+    uniform float uTime;
+    uniform vec2 uResolution;
+    uniform sampler2D uTouchTexture;
     uniform vec3 uColor1;
     uniform vec3 uColor2;
     uniform vec3 uColor3;
-    uniform float uTime;
+    uniform vec3 uColor4;
+    uniform float uGrainIntensity;
     varying vec2 vUv;
-    varying float vElevation;
+
+    // Pseudo-random noise for film grain
+    float random(vec2 st) {
+      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+    }
 
     void main() {
-      float mixFactor = smoothstep(-6.0, 8.0, vElevation);
-      vec3 color = mix(uColor1, uColor2, mixFactor + sin(uTime * 0.4) * 0.25);
+      vec2 st = gl_FragCoord.xy / uResolution.xy;
       
-      // Dynamic specular glass highlight
-      float specular = pow(smoothstep(-2.0, 6.0, vElevation), 3.0) * 0.35;
-      color += uColor3 * specular;
+      // Sample touch distortion texture
+      vec4 touch = texture2D(uTouchTexture, st);
+      vec2 distortedSt = st + (touch.r * 0.12 - 0.06);
 
-      float alpha = smoothstep(0.0, 0.8, 1.0 - length(vUv - vec2(0.5)) * 1.2) * 0.65;
-      gl_FragColor = vec4(color, alpha);
+      // Multi-layer trigonometric domain warping liquid animation
+      float t = uTime * 0.3;
+      float wave1 = sin(distortedSt.x * 3.0 + t + cos(distortedSt.y * 2.5 + t));
+      float wave2 = cos(distortedSt.y * 4.0 - t + sin(distortedSt.x * 3.5 - t));
+      float wave3 = sin(distortedSt.x * 2.0 + distortedSt.y * 3.0 + t * 1.5);
+      
+      float blendFactor = (wave1 + wave2 + wave3) / 3.0;
+      blendFactor = blendFactor * 0.5 + 0.5;
+
+      // Color interpolation
+      vec3 color = mix(uColor4, mix(uColor1, uColor2, blendFactor), 0.7);
+      color = mix(color, uColor3, touch.r * 0.8);
+
+      // Subtle film grain
+      float grain = (random(st + uTime) - 0.5) * uGrainIntensity;
+      color += grain;
+
+      gl_FragColor = vec4(color, 0.85);
     }
   `;
 
-  const waveMaterial = new THREE.ShaderMaterial({
+  const planeGeo = new THREE.PlaneGeometry(2, 2);
+  const material = new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
     uniforms,
     transparent: true,
-    wireframe: false,
-    side: THREE.DoubleSide
+    depthWrite: false
   });
 
-  const waveMesh = new THREE.Mesh(planeGeo, waveMaterial);
-  waveMesh.rotation.x = -Math.PI / 4;
-  waveMesh.position.y = -20;
-  scene.add(waveMesh);
+  const mesh = new THREE.Mesh(planeGeo, material);
+  scene.add(mesh);
 
-  // 2. Floating Interactive Particle Constellation
-  const particleCount = 450;
-  const particleGeo = new THREE.BufferGeometry();
-  const particlePos = new Float32Array(particleCount * 3);
+  // Event Listeners for Cursor and Touch Dynamics
+  const onMove = (e) => {
+    const x = e.clientX / window.innerWidth;
+    const y = e.clientY / window.innerHeight;
+    touchTexture.addTouch({ x, y });
+  };
 
-  for (let i = 0; i < particleCount; i++) {
-    particlePos[i * 3] = (Math.random() - 0.5) * 260;
-    particlePos[i * 3 + 1] = (Math.random() - 0.5) * 180;
-    particlePos[i * 3 + 2] = (Math.random() - 0.5) * 120;
-  }
-
-  particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
-
-  const particleMat = new THREE.PointsMaterial({
-    size: 2.5,
-    color: 0x22d3ee,
-    transparent: true,
-    opacity: 0.75,
-    blending: THREE.AdditiveBlending
-  });
-
-  const particleSystem = new THREE.Points(particleGeo, particleMat);
-  scene.add(particleSystem);
-
-  // Smooth Motion Interpolation Controls
-  let mouseX = 0.5, mouseY = 0.5;
-  let targetMouseX = 0, targetMouseY = 0;
-
-  document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX / window.innerWidth);
-    mouseY = 1.0 - (e.clientY / window.innerHeight);
-    
-    targetMouseX = (e.clientX - window.innerWidth / 2) * 0.0005;
-    targetMouseY = (e.clientY - window.innerHeight / 2) * 0.0005;
-  });
+  window.addEventListener('mousemove', onMove);
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 0) {
+      const x = e.touches[0].clientX / window.innerWidth;
+      const y = e.touches[0].clientY / window.innerHeight;
+      touchTexture.addTouch({ x, y });
+    }
+  }, { passive: true });
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
@@ -1289,40 +1332,30 @@ function init3DMotionBackground() {
     uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
   });
 
-  // Global Shockwave Ripple Trigger for Messaging Events
-  window.triggerFluidRipple = (normalizedX = 0.5, normalizedY = 0.5) => {
-    uniforms.uRipplePos.value.set(normalizedX, normalizedY);
-    uniforms.uRipple.value = 1.0;
+  // Global Shockwave Ripple Trigger
+  window.triggerFluidRipple = (x = 0.5, y = 0.5) => {
+    for (let i = 0; i < 8; i++) {
+      setTimeout(() => {
+        const rx = x + (Math.random() - 0.5) * 0.1;
+        const ry = y + (Math.random() - 0.5) * 0.1;
+        touchTexture.addTouch({ x: rx, y: ry });
+      }, i * 30);
+    }
   };
 
   const clock = new THREE.Clock();
 
-  function animateFluid() {
-    requestAnimationFrame(animateFluid);
+  function animateLiquid() {
+    requestAnimationFrame(animateLiquid);
 
-    const elapsedTime = clock.getElapsedTime();
-    uniforms.uTime.value = elapsedTime;
+    const delta = clock.getDelta();
+    uniforms.uTime.value += delta;
 
-    uniforms.uMouse.value.x += (mouseX - uniforms.uMouse.value.x) * 0.08;
-    uniforms.uMouse.value.y += (mouseY - uniforms.uMouse.value.y) * 0.08;
-
-    if (uniforms.uRipple.value > 0.001) {
-      uniforms.uRipple.value *= 0.94;
-    } else {
-      uniforms.uRipple.value = 0;
-    }
-
-    camera.position.x += (targetMouseX * 50 - camera.position.x) * 0.05;
-    camera.position.y += (-targetMouseY * 50 - camera.position.y) * 0.05;
-    camera.lookAt(scene.position);
-
-    particleSystem.rotation.y = elapsedTime * 0.03;
-    particleSystem.rotation.x = elapsedTime * 0.02;
-
+    touchTexture.update();
     renderer.render(scene, camera);
   }
 
-  animateFluid();
+  animateLiquid();
 }
 
 
