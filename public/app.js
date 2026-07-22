@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => authAlert.classList.add('hidden'), 4000);
   };
 
-  if (switchToRegisterBtn) switchToRegisterBtn.addEventListener('click', () => {
+  switchToRegisterBtn.addEventListener('click', () => {
     loginForm.classList.remove('active');
     loginForm.classList.add('hidden');
     registerForm.classList.remove('hidden');
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  if (switchToLoginBtn) switchToLoginBtn.addEventListener('click', () => {
+  switchToLoginBtn.addEventListener('click', () => {
     registerForm.classList.remove('active');
     registerForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  if (avatarPicker) avatarPicker.addEventListener('click', (e) => {
+  avatarPicker.addEventListener('click', (e) => {
     const opt = e.target.closest('.avatar-opt');
     if (!opt) return;
     avatarPicker.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (registerForm) registerForm.addEventListener('submit', async (e) => {
+  registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  if (loginForm) loginForm.addEventListener('submit', async (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
@@ -517,10 +517,10 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebar();
   };
 
-  if (logoutBtn) logoutBtn.addEventListener('click', performLogout);
+  logoutBtn.addEventListener('click', performLogout);
 
   // Channel & DM Tab Switching
-  if (globalChannelBtn) globalChannelBtn.addEventListener('click', () => {
+  globalChannelBtn.addEventListener('click', () => {
     switchChatTab(null);
   });
 
@@ -595,12 +595,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
-    if (myAvatarEl) myAvatarEl.textContent = currentUser.avatar || '⚡';
-    if (myUsernameEl) myUsernameEl.textContent = currentUser.username;
+    myAvatarEl.textContent = currentUser.avatar || '⚡';
+    myUsernameEl.textContent = currentUser.username;
     if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
 
-    if (authView) authView.classList.add('hidden');
-    if (chatView) chatView.classList.remove('hidden');
+    authView.classList.add('hidden');
+    chatView.classList.remove('hidden');
 
     requestNotificationPermission();
     await loadMessageHistory();
@@ -1057,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  if (messageForm) messageForm.addEventListener('submit', (e) => {
+  messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const content = messageInput.value.trim();
 
@@ -1092,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   });
 
-  if (messageInput) messageInput.addEventListener('input', () => {
+  messageInput.addEventListener('input', () => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     ws.send(JSON.stringify({
@@ -1124,18 +1124,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  if (emojiBtn) emojiBtn.addEventListener('click', () => {
+  emojiBtn.addEventListener('click', () => {
     emojiPicker.classList.toggle('hidden');
   });
 
-  if (emojiPicker) emojiPicker.addEventListener('click', (e) => {
+  emojiPicker.addEventListener('click', (e) => {
     if (e.target.classList.contains('emoji-item')) {
       messageInput.value += e.target.textContent;
       messageInput.focus();
     }
   });
 
-  if (filterInput) filterInput.addEventListener('input', (e) => {
+  filterInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.online-user-item').forEach(item => {
       const text = item.textContent.toLowerCase();
@@ -1234,221 +1234,3 @@ function init3DMotionBackground() {
 
   animate3D();
 }
-
-
-  // ================= 3D TILT MOTION & CONTEXT MENU ENGINE =================
-  const msgContextMenu = document.getElementById('msgContextMenu');
-  const ctxReplyBtn = document.getElementById('ctxReplyBtn');
-  const ctxReactBtn = document.getElementById('ctxReactBtn');
-  const ctxCopyBtn = document.getElementById('ctxCopyBtn');
-  const ctxPinBtn = document.getElementById('ctxPinBtn');
-  const ctxPinText = document.getElementById('ctxPinText');
-  const ctxEditBtn = document.getElementById('ctxEditBtn');
-  const ctxDeleteBtn = document.getElementById('ctxDeleteBtn');
-
-  let activeContextMsg = null;
-  let touchTimer = null;
-  let touchStartPos = { x: 0, y: 0 };
-
-  // 3D Card Perspective Motion Effect on MouseMove
-  document.addEventListener('mousemove', (e) => {
-    const card = e.target.closest('.message-card, .btn, .icon-btn, .avatar-opt, .online-user-item, .auth-card-container');
-    if (!card) return;
-
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-
-    const rotateX = (-y / rect.height) * 12;
-    const rotateY = (x / rect.width) * 12;
-
-    card.style.transform = ;
-  });
-
-  document.addEventListener('mouseout', (e) => {
-    const card = e.target.closest('.message-card, .btn, .icon-btn, .avatar-opt, .online-user-item, .auth-card-container');
-    if (card) {
-      card.style.transform = '';
-    }
-  });
-
-  // Open Context Menu Function
-  const openMsgContextMenu = (msgCard, clientX, clientY) => {
-    if (!msgCard || !msgContextMenu) return;
-    activeContextMsg = msgCard;
-
-    const msgId = msgCard.dataset.msgId;
-    const isOutgoing = msgCard.classList.contains('outgoing');
-    const isPinned = msgCard.classList.contains('pinned');
-
-    // Show or hide outgoing-only options
-    msgContextMenu.querySelectorAll('.outgoing-only').forEach(el => {
-      el.style.display = isOutgoing ? 'flex' : 'none';
-    });
-
-    if (ctxPinText) {
-      ctxPinText.textContent = isPinned ? 'Unpin Message' : 'Pin Message';
-    }
-
-    // Position Context Menu Responsively
-    msgContextMenu.classList.remove('hidden');
-    const menuWidth = msgContextMenu.offsetWidth || 220;
-    const menuHeight = msgContextMenu.offsetHeight || 240;
-
-    let left = clientX;
-    let top = clientY;
-
-    if (left + menuWidth > window.innerWidth - 10) {
-      left = window.innerWidth - menuWidth - 15;
-    }
-    if (top + menuHeight > window.innerHeight - 10) {
-      top = window.innerHeight - menuHeight - 15;
-    }
-    if (left < 10) left = 10;
-    if (top < 10) top = 10;
-
-    msgContextMenu.style.left = ;
-    msgContextMenu.style.top = ;
-
-    // Trigger haptic vibration feedback on mobile
-    if ('vibrate' in navigator) {
-      try { navigator.vibrate(50); } catch(e){}
-    }
-  };
-
-  const closeMsgContextMenu = () => {
-    if (msgContextMenu) msgContextMenu.classList.add('hidden');
-    if (activeContextMsg) {
-      activeContextMsg.classList.remove('long-pressed');
-      activeContextMsg = null;
-    }
-  };
-
-  // Close context menu on outside click or scroll
-  document.addEventListener('click', (e) => {
-    if (msgContextMenu && !msgContextMenu.contains(e.target)) {
-      closeMsgContextMenu();
-    }
-  });
-
-  document.addEventListener('scroll', closeMsgContextMenu, true);
-
-  // Desktop Right Click (contextmenu) Event Delegation
-  if (messagesFeed) {
-    messagesFeed.addEventListener('contextmenu', (e) => {
-      const card = e.target.closest('.message-card');
-      if (card) {
-        e.preventDefault();
-        openMsgContextMenu(card, e.clientX, e.clientY);
-      }
-    });
-
-    // Mobile Long Press (touchstart / touchend / touchmove) Handling
-    messagesFeed.addEventListener('touchstart', (e) => {
-      const card = e.target.closest('.message-card');
-      if (!card) return;
-
-      const touch = e.touches[0];
-      touchStartPos = { x: touch.clientX, y: touch.clientY };
-
-      clearTimeout(touchTimer);
-      touchTimer = setTimeout(() => {
-        card.classList.add('long-pressed');
-        openMsgContextMenu(card, touchStartPos.x, touchStartPos.y);
-      }, 500); // 500ms long press threshold
-    }, { passive: true });
-
-    messagesFeed.addEventListener('touchmove', (e) => {
-      if (!touchTimer) return;
-      const touch = e.touches[0];
-      const dist = Math.hypot(touch.clientX - touchStartPos.x, touch.clientY - touchStartPos.y);
-      if (dist > 10) { // Cancel long press if scrolled
-        clearTimeout(touchTimer);
-        touchTimer = null;
-      }
-    }, { passive: true });
-
-    messagesFeed.addEventListener('touchend', () => {
-      clearTimeout(touchTimer);
-      touchTimer = null;
-    });
-
-    messagesFeed.addEventListener('touchcancel', () => {
-      clearTimeout(touchTimer);
-      touchTimer = null;
-    });
-  }
-
-  // Context Menu Action Listeners
-  if (ctxReplyBtn) {
-    ctxReplyBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const author = activeContextMsg.querySelector('.msg-author')?.textContent || 'User';
-      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
-      const msgId = activeContextMsg.dataset.msgId;
-
-      // Trigger reply UI in message form
-      if (typeof setQuotedReply === 'function') {
-        setQuotedReply(msgId, author, content);
-      } else if (messageInput) {
-        messageInput.placeholder = ;
-        messageInput.focus();
-      }
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxReactBtn) {
-    ctxReactBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      if (emojiPicker) emojiPicker.classList.remove('hidden');
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxCopyBtn) {
-    ctxCopyBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
-      if (content && navigator.clipboard) {
-        navigator.clipboard.writeText(content);
-        if (typeof showAlert === 'function') showAlert('Message copied to clipboard!', 'success');
-      }
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxPinBtn) {
-    ctxPinBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const msgId = activeContextMsg.dataset.msgId;
-      if (ws && ws.readyState === WebSocket.OPEN && msgId) {
-        ws.send(JSON.stringify({ type: 'toggle_pin', messageId: parseInt(msgId, 10) }));
-      }
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxEditBtn) {
-    ctxEditBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const msgId = activeContextMsg.dataset.msgId;
-      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
-      if (messageInput && content) {
-        messageInput.value = content;
-        messageInput.focus();
-      }
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxDeleteBtn) {
-    ctxDeleteBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const msgId = activeContextMsg.dataset.msgId;
-      if (msgId && typeof deleteMessage === 'function') {
-        deleteMessage(msgId);
-      }
-      closeMsgContextMenu();
-    });
-  }
