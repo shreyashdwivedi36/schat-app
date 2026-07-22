@@ -1601,3 +1601,164 @@ body {
     padding: 16px;
   }
 }
+
+
+
+/* ================= 3D TILT & UNIVERSAL LIQUID GLASS HOVER ================= */
+.btn, .icon-btn, .avatar-opt, .message-card, .online-user-item, .channel-item, .auth-card-container, .liquid-glass-dropdown, .input-wrapper input {
+  transition: transform 0.25s var(--spring-easing), box-shadow 0.25s ease, background 0.25s ease, border-color 0.25s ease, -webkit-backdrop-filter 0.25s ease, backdrop-filter 0.25s ease;
+  will-change: transform, box-shadow;
+}
+
+.btn:hover, .icon-btn:hover, .avatar-opt:hover, .message-card:hover, .online-user-item:hover, .channel-item:hover, .auth-card-container:hover {
+  -webkit-backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1.4));
+  backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1.4));
+  box-shadow: inset 0 0 12px rgba(255, 255, 255, 0.25), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.4), 
+              0 14px 35px rgba(0, 0, 0, 0.45);
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateY(-2px) scale(1.015);
+}
+
+.message-card.long-pressed {
+  animation: pulseTouch 0.4s var(--spring-easing);
+  box-shadow: 0 0 0 3px var(--primary-accent), 0 10px 30px rgba(139, 92, 246, 0.4) !important;
+}
+
+@keyframes pulseTouch {
+  0% { transform: scale(1); }
+  50% { transform: scale(0.96); }
+  100% { transform: scale(1.01); }
+}
+
+/* ================= LIQUID GLASS CONTEXT MENU (DESKTOP & MOBILE) ================= */
+.liquid-glass-context-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 210px;
+  background: rgba(15, 18, 35, 0.92);
+  -webkit-backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(180%) blur(30px);
+  backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(180%) blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.3),
+              0 0 20px rgba(139, 92, 246, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: ctxPopIn 0.2s var(--spring-easing);
+  transform-origin: top left;
+}
+
+@keyframes ctxPopIn {
+  0% { opacity: 0; transform: scale(0.85) translateY(-8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.ctx-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: var(--text-main);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  user-select: none;
+}
+
+.ctx-item:hover, .ctx-item:active {
+  background: rgba(139, 92, 246, 0.28);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+.ctx-icon {
+  font-size: 1.05rem;
+}
+
+.ctx-label {
+  flex: 1;
+}
+
+.ctx-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 4px 6px;
+}
+
+.ctx-danger {
+  color: var(--danger-color);
+}
+
+.ctx-danger:hover, .ctx-danger:active {
+  background: rgba(244, 63, 94, 0.22);
+  color: #ff4d6d;
+}
+
+/* Mobile Responsiveness for Context Menu */
+@media (max-width: 640px) {
+  .liquid-glass-context-menu {
+    min-width: 260px;
+    padding: 12px;
+    border-radius: 24px;
+  }
+
+  .ctx-item {
+    padding: 14px 16px;
+    font-size: 0.95rem;
+  }
+}
+
+
+/* ================= FLUID WEBGL & GLASS MOTION ENHANCEMENTS ================= */
+#bg3dCanvas {
+  filter: contrast(110%) saturate(120%);
+  will-change: transform;
+}
+
+.message-card, .btn, .icon-btn, .avatar-opt, .online-user-item, .auth-card-container, .modal-content {
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, background 0.25s ease;
+  will-change: transform;
+}
+
+.message-card:hover {
+  box-shadow: 0 12px 30px -10px rgba(139, 92, 246, 0.25);
+}
+
+/* Fluid Floating Ambient Animation */
+@keyframes fluidAmbientFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4px) rotate(0.5deg);
+  }
+}
+
+.auth-card-container {
+  animation: fluidAmbientFloat 8s ease-in-out infinite;
+}
+
+/* Fluid Ripple Pulse Keyframe */
+@keyframes fluidShockwave {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(139, 92, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  }
+}
+
+.btn-primary:active, .send-btn:active {
+  animation: fluidShockwave 0.6s ease-out;
+}

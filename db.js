@@ -7,7 +7,14 @@ if (process.env.DATABASE_URL) {
   const { Pool } = require('pg');
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
+    max: 10, // Optimized for Neon Free Tier connection limits
+    idleTimeoutMillis: 30000, // Close idle connections after 30s
+    connectionTimeoutMillis: 10000 // Allow 10s for Neon compute warm-up
+  });
+
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle Neon PostgreSQL client:', err);
   });
 
   async function initPg() {
@@ -69,6 +76,9 @@ if (process.env.DATABASE_URL) {
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_user VARCHAR(255) DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_text TEXT DEFAULT NULL;`); } catch(e){}
+      try { await pool.query(`CREATE INDEX IF NOT EXISTS idx_messages_channel_created ON messages(channel, created_at);`); } catch(e){}
+      try { await pool.query(`CREATE INDEX IF NOT EXISTS idx_messages_recipient_user ON messages(user_id, recipient_id);`); } catch(e){}
+      try { await pool.query(`CREATE INDEX IF NOT EXISTS idx_messages_created ON messages(created_at);`); } catch(e){}
       console.log('Connected to PostgreSQL Database cleanly with all 9 features.');
     } catch (err) {
       console.error('PostgreSQL Init Error:', err);

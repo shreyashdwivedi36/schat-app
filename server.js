@@ -17,6 +17,26 @@ try {
 const app = express();
 const server = http.createServer(app);
 
+// WebSocket Server Protocol Upgrade Handling & Security Handshake
+server.on('upgrade', (request, socket, head) => {
+  try {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    const token = url.searchParams.get('token');
+    
+    if (token) {
+      const user = verifyToken(token);
+      if (!user) {
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+    }
+  } catch (err) {
+    // Graceful fallback if url parsing fails
+  }
+});
+
+
 // CORS Policy Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
 app.use(cors({

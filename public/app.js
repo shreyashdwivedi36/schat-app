@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => authAlert.classList.add('hidden'), 4000);
   };
 
-  switchToRegisterBtn.addEventListener('click', () => {
+  if (switchToRegisterBtn) switchToRegisterBtn.addEventListener('click', () => {
     loginForm.classList.remove('active');
     loginForm.classList.add('hidden');
     registerForm.classList.remove('hidden');
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  switchToLoginBtn.addEventListener('click', () => {
+  if (switchToLoginBtn) switchToLoginBtn.addEventListener('click', () => {
     registerForm.classList.remove('active');
     registerForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  avatarPicker.addEventListener('click', (e) => {
+  if (avatarPicker) avatarPicker.addEventListener('click', (e) => {
     const opt = e.target.closest('.avatar-opt');
     if (!opt) return;
     avatarPicker.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  registerForm.addEventListener('submit', async (e) => {
+  if (registerForm) registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  loginForm.addEventListener('submit', async (e) => {
+  if (loginForm) loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
@@ -517,10 +517,10 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebar();
   };
 
-  logoutBtn.addEventListener('click', performLogout);
+  if (logoutBtn) logoutBtn.addEventListener('click', performLogout);
 
   // Channel & DM Tab Switching
-  globalChannelBtn.addEventListener('click', () => {
+  if (globalChannelBtn) globalChannelBtn.addEventListener('click', () => {
     switchChatTab(null);
   });
 
@@ -595,12 +595,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
-    myAvatarEl.textContent = currentUser.avatar || '⚡';
-    myUsernameEl.textContent = currentUser.username;
+    if (myAvatarEl) myAvatarEl.textContent = currentUser.avatar || '⚡';
+    if (myUsernameEl) myUsernameEl.textContent = currentUser.username;
     if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
 
-    authView.classList.add('hidden');
-    chatView.classList.remove('hidden');
+    if (authView) authView.classList.add('hidden');
+    if (chatView) chatView.classList.remove('hidden');
 
     requestNotificationPermission();
     await loadMessageHistory();
@@ -1057,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  messageForm.addEventListener('submit', (e) => {
+  if (messageForm) messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const content = messageInput.value.trim();
 
@@ -1092,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   });
 
-  messageInput.addEventListener('input', () => {
+  if (messageInput) messageInput.addEventListener('input', () => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     ws.send(JSON.stringify({
@@ -1124,18 +1124,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  emojiBtn.addEventListener('click', () => {
+  if (emojiBtn) emojiBtn.addEventListener('click', () => {
     emojiPicker.classList.toggle('hidden');
   });
 
-  emojiPicker.addEventListener('click', (e) => {
+  if (emojiPicker) emojiPicker.addEventListener('click', (e) => {
     if (e.target.classList.contains('emoji-item')) {
       messageInput.value += e.target.textContent;
       messageInput.focus();
     }
   });
 
-  filterInput.addEventListener('input', (e) => {
+  if (filterInput) filterInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.online-user-item').forEach(item => {
       const text = item.textContent.toLowerCase();
@@ -1153,84 +1153,392 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ================= THREE.JS 3D WEBGL MOTION ENGINE =================
+// ================= FLUID WEBGL MOTION DESIGN ENGINE =================
 function init3DMotionBackground() {
   const canvas = document.getElementById('bg3dCanvas');
   if (!canvas || typeof THREE === 'undefined') return;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 400;
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 120;
 
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true, powerPreference: "high-performance" });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  // Create 3D Particle Mesh Constellation
-  const particleCount = 700;
-  const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(particleCount * 3);
-  const colors = new Float32Array(particleCount * 3);
+  // 1. Organic Fluid Wave Plane Mesh
+  const planeGeo = new THREE.PlaneGeometry(320, 220, 64, 64);
+  
+  const uniforms = {
+    uTime: { value: 0 },
+    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+    uColor1: { value: new THREE.Color(0x8b5cf6) }, // Vibrant Accent Purple
+    uColor2: { value: new THREE.Color(0x06b6d4) }, // Vibrant Accent Cyan
+    uColor3: { value: new THREE.Color(0xec4899) }, // Neon Pink Ripple
+    uRipple: { value: 0 },
+    uRipplePos: { value: new THREE.Vector2(0.5, 0.5) }
+  };
 
-  const color1 = new THREE.Color(0x8b5cf6); // Purple
-  const color2 = new THREE.Color(0x06b6d4); // Cyan
+  const vertexShader = `
+    uniform float uTime;
+    uniform vec2 uMouse;
+    uniform float uRipple;
+    uniform vec2 uRipplePos;
+    varying vec2 vUv;
+    varying float vElevation;
+
+    void main() {
+      vUv = uv;
+      vec3 pos = position;
+
+      // Complex fluid wave displacement using trigonometric combinations
+      float wave1 = sin(pos.x * 0.05 + uTime * 0.8) * cos(pos.y * 0.05 + uTime * 0.6) * 4.5;
+      float wave2 = cos(pos.x * 0.08 - uTime * 0.5) * sin(pos.y * 0.08 + uTime * 0.7) * 3.5;
+      
+      // Cursor fluid distortion
+      float distMouse = distance(uv, uMouse);
+      float mouseDistortion = smoothstep(0.4, 0.0, distMouse) * 7.0 * sin(uTime * 2.5);
+
+      // Radial fluid shockwave ripple
+      float distRipple = distance(uv, uRipplePos);
+      float rippleWave = sin(distRipple * 30.0 - uTime * 8.0) * exp(-distRipple * 3.0) * uRipple * 10.0;
+
+      pos.z += wave1 + wave2 + mouseDistortion + rippleWave;
+      vElevation = pos.z;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+    }
+  `;
+
+  const fragmentShader = `
+    uniform vec3 uColor1;
+    uniform vec3 uColor2;
+    uniform vec3 uColor3;
+    uniform float uTime;
+    varying vec2 vUv;
+    varying float vElevation;
+
+    void main() {
+      float mixFactor = smoothstep(-6.0, 8.0, vElevation);
+      vec3 color = mix(uColor1, uColor2, mixFactor + sin(uTime * 0.4) * 0.25);
+      
+      // Dynamic specular glass highlight
+      float specular = pow(smoothstep(-2.0, 6.0, vElevation), 3.0) * 0.35;
+      color += uColor3 * specular;
+
+      float alpha = smoothstep(0.0, 0.8, 1.0 - length(vUv - vec2(0.5)) * 1.2) * 0.65;
+      gl_FragColor = vec4(color, alpha);
+    }
+  `;
+
+  const waveMaterial = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    uniforms,
+    transparent: true,
+    wireframe: false,
+    side: THREE.DoubleSide
+  });
+
+  const waveMesh = new THREE.Mesh(planeGeo, waveMaterial);
+  waveMesh.rotation.x = -Math.PI / 4;
+  waveMesh.position.y = -20;
+  scene.add(waveMesh);
+
+  // 2. Floating Interactive Particle Constellation
+  const particleCount = 450;
+  const particleGeo = new THREE.BufferGeometry();
+  const particlePos = new Float32Array(particleCount * 3);
 
   for (let i = 0; i < particleCount; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 1200;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 1200;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 1200;
-
-    const mixedColor = color1.clone().lerp(color2, Math.random());
-    colors[i * 3] = mixedColor.r;
-    colors[i * 3 + 1] = mixedColor.g;
-    colors[i * 3 + 2] = mixedColor.b;
+    particlePos[i * 3] = (Math.random() - 0.5) * 260;
+    particlePos[i * 3 + 1] = (Math.random() - 0.5) * 180;
+    particlePos[i * 3 + 2] = (Math.random() - 0.5) * 120;
   }
 
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePos, 3));
 
-  const material = new THREE.PointsMaterial({
-    size: 4,
-    vertexColors: true,
+  const particleMat = new THREE.PointsMaterial({
+    size: 2.5,
+    color: 0x22d3ee,
     transparent: true,
-    opacity: 0.8,
+    opacity: 0.75,
     blending: THREE.AdditiveBlending
   });
 
-  const particleSystem = new THREE.Points(geometry, material);
+  const particleSystem = new THREE.Points(particleGeo, particleMat);
   scene.add(particleSystem);
 
-  // Mouse Interactive Motion Tracking
-  let mouseX = 0;
-  let mouseY = 0;
-  let targetX = 0;
-  let targetY = 0;
+  // Smooth Motion Interpolation Controls
+  let mouseX = 0.5, mouseY = 0.5;
+  let targetMouseX = 0, targetMouseY = 0;
 
   document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX - window.innerWidth / 2) * 0.0008;
-    mouseY = (e.clientY - window.innerHeight / 2) * 0.0008;
+    mouseX = (e.clientX / window.innerWidth);
+    mouseY = 1.0 - (e.clientY / window.innerHeight);
+    
+    targetMouseX = (e.clientX - window.innerWidth / 2) * 0.0005;
+    targetMouseY = (e.clientY - window.innerHeight / 2) * 0.0005;
   });
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
   });
 
-  function animate3D() {
-    requestAnimationFrame(animate3D);
+  // Global Shockwave Ripple Trigger for Messaging Events
+  window.triggerFluidRipple = (normalizedX = 0.5, normalizedY = 0.5) => {
+    uniforms.uRipplePos.value.set(normalizedX, normalizedY);
+    uniforms.uRipple.value = 1.0;
+  };
 
-    targetX += (mouseX - targetX) * 0.05;
-    targetY += (mouseY - targetY) * 0.05;
+  const clock = new THREE.Clock();
 
-    particleSystem.rotation.y += 0.0012 + targetX * 0.2;
-    particleSystem.rotation.x += 0.0008 + targetY * 0.2;
+  function animateFluid() {
+    requestAnimationFrame(animateFluid);
 
-    camera.position.x += (targetX * 200 - camera.position.x) * 0.05;
-    camera.position.y += (-targetY * 200 - camera.position.y) * 0.05;
+    const elapsedTime = clock.getElapsedTime();
+    uniforms.uTime.value = elapsedTime;
+
+    uniforms.uMouse.value.x += (mouseX - uniforms.uMouse.value.x) * 0.08;
+    uniforms.uMouse.value.y += (mouseY - uniforms.uMouse.value.y) * 0.08;
+
+    if (uniforms.uRipple.value > 0.001) {
+      uniforms.uRipple.value *= 0.94;
+    } else {
+      uniforms.uRipple.value = 0;
+    }
+
+    camera.position.x += (targetMouseX * 50 - camera.position.x) * 0.05;
+    camera.position.y += (-targetMouseY * 50 - camera.position.y) * 0.05;
     camera.lookAt(scene.position);
+
+    particleSystem.rotation.y = elapsedTime * 0.03;
+    particleSystem.rotation.x = elapsedTime * 0.02;
 
     renderer.render(scene, camera);
   }
 
-  animate3D();
+  animateFluid();
 }
+
+
+  // ================= 3D TILT MOTION & CONTEXT MENU ENGINE =================
+  const msgContextMenu = document.getElementById('msgContextMenu');
+  const ctxReplyBtn = document.getElementById('ctxReplyBtn');
+  const ctxReactBtn = document.getElementById('ctxReactBtn');
+  const ctxCopyBtn = document.getElementById('ctxCopyBtn');
+  const ctxPinBtn = document.getElementById('ctxPinBtn');
+  const ctxPinText = document.getElementById('ctxPinText');
+  const ctxEditBtn = document.getElementById('ctxEditBtn');
+  const ctxDeleteBtn = document.getElementById('ctxDeleteBtn');
+
+  let activeContextMsg = null;
+  let touchTimer = null;
+  let touchStartPos = { x: 0, y: 0 };
+
+  // 3D Card Perspective Motion Effect on MouseMove
+  document.addEventListener('mousemove', (e) => {
+    const card = e.target.closest('.message-card, .btn, .icon-btn, .avatar-opt, .online-user-item, .auth-card-container');
+    if (!card) return;
+
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+
+    const rotateX = (-y / rect.height) * 12;
+    const rotateY = (x / rect.width) * 12;
+
+    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+  });
+
+  document.addEventListener('mouseout', (e) => {
+    const card = e.target.closest('.message-card, .btn, .icon-btn, .avatar-opt, .online-user-item, .auth-card-container');
+    if (card) {
+      card.style.transform = '';
+    }
+  });
+
+  // Open Context Menu Function
+  const openMsgContextMenu = (msgCard, clientX, clientY) => {
+    if (!msgCard || !msgContextMenu) return;
+    activeContextMsg = msgCard;
+
+    const msgId = msgCard.dataset.msgId;
+    const isOutgoing = msgCard.classList.contains('outgoing');
+    const isPinned = msgCard.classList.contains('pinned');
+
+    // Show or hide outgoing-only options
+    msgContextMenu.querySelectorAll('.outgoing-only').forEach(el => {
+      el.style.display = isOutgoing ? 'flex' : 'none';
+    });
+
+    if (ctxPinText) {
+      ctxPinText.textContent = isPinned ? 'Unpin Message' : 'Pin Message';
+    }
+
+    // Position Context Menu Responsively
+    msgContextMenu.classList.remove('hidden');
+    const menuWidth = msgContextMenu.offsetWidth || 220;
+    const menuHeight = msgContextMenu.offsetHeight || 240;
+
+    let left = clientX;
+    let top = clientY;
+
+    if (left + menuWidth > window.innerWidth - 10) {
+      left = window.innerWidth - menuWidth - 15;
+    }
+    if (top + menuHeight > window.innerHeight - 10) {
+      top = window.innerHeight - menuHeight - 15;
+    }
+    if (left < 10) left = 10;
+    if (top < 10) top = 10;
+
+    msgContextMenu.style.left = `${left}px`;
+    msgContextMenu.style.top = `${top}px`;
+
+    // Trigger haptic vibration feedback on mobile
+    if ('vibrate' in navigator) {
+      try { navigator.vibrate(50); } catch(e){}
+    }
+  };
+
+  const closeMsgContextMenu = () => {
+    if (msgContextMenu) msgContextMenu.classList.add('hidden');
+    if (activeContextMsg) {
+      activeContextMsg.classList.remove('long-pressed');
+      activeContextMsg = null;
+    }
+  };
+
+  // Close context menu on outside click or scroll
+  document.addEventListener('click', (e) => {
+    if (msgContextMenu && !msgContextMenu.contains(e.target)) {
+      closeMsgContextMenu();
+    }
+  });
+
+  document.addEventListener('scroll', closeMsgContextMenu, true);
+
+  // Desktop Right Click (contextmenu) Event Delegation
+  if (messagesFeed) {
+    messagesFeed.addEventListener('contextmenu', (e) => {
+      const card = e.target.closest('.message-card');
+      if (card) {
+        e.preventDefault();
+        openMsgContextMenu(card, e.clientX, e.clientY);
+      }
+    });
+
+    // Mobile Long Press (touchstart / touchend / touchmove) Handling
+    messagesFeed.addEventListener('touchstart', (e) => {
+      const card = e.target.closest('.message-card');
+      if (!card) return;
+
+      const touch = e.touches[0];
+      touchStartPos = { x: touch.clientX, y: touch.clientY };
+
+      clearTimeout(touchTimer);
+      touchTimer = setTimeout(() => {
+        card.classList.add('long-pressed');
+        openMsgContextMenu(card, touchStartPos.x, touchStartPos.y);
+      }, 500); // 500ms long press threshold
+    }, { passive: true });
+
+    messagesFeed.addEventListener('touchmove', (e) => {
+      if (!touchTimer) return;
+      const touch = e.touches[0];
+      const dist = Math.hypot(touch.clientX - touchStartPos.x, touch.clientY - touchStartPos.y);
+      if (dist > 10) { // Cancel long press if scrolled
+        clearTimeout(touchTimer);
+        touchTimer = null;
+      }
+    }, { passive: true });
+
+    messagesFeed.addEventListener('touchend', () => {
+      clearTimeout(touchTimer);
+      touchTimer = null;
+    });
+
+    messagesFeed.addEventListener('touchcancel', () => {
+      clearTimeout(touchTimer);
+      touchTimer = null;
+    });
+  }
+
+  // Context Menu Action Listeners
+  if (ctxReplyBtn) {
+    ctxReplyBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const author = activeContextMsg.querySelector('.msg-author')?.textContent || 'User';
+      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
+      const msgId = activeContextMsg.dataset.msgId;
+
+      // Trigger reply UI in message form
+      if (typeof setQuotedReply === 'function') {
+        setQuotedReply(msgId, author, content);
+      } else if (messageInput) {
+        messageInput.placeholder = `Replying to ${author}...`;
+        messageInput.focus();
+      }
+      closeMsgContextMenu();
+    });
+  }
+
+  if (ctxReactBtn) {
+    ctxReactBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      if (emojiPicker) emojiPicker.classList.remove('hidden');
+      closeMsgContextMenu();
+    });
+  }
+
+  if (ctxCopyBtn) {
+    ctxCopyBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
+      if (content && navigator.clipboard) {
+        navigator.clipboard.writeText(content);
+        if (typeof showAlert === 'function') showAlert('Message copied to clipboard!', 'success');
+      }
+      closeMsgContextMenu();
+    });
+  }
+
+  if (ctxPinBtn) {
+    ctxPinBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const msgId = activeContextMsg.dataset.msgId;
+      if (ws && ws.readyState === WebSocket.OPEN && msgId) {
+        ws.send(JSON.stringify({ type: 'toggle_pin', messageId: parseInt(msgId, 10) }));
+      }
+      closeMsgContextMenu();
+    });
+  }
+
+  if (ctxEditBtn) {
+    ctxEditBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const msgId = activeContextMsg.dataset.msgId;
+      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
+      if (messageInput && content) {
+        messageInput.value = content;
+        messageInput.focus();
+      }
+      closeMsgContextMenu();
+    });
+  }
+
+  if (ctxDeleteBtn) {
+    ctxDeleteBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const msgId = activeContextMsg.dataset.msgId;
+      if (msgId && typeof deleteMessage === 'function') {
+        deleteMessage(msgId);
+      }
+      closeMsgContextMenu();
+    });
+  }
