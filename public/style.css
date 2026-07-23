@@ -740,6 +740,8 @@ body {
   align-items: center;
   gap: 6px;
   flex-shrink: 0;
+  z-index: 501;
+  overflow: visible;
 }
 
 /* LIQUID GLASS POPOVER DROPDOWN MENU */
@@ -1686,20 +1688,19 @@ body {
 /* ANDROID / MOBILE LIQUID GLASS OVERLAY FIX */
 @media (max-width: 600px) {
   .liquid-glass-dropdown {
-    position: fixed !important;
-    top: 68px !important;
-    right: 12px !important;
-    left: auto !important;
-    width: calc(100vw - 24px) !important;
-    max-width: 320px !important;
+    position: absolute !important;
+    top: calc(100% + 8px) !important;
+    right: 0 !important;
+    width: calc(100vw - 32px) !important;
+    max-width: 280px !important;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(10, 13, 26, 0.97) !important;
     -webkit-backdrop-filter: blur(36px) saturate(220%) !important;
     backdrop-filter: blur(36px) saturate(220%) !important;
     border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.5), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.4) !important;
-    z-index: 1000 !important;
-    border-radius: 24px !important;
-    padding: 12px !important;
+    z-index: 9999 !important;
+    border-radius: 22px !important;
+    padding: 10px !important;
     isolation: isolate !important;
     transform: translateZ(0) !important;
   }
