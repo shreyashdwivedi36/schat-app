@@ -409,7 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => authAlert.classList.add('hidden'), 4000);
   };
 
-  if (switchToRegisterBtn) switchToRegisterBtn.addEventListener('click', () => {
+  switchToRegisterBtn.addEventListener('click', () => {
     loginForm.classList.remove('active');
     loginForm.classList.add('hidden');
     registerForm.classList.remove('hidden');
@@ -417,7 +417,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  if (switchToLoginBtn) switchToLoginBtn.addEventListener('click', () => {
+  switchToLoginBtn.addEventListener('click', () => {
     registerForm.classList.remove('active');
     registerForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
     authAlert.classList.add('hidden');
   });
 
-  if (avatarPicker) avatarPicker.addEventListener('click', (e) => {
+  avatarPicker.addEventListener('click', (e) => {
     const opt = e.target.closest('.avatar-opt');
     if (!opt) return;
     avatarPicker.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
@@ -440,7 +440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (registerForm) registerForm.addEventListener('submit', async (e) => {
+  registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('regUsername').value.trim();
     const email = document.getElementById('regEmail').value.trim();
@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  if (loginForm) loginForm.addEventListener('submit', async (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
@@ -517,10 +517,10 @@ document.addEventListener('DOMContentLoaded', () => {
     closeSidebar();
   };
 
-  if (logoutBtn) logoutBtn.addEventListener('click', performLogout);
+  logoutBtn.addEventListener('click', performLogout);
 
   // Channel & DM Tab Switching
-  if (globalChannelBtn) globalChannelBtn.addEventListener('click', () => {
+  globalChannelBtn.addEventListener('click', () => {
     switchChatTab(null);
   });
 
@@ -595,12 +595,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
-    if (myAvatarEl) myAvatarEl.textContent = currentUser.avatar || '⚡';
-    if (myUsernameEl) myUsernameEl.textContent = currentUser.username;
+    myAvatarEl.textContent = currentUser.avatar || '⚡';
+    myUsernameEl.textContent = currentUser.username;
     if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
 
-    if (authView) authView.classList.add('hidden');
-    if (chatView) chatView.classList.remove('hidden');
+    authView.classList.add('hidden');
+    chatView.classList.remove('hidden');
 
     requestNotificationPermission();
     await loadMessageHistory();
@@ -1057,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  if (messageForm) messageForm.addEventListener('submit', (e) => {
+  messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const content = messageInput.value.trim();
 
@@ -1092,7 +1092,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
   });
 
-  if (messageInput) messageInput.addEventListener('input', () => {
+  messageInput.addEventListener('input', () => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
     ws.send(JSON.stringify({
@@ -1124,18 +1124,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  if (emojiBtn) emojiBtn.addEventListener('click', () => {
+  emojiBtn.addEventListener('click', () => {
     emojiPicker.classList.toggle('hidden');
   });
 
-  if (emojiPicker) emojiPicker.addEventListener('click', (e) => {
+  emojiPicker.addEventListener('click', (e) => {
     if (e.target.classList.contains('emoji-item')) {
       messageInput.value += e.target.textContent;
       messageInput.focus();
     }
   });
 
-  if (filterInput) filterInput.addEventListener('input', (e) => {
+  filterInput.addEventListener('input', (e) => {
     const term = e.target.value.toLowerCase();
     document.querySelectorAll('.online-user-item').forEach(item => {
       const text = item.textContent.toLowerCase();
@@ -1153,425 +1153,84 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ================= THREE.JS 3D WEBGL MOTION ENGINE =================
-// ================= FLUID WEBGL LIQUID MOTION ENGINE =================
-class TouchTexture {
-  constructor() {
-    self = this;
-    this.size = 128;
-    this.maxAge = 64;
-    this.radius = 0.15;
-    this.trail = [];
-    
-    this.canvas = document.createElement('canvas');
-    this.canvas.width = this.size;
-    this.canvas.height = this.size;
-    this.ctx = this.canvas.getContext('2d');
-    this.ctx.fillStyle = 'black';
-    this.ctx.fillRect(0, 0, this.size, this.size);
-    
-    this.texture = new THREE.CanvasTexture(this.canvas);
-  }
-
-  addTouch(point) {
-    let force = 0;
-    if (this.last) {
-      const dx = point.x - this.last.x;
-      const dy = point.y - this.last.y;
-      const dd = dx * dx + dy * dy;
-      force = Math.min(dd * 10000, 1.0);
-    }
-    this.last = { x: point.x, y: point.y };
-    this.trail.push({ x: point.x, y: point.y, age: 0, force: Math.max(force, 0.2) });
-  }
-
-  update() {
-    this.ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
-    this.ctx.fillRect(0, 0, this.size, this.size);
-
-    this.trail.forEach((point, i) => {
-      point.age++;
-      if (point.age > this.maxAge) {
-        this.trail.splice(i, 1);
-      } else {
-        const alpha = 1 - point.age / this.maxAge;
-        const pos = { x: point.x * this.size, y: (1 - point.y) * this.size };
-        const grad = this.ctx.createRadialGradient(
-          pos.x, pos.y, 0,
-          pos.x, pos.y, this.radius * this.size
-        );
-        grad.addColorStop(0, `rgba(255, 255, 255, ${alpha * point.force})`);
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        
-        this.ctx.beginPath();
-        this.ctx.fillStyle = grad;
-        this.ctx.arc(pos.x, pos.y, this.radius * this.size, 0, Math.PI * 2);
-        this.ctx.fill();
-      }
-    });
-
-    this.texture.needsUpdate = true;
-  }
-}
-
 function init3DMotionBackground() {
   const canvas = document.getElementById('bg3dCanvas');
   if (!canvas || typeof THREE === 'undefined') return;
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-  camera.position.z = 10;
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 400;
 
-  const renderer = new THREE.WebGLRenderer({
-    canvas: canvas,
-    alpha: true,
-    antialias: true,
-    powerPreference: "high-performance",
-    depth: false,
-    stencil: false
-  });
+  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  const touchTexture = new TouchTexture();
+  // Create 3D Particle Mesh Constellation
+  const particleCount = 700;
+  const geometry = new THREE.BufferGeometry();
+  const positions = new Float32Array(particleCount * 3);
+  const colors = new Float32Array(particleCount * 3);
 
-  const uniforms = {
-    uTime: { value: 0 },
-    uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-    uTouchTexture: { value: touchTexture.texture },
-    uColor1: { value: new THREE.Color(0x8b5cf6) }, // Purple Accent
-    uColor2: { value: new THREE.Color(0x06b6d4) }, // Cyan Accent
-    uColor3: { value: new THREE.Color(0xec4899) }, // Pink Accent
-    uColor4: { value: new THREE.Color(0x07080e) }, // Dark Base
-    uGrainIntensity: { value: 0.04 }
-  };
+  const color1 = new THREE.Color(0x8b5cf6); // Purple
+  const color2 = new THREE.Color(0x06b6d4); // Cyan
 
-  const vertexShader = `
-    varying vec2 vUv;
-    void main() {
-      vUv = uv;
-      gl_Position = vec4(position, 1.0);
-    }
-  `;
+  for (let i = 0; i < particleCount; i++) {
+    positions[i * 3] = (Math.random() - 0.5) * 1200;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 1200;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 1200;
 
-  const fragmentShader = `
-    uniform float uTime;
-    uniform vec2 uResolution;
-    uniform sampler2D uTouchTexture;
-    uniform vec3 uColor1;
-    uniform vec3 uColor2;
-    uniform vec3 uColor3;
-    uniform vec3 uColor4;
-    uniform float uGrainIntensity;
-    varying vec2 vUv;
+    const mixedColor = color1.clone().lerp(color2, Math.random());
+    colors[i * 3] = mixedColor.r;
+    colors[i * 3 + 1] = mixedColor.g;
+    colors[i * 3 + 2] = mixedColor.b;
+  }
 
-    // Pseudo-random noise for film grain
-    float random(vec2 st) {
-      return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-    }
+  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
-    void main() {
-      vec2 st = gl_FragCoord.xy / uResolution.xy;
-      
-      // Sample touch distortion texture
-      vec4 touch = texture2D(uTouchTexture, st);
-      vec2 distortedSt = st + (touch.r * 0.12 - 0.06);
-
-      // Multi-layer trigonometric domain warping liquid animation
-      float t = uTime * 0.3;
-      float wave1 = sin(distortedSt.x * 3.0 + t + cos(distortedSt.y * 2.5 + t));
-      float wave2 = cos(distortedSt.y * 4.0 - t + sin(distortedSt.x * 3.5 - t));
-      float wave3 = sin(distortedSt.x * 2.0 + distortedSt.y * 3.0 + t * 1.5);
-      
-      float blendFactor = (wave1 + wave2 + wave3) / 3.0;
-      blendFactor = blendFactor * 0.5 + 0.5;
-
-      // Color interpolation
-      vec3 color = mix(uColor4, mix(uColor1, uColor2, blendFactor), 0.7);
-      color = mix(color, uColor3, touch.r * 0.8);
-
-      // Subtle film grain
-      float grain = (random(st + uTime) - 0.5) * uGrainIntensity;
-      color += grain;
-
-      gl_FragColor = vec4(color, 0.85);
-    }
-  `;
-
-  const planeGeo = new THREE.PlaneGeometry(2, 2);
-  const material = new THREE.ShaderMaterial({
-    vertexShader,
-    fragmentShader,
-    uniforms,
+  const material = new THREE.PointsMaterial({
+    size: 4,
+    vertexColors: true,
     transparent: true,
-    depthWrite: false
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending
   });
 
-  const mesh = new THREE.Mesh(planeGeo, material);
-  scene.add(mesh);
+  const particleSystem = new THREE.Points(geometry, material);
+  scene.add(particleSystem);
 
-  // Event Listeners for Cursor and Touch Dynamics
-  const onMove = (e) => {
-    const x = e.clientX / window.innerWidth;
-    const y = e.clientY / window.innerHeight;
-    touchTexture.addTouch({ x, y });
-  };
+  // Mouse Interactive Motion Tracking
+  let mouseX = 0;
+  let mouseY = 0;
+  let targetX = 0;
+  let targetY = 0;
 
-  window.addEventListener('mousemove', onMove);
-  window.addEventListener('touchmove', (e) => {
-    if (e.touches.length > 0) {
-      const x = e.touches[0].clientX / window.innerWidth;
-      const y = e.touches[0].clientY / window.innerHeight;
-      touchTexture.addTouch({ x, y });
-    }
-  }, { passive: true });
+  document.addEventListener('mousemove', (e) => {
+    mouseX = (e.clientX - window.innerWidth / 2) * 0.0008;
+    mouseY = (e.clientY - window.innerHeight / 2) * 0.0008;
+  });
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
   });
 
-  // Global Shockwave Ripple Trigger
-  window.triggerFluidRipple = (x = 0.5, y = 0.5) => {
-    for (let i = 0; i < 8; i++) {
-      setTimeout(() => {
-        const rx = x + (Math.random() - 0.5) * 0.1;
-        const ry = y + (Math.random() - 0.5) * 0.1;
-        touchTexture.addTouch({ x: rx, y: ry });
-      }, i * 30);
-    }
-  };
+  function animate3D() {
+    requestAnimationFrame(animate3D);
 
-  const clock = new THREE.Clock();
+    targetX += (mouseX - targetX) * 0.05;
+    targetY += (mouseY - targetY) * 0.05;
 
-  function animateLiquid() {
-    requestAnimationFrame(animateLiquid);
+    particleSystem.rotation.y += 0.0012 + targetX * 0.2;
+    particleSystem.rotation.x += 0.0008 + targetY * 0.2;
 
-    const delta = clock.getDelta();
-    uniforms.uTime.value += delta;
+    camera.position.x += (targetX * 200 - camera.position.x) * 0.05;
+    camera.position.y += (-targetY * 200 - camera.position.y) * 0.05;
+    camera.lookAt(scene.position);
 
-    touchTexture.update();
     renderer.render(scene, camera);
   }
 
-  animateLiquid();
+  animate3D();
 }
-
-
-  // ================= 3D TILT MOTION & CONTEXT MENU ENGINE =================
-  const msgContextMenu = document.getElementById('msgContextMenu');
-  const ctxReplyBtn = document.getElementById('ctxReplyBtn');
-  const ctxReactBtn = document.getElementById('ctxReactBtn');
-  const ctxCopyBtn = document.getElementById('ctxCopyBtn');
-  const ctxPinBtn = document.getElementById('ctxPinBtn');
-  const ctxPinText = document.getElementById('ctxPinText');
-  const ctxEditBtn = document.getElementById('ctxEditBtn');
-  const ctxDeleteBtn = document.getElementById('ctxDeleteBtn');
-
-  let activeContextMsg = null;
-  let touchTimer = null;
-  let touchStartPos = { x: 0, y: 0 };
-
-  // 3D Card Perspective Motion Effect on MouseMove
-  document.addEventListener('mousemove', (e) => {
-    const card = e.target.closest('.message-card, .btn, .icon-btn, .avatar-opt, .online-user-item, .auth-card-container');
-    if (!card) return;
-
-    const rect = card.getBoundingClientRect();
-    const x = e.clientX - rect.left - rect.width / 2;
-    const y = e.clientY - rect.top - rect.height / 2;
-
-    const rotateX = (-y / rect.height) * 12;
-    const rotateY = (x / rect.width) * 12;
-
-    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
-  });
-
-  document.addEventListener('mouseout', (e) => {
-    const card = e.target.closest('.message-card, .btn, .icon-btn, .avatar-opt, .online-user-item, .auth-card-container');
-    if (card) {
-      card.style.transform = '';
-    }
-  });
-
-  // Open Context Menu Function
-  const openMsgContextMenu = (msgCard, clientX, clientY) => {
-    if (!msgCard || !msgContextMenu) return;
-    activeContextMsg = msgCard;
-
-    const msgId = msgCard.dataset.msgId;
-    const isOutgoing = msgCard.classList.contains('outgoing');
-    const isPinned = msgCard.classList.contains('pinned');
-
-    // Show or hide outgoing-only options
-    msgContextMenu.querySelectorAll('.outgoing-only').forEach(el => {
-      el.style.display = isOutgoing ? 'flex' : 'none';
-    });
-
-    if (ctxPinText) {
-      ctxPinText.textContent = isPinned ? 'Unpin Message' : 'Pin Message';
-    }
-
-    // Position Context Menu Responsively
-    msgContextMenu.classList.remove('hidden');
-    const menuWidth = msgContextMenu.offsetWidth || 220;
-    const menuHeight = msgContextMenu.offsetHeight || 240;
-
-    let left = clientX;
-    let top = clientY;
-
-    if (left + menuWidth > window.innerWidth - 10) {
-      left = window.innerWidth - menuWidth - 15;
-    }
-    if (top + menuHeight > window.innerHeight - 10) {
-      top = window.innerHeight - menuHeight - 15;
-    }
-    if (left < 10) left = 10;
-    if (top < 10) top = 10;
-
-    msgContextMenu.style.left = `${left}px`;
-    msgContextMenu.style.top = `${top}px`;
-
-    // Trigger haptic vibration feedback on mobile
-    if ('vibrate' in navigator) {
-      try { navigator.vibrate(50); } catch(e){}
-    }
-  };
-
-  const closeMsgContextMenu = () => {
-    if (msgContextMenu) msgContextMenu.classList.add('hidden');
-    if (activeContextMsg) {
-      activeContextMsg.classList.remove('long-pressed');
-      activeContextMsg = null;
-    }
-  };
-
-  // Close context menu on outside click or scroll
-  document.addEventListener('click', (e) => {
-    if (msgContextMenu && !msgContextMenu.contains(e.target)) {
-      closeMsgContextMenu();
-    }
-  });
-
-  document.addEventListener('scroll', closeMsgContextMenu, true);
-
-  // Desktop Right Click (contextmenu) Event Delegation
-  if (messagesFeed) {
-    messagesFeed.addEventListener('contextmenu', (e) => {
-      const card = e.target.closest('.message-card');
-      if (card) {
-        e.preventDefault();
-        openMsgContextMenu(card, e.clientX, e.clientY);
-      }
-    });
-
-    // Mobile Long Press (touchstart / touchend / touchmove) Handling
-    messagesFeed.addEventListener('touchstart', (e) => {
-      const card = e.target.closest('.message-card');
-      if (!card) return;
-
-      const touch = e.touches[0];
-      touchStartPos = { x: touch.clientX, y: touch.clientY };
-
-      clearTimeout(touchTimer);
-      touchTimer = setTimeout(() => {
-        card.classList.add('long-pressed');
-        openMsgContextMenu(card, touchStartPos.x, touchStartPos.y);
-      }, 500); // 500ms long press threshold
-    }, { passive: true });
-
-    messagesFeed.addEventListener('touchmove', (e) => {
-      if (!touchTimer) return;
-      const touch = e.touches[0];
-      const dist = Math.hypot(touch.clientX - touchStartPos.x, touch.clientY - touchStartPos.y);
-      if (dist > 10) { // Cancel long press if scrolled
-        clearTimeout(touchTimer);
-        touchTimer = null;
-      }
-    }, { passive: true });
-
-    messagesFeed.addEventListener('touchend', () => {
-      clearTimeout(touchTimer);
-      touchTimer = null;
-    });
-
-    messagesFeed.addEventListener('touchcancel', () => {
-      clearTimeout(touchTimer);
-      touchTimer = null;
-    });
-  }
-
-  // Context Menu Action Listeners
-  if (ctxReplyBtn) {
-    ctxReplyBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const author = activeContextMsg.querySelector('.msg-author')?.textContent || 'User';
-      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
-      const msgId = activeContextMsg.dataset.msgId;
-
-      // Trigger reply UI in message form
-      if (typeof setQuotedReply === 'function') {
-        setQuotedReply(msgId, author, content);
-      } else if (messageInput) {
-        messageInput.placeholder = `Replying to ${author}...`;
-        messageInput.focus();
-      }
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxReactBtn) {
-    ctxReactBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      if (emojiPicker) emojiPicker.classList.remove('hidden');
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxCopyBtn) {
-    ctxCopyBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
-      if (content && navigator.clipboard) {
-        navigator.clipboard.writeText(content);
-        if (typeof showAlert === 'function') showAlert('Message copied to clipboard!', 'success');
-      }
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxPinBtn) {
-    ctxPinBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const msgId = activeContextMsg.dataset.msgId;
-      if (ws && ws.readyState === WebSocket.OPEN && msgId) {
-        ws.send(JSON.stringify({ type: 'toggle_pin', messageId: parseInt(msgId, 10) }));
-      }
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxEditBtn) {
-    ctxEditBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const msgId = activeContextMsg.dataset.msgId;
-      const content = activeContextMsg.querySelector('.msg-text')?.textContent || '';
-      if (messageInput && content) {
-        messageInput.value = content;
-        messageInput.focus();
-      }
-      closeMsgContextMenu();
-    });
-  }
-
-  if (ctxDeleteBtn) {
-    ctxDeleteBtn.addEventListener('click', () => {
-      if (!activeContextMsg) return;
-      const msgId = activeContextMsg.dataset.msgId;
-      if (msgId && typeof deleteMessage === 'function') {
-        deleteMessage(msgId);
-      }
-      closeMsgContextMenu();
-    });
-  }

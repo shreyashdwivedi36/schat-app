@@ -33,8 +33,13 @@ try {
   };
 }
 
-// Stable JWT Secret for consistent authentication across server restarts
-const JWT_SECRET = process.env.JWT_SECRET || 'schat_stable_production_jwt_secret_key_2026';
+// Require or generate strong JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || (() => {
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ WARNING: JWT_SECRET environment variable is missing in production!');
+  }
+  return crypto.randomBytes(32).toString('hex');
+})();
 
 function hashPassword(password) {
   return bcrypt.hashSync(password, 10);
