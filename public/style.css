@@ -156,12 +156,15 @@ body {
 
 .auth-card-container {
   width: 100%;
-  background: var(--panel-bg);
-  backdrop-filter: blur(24px);
-  border: 1px solid var(--panel-border);
-  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%), var(--panel-bg);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  backdrop-filter: blur(32px) saturate(200%);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 26px;
   padding: 32px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.4), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.25);
+  isolation: isolate;
+  transform: translateZ(0);
   position: relative;
 }
 
@@ -675,8 +678,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: var(--header-bg);
-  backdrop-filter: blur(24px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), var(--header-bg);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  backdrop-filter: blur(32px) saturate(200%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+  isolation: isolate;
+  transform: translateZ(0);
   min-height: 60px;
   position: relative;
 }
@@ -735,45 +742,107 @@ body {
   flex-shrink: 0;
 }
 
-/* LIQUID GLASS CHROMATIC ABERRATION POPOVER DROPDOWN MENU */
-:root {
-  --glass-frost: 0.1;
-  --glass-saturation: 1.2;
-  --filter-id: url(#glass-filter);
+/* LIQUID GLASS POPOVER DROPDOWN MENU */
+.liquid-glass-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  min-width: 240px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%), rgba(12, 15, 30, 0.94);
+  -webkit-backdrop-filter: blur(32px) saturate(210%);
+  backdrop-filter: blur(32px) saturate(210%);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  padding: 10px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: liquidPopIn 0.25s var(--spring-easing);
+  transform-origin: top right;
+  isolation: isolate;
+  transform: translateZ(0);
+  will-change: transform, backdrop-filter;
 }
 
+[data-theme="light"] .liquid-glass-dropdown {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.6) 100%), rgba(248, 250, 252, 0.96);
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.9), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.08);
+}
+
+@keyframes liquidPopIn {
+  0% { opacity: 0; transform: scale(0.85) translateY(-10px) translateZ(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0) translateZ(0); }
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  color: var(--text-main);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: 1px solid transparent;
+}
+
+.dropdown-item:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.32) 0%, rgba(6, 182, 212, 0.22) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.dropdown-icon {
+  font-size: 1.05rem;
+}
+
+.dropdown-label {
+  flex: 1;
+}
+
+.dropdown-badge {
+  font-size: 0.72rem;
+  padding: 3px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-muted);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--success-color);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--success-color);
+  animation: blink 1.5s infinite;
+}
 .liquid-glass-dropdown {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  min-width: 230px;
-  background: hsl(0 0% 0% / var(--glass-frost, 0.1));
-  -webkit-backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1.2));
-  backdrop-filter: var(--filter-id, url(#glass-filter)) saturate(var(--glass-saturation, 1.2));
-  box-shadow: inset 0 0 2px 1px lab(100% 0 0 / .35), 
-              inset 0 0 10px 4px lab(100% 0 0 / .15), 
-              inset 0 4px 16px lab(5.32% 1.61 -5.88 / .05), 
-              inset 0 8px 24px lab(5.32% 1.61 -5.88 / .05), 
-              0 20px 50px rgba(0, 0, 0, 0.5);
-  border-radius: 20px;
+  min-width: 220px;
+  background: rgba(18, 22, 40, 0.88);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
   padding: 8px;
-  z-index: 300;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  z-index: 200;
   display: flex;
   flex-direction: column;
   gap: 4px;
   animation: liquidPopIn 0.25s var(--spring-easing);
   transform-origin: top right;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.glass-surface__filter {
-  pointer-events: none;
-  opacity: 0;
-  z-index: -1;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  inset: 0;
 }
 
 @keyframes liquidPopIn {
@@ -1015,8 +1084,12 @@ body {
   padding: 14px 20px;
   border-top: 1px solid var(--panel-border);
   position: relative;
-  background: var(--header-bg);
-  backdrop-filter: blur(24px);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%), var(--header-bg);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  backdrop-filter: blur(32px) saturate(200%);
+  box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+  isolation: isolate;
+  transform: translateZ(0);
   padding-bottom: max(14px, env(safe-area-inset-bottom));
 }
 
@@ -1278,12 +1351,16 @@ body {
 .modal-card {
   width: 100%;
   max-width: 380px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.03) 100%), var(--panel-bg);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  backdrop-filter: blur(32px) saturate(200%);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 26px;
   padding: 26px;
   position: relative;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.3);
+  isolation: isolate;
+  transform: translateZ(0);
 }
 
 .modal-close-btn {
@@ -1482,8 +1559,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(6, 182, 212, 0.1);
-  border-bottom: 1px solid var(--panel-border);
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(139, 92, 246, 0.12) 100%), rgba(10, 14, 28, 0.92);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
   padding: 8px 20px;
   font-size: 0.78rem;
 }
@@ -1599,5 +1679,33 @@ body {
 
   .messages-feed {
     padding: 16px;
+  }
+}
+
+
+/* ANDROID / MOBILE LIQUID GLASS OVERLAY FIX */
+@media (max-width: 600px) {
+  .liquid-glass-dropdown {
+    position: fixed !important;
+    top: 68px !important;
+    right: 12px !important;
+    left: auto !important;
+    width: calc(100vw - 24px) !important;
+    max-width: 320px !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(10, 13, 26, 0.97) !important;
+    -webkit-backdrop-filter: blur(36px) saturate(220%) !important;
+    backdrop-filter: blur(36px) saturate(220%) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.5), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.4) !important;
+    z-index: 1000 !important;
+    border-radius: 24px !important;
+    padding: 12px !important;
+    isolation: isolate !important;
+    transform: translateZ(0) !important;
+  }
+
+  [data-theme="light"] .liquid-glass-dropdown {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%), rgba(255, 255, 255, 0.98) !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
   }
 }
