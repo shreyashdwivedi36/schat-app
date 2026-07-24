@@ -747,6 +747,28 @@ body {
 /* LIQUID GLASS POPOVER DROPDOWN MENU */
 .liquid-glass-dropdown {
   position: absolute;
+  top: 62px;
+  right: 16px;
+  min-width: 240px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(11, 14, 28, 0.97);
+  -webkit-backdrop-filter: blur(32px) saturate(210%);
+  backdrop-filter: blur(32px) saturate(210%);
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  border-radius: 22px;
+  padding: 10px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.3);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: liquidPopIn 0.25s var(--spring-easing);
+  transform-origin: top right;
+  isolation: isolate;
+  transform: translateZ(0);
+  will-change: transform, backdrop-filter;
+}
+.liquid-glass-dropdown {
+  position: absolute;
   top: calc(100% + 12px);
   right: 0;
   min-width: 240px;
@@ -1689,16 +1711,16 @@ body {
 @media (max-width: 600px) {
   .liquid-glass-dropdown {
     position: absolute !important;
-    top: calc(100% + 8px) !important;
-    right: 0 !important;
-    width: calc(100vw - 32px) !important;
+    top: 62px !important;
+    right: 12px !important;
+    width: calc(100vw - 24px) !important;
     max-width: 280px !important;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.04) 100%), rgba(10, 13, 26, 0.97) !important;
     -webkit-backdrop-filter: blur(36px) saturate(220%) !important;
     backdrop-filter: blur(36px) saturate(220%) !important;
     border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.5), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.4) !important;
-    z-index: 9999 !important;
+    z-index: 99999 !important;
     border-radius: 22px !important;
     padding: 10px !important;
     isolation: isolate !important;

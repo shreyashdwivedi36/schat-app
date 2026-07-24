@@ -300,26 +300,7 @@
           <div class="chat-header-actions">
             <button id="optionsMenuBtn" class="icon-btn options-btn" title="App Settings & Options" aria-label="Open options menu">⚙️</button>
             
-            <!-- Liquid Glass Popover Dropdown -->
-            <div id="optionsDropdown" class="liquid-glass-dropdown hidden" role="menu">
-              <div class="dropdown-item" id="dropdownThemeBtn" role="menuitem">
-                <span class="dropdown-icon" id="dropdownThemeIcon">🌙</span>
-                <span class="dropdown-label">Theme Mode</span>
-                <span id="dropdownThemeValue" class="dropdown-badge">Dark</span>
-              </div>
-              <div class="dropdown-item" id="dropdownExportBtn" role="menuitem">
-                <span class="dropdown-icon">📥</span>
-                <span class="dropdown-label">Export Chat History</span>
-              </div>
-              <div class="dropdown-item hidden" id="dropdownPwaBtn" role="menuitem">
-                <span class="dropdown-icon">📲</span>
-                <span class="dropdown-label">Install Web App</span>
-              </div>
-              <div class="dropdown-item" id="dropdownAboutBtn" role="menuitem">
-                <span class="dropdown-icon">ℹ️</span>
-                <span class="dropdown-label">About SChat</span>
-              </div>
-            </div>
+
           </div>
         </header>
 
@@ -411,6 +392,27 @@
           </form>
         </footer>
 
+      
+        <!-- Liquid Glass Popover Dropdown (Placed at main level to guarantee top stacking above pinned banners) -->
+        <div id="optionsDropdown" class="liquid-glass-dropdown hidden" role="menu">
+          <div class="dropdown-item" id="dropdownThemeBtn" role="menuitem">
+            <span class="dropdown-icon" id="dropdownThemeIcon">🌙</span>
+            <span class="dropdown-label">Theme Mode</span>
+            <span id="dropdownThemeValue" class="dropdown-badge">Dark</span>
+          </div>
+          <div class="dropdown-item" id="dropdownExportBtn" role="menuitem">
+            <span class="dropdown-icon">📥</span>
+            <span class="dropdown-label">Export Chat History</span>
+          </div>
+          <div class="dropdown-item hidden" id="dropdownPwaBtn" role="menuitem">
+            <span class="dropdown-icon">📲</span>
+            <span class="dropdown-label">Install Web App</span>
+          </div>
+          <div class="dropdown-item" id="dropdownAboutBtn" role="menuitem">
+            <span class="dropdown-icon">ℹ️</span>
+            <span class="dropdown-label">About SChat</span>
+          </div>
+        </div>
       </main>
     </div>
 
