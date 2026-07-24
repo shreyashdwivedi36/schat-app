@@ -668,7 +668,7 @@ body {
   position: relative;
   background: var(--panel-bg);
   backdrop-filter: blur(20px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Chat Header */
