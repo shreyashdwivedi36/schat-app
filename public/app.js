@@ -687,6 +687,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!res.ok) return;
 
+      const renewedToken = res.headers.get('X-Renewed-Token');
+      if (renewedToken) {
+        authToken = renewedToken;
+        localStorage.setItem('schat_token', authToken);
+      }
+
       const data = await res.json();
       messagesFeed.innerHTML = `
         <div class="welcome-banner">
@@ -751,6 +757,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (data.type === 'auth_success') {
+          if (data.token) {
+            authToken = data.token;
+            localStorage.setItem('schat_token', authToken);
+          }
           updateOnlineUsers(data.onlineUsers);
         } else if (data.type === 'new_message') {
           let isCurrentTab = false;

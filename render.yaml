@@ -8,4 +8,4 @@ services:
       - key: PORT
         value: 3000
       - key: JWT_SECRET
-        generateValue: true
+        value: schat_persistent_jwt_secret_key_v1_2026

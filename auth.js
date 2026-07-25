@@ -34,12 +34,8 @@ try {
 }
 
 // Require or generate strong JWT Secret
-const JWT_SECRET = process.env.JWT_SECRET || (() => {
-  if (process.env.NODE_ENV === 'production') {
-    console.warn('⚠️ WARNING: JWT_SECRET environment variable is missing in production!');
-  }
-  return crypto.randomBytes(32).toString('hex');
-})();
+// Persistent JWT Secret across server deployments to prevent user logouts
+const JWT_SECRET = process.env.JWT_SECRET || 'schat_persistent_jwt_secret_key_v1_2026';
 
 function hashPassword(password) {
   return bcrypt.hashSync(password, 10);
@@ -53,7 +49,7 @@ function generateToken(user) {
   return jwt.sign(
     { id: user.id, username: user.username, email: user.email, avatar: user.avatar },
     JWT_SECRET,
-    { expiresIn: '24h' }
+    { expiresIn: '30d' }
   );
 }
 
@@ -78,6 +74,9 @@ function authMiddleware(req, res, next) {
   }
 
   req.user = decoded;
+  // Sliding Session: issue a renewed token on every authenticated request
+  const renewedToken = generateToken(decoded);
+  res.setHeader('X-Renewed-Token', renewedToken);
   next();
 }
 

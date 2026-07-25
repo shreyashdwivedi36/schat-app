@@ -22,7 +22,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS
 app.use(cors({
   origin: allowedOrigins,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['X-Renewed-Token']
 }));
 
 app.use(express.json({ limit: '1mb' }));
@@ -399,9 +400,11 @@ wss.on('connection', (ws, req) => {
       currentUser = decoded;
       clients.set(ws, currentUser);
 
+      const renewedWsToken = generateToken(currentUser);
       ws.send(JSON.stringify({
         type: 'auth_success',
         user: currentUser,
+        token: renewedWsToken,
         onlineUsers: getOnlineUsersList()
       }));
 
