@@ -92,7 +92,17 @@ async function runAllTests() {
     assert.strictEqual(unblockedList.length, 0, 'Unblocked list should be empty');
     console.log('✅ Passed Test 6\n');
 
-    console.log('🎉 ALL 6 EXPANDED TEST SUITES PASSED SUCCESSFULLY!');
+        // 7. Change Password Test
+    console.log('Test 7: Password Change & Verification');
+    const newPwdRaw = 'brandNewPassword456';
+    const newHash = hashPassword(newPwdRaw);
+    await db.run('UPDATE users SET password = ? WHERE id = ?', [newHash, userA.id]);
+    const userA_updated = await db.get('SELECT password FROM users WHERE id = ?', [userA.id]);
+    assert.strictEqual(comparePassword(newPwdRaw, userA_updated.password), true, 'User password must be updated to new hash');
+    assert.strictEqual(comparePassword('secretPassword123', userA_updated.password), false, 'Old password must no longer verify');
+    console.log('✅ Passed Test 7\n');
+
+    console.log('🎉 ALL 7 EXPANDED TEST SUITES PASSED SUCCESSFULLY!');
     process.exit(0);
   } catch (err) {
     console.error('❌ TEST FAILED:', err);

@@ -184,6 +184,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const openProfileModal = () => {
     if (profileModal) {
       if (profileBioInput && currentUser) profileBioInput.value = currentUser.bio || '';
+      const pwdAlertEl = document.getElementById('pwdAlert');
+      const changeCurrPwdEl = document.getElementById('changeCurrentPwd');
+      const changeNewPwdEl = document.getElementById('changeNewPwd');
+      if (pwdAlertEl) pwdAlertEl.classList.add('hidden');
+      if (changeCurrPwdEl) changeCurrPwdEl.value = '';
+      if (changeNewPwdEl) changeNewPwdEl.value = '';
       profileModal.classList.remove('hidden');
     }
   };
@@ -195,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
 
-  if (profileForm) {
+    if (profileForm) {
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const newBio = profileBioInput.value.trim();
@@ -211,13 +217,69 @@ document.addEventListener('DOMContentLoaded', () => {
         if (res.ok) {
           currentUser.bio = newBio;
           localStorage.setItem('schat_user', JSON.stringify(currentUser));
-          if (myBioEl) myBioEl.textContent = newBio || 'Online';
+          if (myBioEl) myBioEl.textContent = newBio;
           closeProfileModal();
         }
-      } catch (err) {}
+      } catch (e) {}
     });
   }
 
+  // Change Password Form Submission
+  const changePasswordForm = document.getElementById('changePasswordForm');
+  const changeCurrentPwd = document.getElementById('changeCurrentPwd');
+  const changeNewPwd = document.getElementById('changeNewPwd');
+  const pwdAlert = document.getElementById('pwdAlert');
+
+  if (changePasswordForm) {
+    changePasswordForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const currentPassword = changeCurrentPwd.value;
+      const newPassword = changeNewPwd.value;
+
+      if (!currentPassword || !newPassword) return;
+
+      if (newPassword.length < 6) {
+        if (pwdAlert) {
+          pwdAlert.className = 'alert-banner error';
+          pwdAlert.textContent = 'New password must be at least 6 characters long.';
+          pwdAlert.classList.remove('hidden');
+        }
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/user/change-password', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        const data = await res.json();
+        if (pwdAlert) {
+          if (!res.ok) {
+            pwdAlert.className = 'alert-banner error';
+            pwdAlert.textContent = data.error || 'Failed to change password.';
+            pwdAlert.classList.remove('hidden');
+          } else {
+            pwdAlert.className = 'alert-banner success';
+            pwdAlert.textContent = data.message || 'Password changed successfully!';
+            pwdAlert.classList.remove('hidden');
+            changeCurrentPwd.value = '';
+            changeNewPwd.value = '';
+          }
+        }
+      } catch (err) {
+        if (pwdAlert) {
+          pwdAlert.className = 'alert-banner error';
+          pwdAlert.textContent = 'Network error. Please try again.';
+          pwdAlert.classList.remove('hidden');
+        }
+      }
+    });
+  }
   if (authAboutBtn) authAboutBtn.addEventListener('click', openAboutModal);
   if (sidebarAboutBtn) sidebarAboutBtn.addEventListener('click', openAboutModal);
   if (headerAboutBtn) headerAboutBtn.addEventListener('click', openAboutModal);

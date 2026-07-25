@@ -206,7 +206,32 @@
               <label>Status Bio</label>
               <input type="text" id="profileBioInput" placeholder="Set status bio..." maxLength="255">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:14px;">Save Settings</button>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Save Profile Bio</button>
+          </form>
+
+          <hr style="margin: 18px 0; border: none; border-top: 1px solid var(--panel-border);">
+
+          <form id="changePasswordForm" class="modal-body">
+            <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin-bottom: 10px;">🔒 Change Password</h3>
+            <div id="pwdAlert" class="alert-banner hidden" style="margin-bottom: 12px; font-size: 0.82rem; padding: 8px 12px; border-radius: 10px;"></div>
+            
+            <div class="input-group">
+              <label for="changeCurrentPwd">Current Password</label>
+              <div class="pwd-input-wrapper">
+                <input type="password" id="changeCurrentPwd" placeholder="••••••••" required autocomplete="current-password">
+                <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('changeCurrentPwd', this)">👁️</button>
+              </div>
+            </div>
+
+            <div class="input-group" style="margin-top: 10px;">
+              <label for="changeNewPwd">New Password</label>
+              <div class="pwd-input-wrapper">
+                <input type="password" id="changeNewPwd" placeholder="Minimum 6 characters" required autocomplete="new-password">
+                <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('changeNewPwd', this)">👁️</button>
+              </div>
+            </div>
+
+            <button type="submit" id="changePwdSubmitBtn" class="btn btn-primary" style="margin-top: 14px; background: linear-gradient(135deg, var(--secondary-accent), var(--primary-accent));">Update Password</button>
           </form>
         </div>
       </div>

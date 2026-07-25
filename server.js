@@ -154,6 +154,40 @@ app.get('/api/me', authMiddleware, async (req, res) => {
   }
 });
 
+// Change Password REST API
+app.post('/api/user/change-password', authMiddleware, async (req, res) => {
+  try {
+    const currentPassword = req.body.currentPassword;
+    const newPassword = req.body.newPassword;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current password and new password are required.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters long.' });
+    }
+
+    const user = await db.get('SELECT password FROM users WHERE id = ?', [req.user.id]);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+
+    const isMatch = comparePassword(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ error: 'Incorrect current password.' });
+    }
+
+    const newHashedPassword = hashPassword(newPassword);
+    await db.run('UPDATE users SET password = ? WHERE id = ?', [newHashedPassword, req.user.id]);
+
+    res.json({ message: 'Password changed successfully!' });
+  } catch (err) {
+    console.error('Change Password Error:', err);
+    res.status(500).json({ error: 'Internal server error while changing password.' });
+  }
+});
+
 // Update Profile Settings
 app.put('/api/me', authMiddleware, async (req, res) => {
   try {
