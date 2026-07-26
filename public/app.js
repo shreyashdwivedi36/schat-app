@@ -51,9 +51,23 @@ document.addEventListener('DOMContentLoaded', () => {
       closeAboutModal();
       closeProfileModal();
       closeOptionsDropdown();
-      if (emojiPicker) emojiPicker.classList.add('hidden');
+      if (emojiPicker) hideElement(emojiPicker);
     }
   });
+
+  
+  // Helper functions for showing/hiding elements with both style.display and classList
+  const showElement = (el) => {
+    if (!el) return;
+    el.style.display = '';
+    el.classList.remove('hidden');
+  };
+
+  const hideElement = (el) => {
+    if (!el) return;
+    el.style.display = 'none';
+    el.classList.add('hidden');
+  };
 
   // DOM Elements
   const pwaInstallBtn = document.getElementById('pwaInstallBtn');
@@ -254,7 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pwdAlert) {
           pwdAlert.className = 'alert-banner error';
           pwdAlert.textContent = 'New password must be at least 6 characters long.';
-          pwdAlert.classList.remove('hidden');
+          showElement(pwdAlert);
         }
         return;
       }
@@ -274,11 +288,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (!res.ok) {
             pwdAlert.className = 'alert-banner error';
             pwdAlert.textContent = data.error || 'Failed to change password.';
-            pwdAlert.classList.remove('hidden');
+            showElement(pwdAlert);
           } else {
             pwdAlert.className = 'alert-banner success';
             pwdAlert.textContent = data.message || 'Password changed successfully!';
-            pwdAlert.classList.remove('hidden');
+            showElement(pwdAlert);
             changeCurrentPwd.value = '';
             changeNewPwd.value = '';
           }
@@ -287,7 +301,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pwdAlert) {
           pwdAlert.className = 'alert-banner error';
           pwdAlert.textContent = 'Network error. Please try again.';
-          pwdAlert.classList.remove('hidden');
+          showElement(pwdAlert);
         }
       }
     });
@@ -344,7 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const setReplyState = (msg) => {
     if (!msg) {
       activeReply = null;
-      if (replyPreviewBar) replyPreviewBar.classList.add('hidden');
+      if (replyPreviewBar) hideElement(replyPreviewBar);
       return;
     }
     activeReply = {
@@ -354,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     if (replyUserLabel) replyUserLabel.textContent = `Replying to @${activeReply.username}`;
     if (replyTextSnippet) replyTextSnippet.textContent = activeReply.text;
-    if (replyPreviewBar) replyPreviewBar.classList.remove('hidden');
+    if (replyPreviewBar) showElement(replyPreviewBar);
     messageInput.focus();
   };
 
@@ -479,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const showAlert = (message, type = 'error') => {
     authAlert.textContent = message;
     authAlert.className = `alert-banner ${type}`;
-    authAlert.classList.remove('hidden');
+    showElement(authAlert);
     setTimeout(() => authAlert.classList.add('hidden'), 4000);
   };
 
@@ -488,7 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loginForm.classList.add('hidden');
     registerForm.classList.remove('hidden');
     registerForm.classList.add('active');
-    authAlert.classList.add('hidden');
+    hideElement(authAlert);
   });
 
   switchToLoginBtn.addEventListener('click', () => {
@@ -496,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
     registerForm.classList.add('hidden');
     loginForm.classList.remove('hidden');
     loginForm.classList.add('active');
-    authAlert.classList.add('hidden');
+    hideElement(authAlert);
   });
 
   avatarPicker.addEventListener('click', (e) => {
@@ -837,10 +851,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
             if (card && pinnedBanner) {
               pinnedTextSnippet.textContent = card.querySelector('.msg-bubble')?.textContent || 'Pinned message';
-              pinnedBanner.classList.remove('hidden');
+              showElement(pinnedBanner);
             }
           } else if (pinnedBanner) {
-            pinnedBanner.classList.add('hidden');
+            hideElement(pinnedBanner);
           }
         } else if (data.type === 'delete_message') {
           removeMessageFromDOM(data.messageId);
@@ -1240,13 +1254,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (msg.is_pinned && pinnedBanner) {
       pinnedTextSnippet.textContent = msg.content;
-      pinnedBanner.classList.remove('hidden');
+      showElement(pinnedBanner);
     }
   };
 
   if (unpinBtn) {
     unpinBtn.addEventListener('click', () => {
-      if (pinnedBanner) pinnedBanner.classList.add('hidden');
+      if (pinnedBanner) hideElement(pinnedBanner);
     });
   }
 
@@ -1323,7 +1337,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     messageInput.value = '';
     setReplyState(null);
-    emojiPicker.classList.add('hidden');
+    hideElement(emojiPicker);
     playSound('send');
 
     ws.send(JSON.stringify({
@@ -1359,9 +1373,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (isRelevantTyping && data.isTyping) {
       typingText.textContent = `${data.username} is typing...`;
-      typingBanner.classList.remove('hidden');
+      showElement(typingBanner);
     } else {
-      typingBanner.classList.add('hidden');
+      hideElement(typingBanner);
     }
   };
 
