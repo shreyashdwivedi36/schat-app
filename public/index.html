@@ -18,6 +18,46 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
   <!-- Three.js 3D WebGL Motion Engine CDN -->
+    <!-- Liquid Glass Translucent Context Menu Popup -->
+  <div id="msgContextMenu" class="msg-context-menu hidden" role="menu">
+    <div id="msgContextMenuOverlay" class="msg-context-overlay"></div>
+    <div id="msgContextMenuCard" class="msg-context-card">
+      <!-- Quick Reaction Bar -->
+      <div class="quick-reactions-bar">
+        <button class="quick-rx-btn" data-emoji="👍" title="React 👍">👍</button>
+        <button class="quick-rx-btn" data-emoji="❤️" title="React ❤️">❤️</button>
+        <button class="quick-rx-btn" data-emoji="😂" title="React 😂">😂</button>
+        <button class="quick-rx-btn" data-emoji="🔥" title="React 🔥">🔥</button>
+        <button class="quick-rx-btn" data-emoji="😮" title="React 😮">😮</button>
+        <button class="quick-rx-btn" data-emoji="🎉" title="React 🎉">🎉</button>
+      </div>
+
+      <!-- Actions List -->
+      <div class="context-actions-list">
+        <div class="context-item" id="ctxReplyBtn" role="menuitem">
+          <span class="context-icon">↩️</span>
+          <span class="context-label">Reply</span>
+        </div>
+        <div class="context-item" id="ctxCopyBtn" role="menuitem">
+          <span class="context-icon">📋</span>
+          <span class="context-label">Copy Text</span>
+        </div>
+        <div class="context-item" id="ctxPinBtn" role="menuitem">
+          <span class="context-icon">📌</span>
+          <span class="context-label" id="ctxPinLabel">Pin Message</span>
+        </div>
+        <div class="context-item owner-only" id="ctxEditBtn" role="menuitem">
+          <span class="context-icon">✏️</span>
+          <span class="context-label">Edit Message</span>
+        </div>
+        <div class="context-item owner-only danger" id="ctxDeleteBtn" role="menuitem">
+          <span class="context-icon">🗑️</span>
+          <span class="context-label">Delete Message</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <!-- Cache-Busting Stylesheet -->

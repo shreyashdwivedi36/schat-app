@@ -932,6 +932,136 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  
+  // Liquid Glass Context Menu Management
+  const msgContextMenu = document.getElementById('msgContextMenu');
+  const msgContextMenuOverlay = document.getElementById('msgContextMenuOverlay');
+  const msgContextMenuCard = document.getElementById('msgContextMenuCard');
+  let activeContextMsg = null;
+
+  const closeMessageContextMenu = () => {
+    if (msgContextMenu) msgContextMenu.classList.add('hidden');
+    activeContextMsg = null;
+  };
+
+  if (msgContextMenuOverlay) {
+    msgContextMenuOverlay.addEventListener('click', closeMessageContextMenu);
+  }
+
+  const openMessageContextMenu = (e, msg, msgCard, isOutgoing) => {
+    if (e && e.preventDefault) e.preventDefault();
+    activeContextMsg = { msg, msgCard, isOutgoing };
+
+    const ownerElements = msgContextMenuCard ? msgContextMenuCard.querySelectorAll('.owner-only') : [];
+    ownerElements.forEach(el => {
+      el.style.display = isOutgoing ? 'flex' : 'none';
+    });
+
+    const ctxPinLabel = document.getElementById('ctxPinLabel');
+    if (ctxPinLabel) {
+      ctxPinLabel.textContent = msg.is_pinned ? 'Unpin Message' : 'Pin Message';
+    }
+
+    let clientX = window.innerWidth / 2;
+    let clientY = window.innerHeight / 2;
+
+    if (e) {
+      if (e.clientX !== undefined && e.clientX !== 0) clientX = e.clientX;
+      else if (e.touches && e.touches[0]) clientX = e.touches[0].clientX;
+
+      if (e.clientY !== undefined && e.clientY !== 0) clientY = e.clientY;
+      else if (e.touches && e.touches[0]) clientY = e.touches[0].clientY;
+    }
+
+    const cardWidth = 260;
+    const cardHeight = 280;
+
+    let posX = clientX - cardWidth / 2;
+    let posY = clientY - 40;
+
+    if (posX < 12) posX = 12;
+    if (posX + cardWidth > window.innerWidth - 12) posX = window.innerWidth - cardWidth - 12;
+
+    if (posY < 12) posY = 12;
+    if (posY + cardHeight > window.innerHeight - 12) posY = window.innerHeight - cardHeight - 12;
+
+    if (msgContextMenuCard) {
+      msgContextMenuCard.style.left = `${posX}px`;
+      msgContextMenuCard.style.top = `${posY}px`;
+    }
+
+    if (msgContextMenu) msgContextMenu.classList.remove('hidden');
+  };
+
+  // Quick Reactions in Context Menu
+  const quickRxBtns = document.querySelectorAll('.quick-rx-btn');
+  quickRxBtns.forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!activeContextMsg) return;
+      const emoji = btn.dataset.emoji;
+      toggleReaction(activeContextMsg.msg.id, emoji);
+      closeMessageContextMenu();
+    });
+  });
+
+  // Action Items in Context Menu
+  const ctxReplyBtn = document.getElementById('ctxReplyBtn');
+  const ctxCopyBtn = document.getElementById('ctxCopyBtn');
+  const ctxPinBtn = document.getElementById('ctxPinBtn');
+  const ctxEditBtn = document.getElementById('ctxEditBtn');
+  const ctxDeleteBtn = document.getElementById('ctxDeleteBtn');
+
+  if (ctxReplyBtn) {
+    ctxReplyBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const { msg } = activeContextMsg;
+      setReplyState(msg);
+      closeMessageContextMenu();
+    });
+  }
+
+  if (ctxCopyBtn) {
+    ctxCopyBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const { msg } = activeContextMsg;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(msg.content);
+        showAlert('Message text copied to clipboard!', 'success');
+      }
+      closeMessageContextMenu();
+    });
+  }
+
+  if (ctxPinBtn) {
+    ctxPinBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const { msg } = activeContextMsg;
+      togglePinMessage(msg.id);
+      closeMessageContextMenu();
+    });
+  }
+
+  if (ctxEditBtn) {
+    ctxEditBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const { msgCard } = activeContextMsg;
+      closeMessageContextMenu();
+      const editBtn = msgCard.querySelector('.msg-edit-btn');
+      if (editBtn) editBtn.click();
+    });
+  }
+
+  if (ctxDeleteBtn) {
+    ctxDeleteBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const { msg } = activeContextMsg;
+      closeMessageContextMenu();
+      deleteMessage(msg.id);
+    });
+  }
+
+
   const renderMessage = (msg) => {
     const msgUniqueId = msg.id || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
@@ -1060,6 +1190,27 @@ document.addEventListener('DOMContentLoaded', () => {
         setReplyState(msg);
       });
     }
+
+        // Right-Click Desktop & Long-Press Mobile Listeners
+    let longPressTimer = null;
+    msgCard.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      openMessageContextMenu(e, msg, msgCard, isOutgoing);
+    });
+
+    msgCard.addEventListener('touchstart', (e) => {
+      longPressTimer = setTimeout(() => {
+        openMessageContextMenu(e, msg, msgCard, isOutgoing);
+      }, 400);
+    }, { passive: true });
+
+    msgCard.addEventListener('touchend', () => {
+      if (longPressTimer) clearTimeout(longPressTimer);
+    });
+
+    msgCard.addEventListener('touchmove', () => {
+      if (longPressTimer) clearTimeout(longPressTimer);
+    });
 
     messagesFeed.appendChild(msgCard);
 
