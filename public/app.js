@@ -160,11 +160,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const profileBioInput = document.getElementById('profileBioInput');
 
   const toggleOptionsDropdown = () => {
-    if (optionsDropdown) optionsDropdown.classList.toggle('hidden');
+    if (optionsDropdown) {
+      if (optionsDropdown.classList.contains('hidden')) {
+        optionsDropdown.style.display = '';
+        optionsDropdown.classList.remove('hidden');
+      } else {
+        optionsDropdown.style.display = 'none';
+        optionsDropdown.classList.add('hidden');
+      }
+    }
   };
 
   const closeOptionsDropdown = () => {
-    if (optionsDropdown) optionsDropdown.classList.add('hidden');
+    if (optionsDropdown) {
+      optionsDropdown.style.display = 'none';
+      optionsDropdown.classList.add('hidden');
+    }
   };
 
   if (optionsMenuBtn) optionsMenuBtn.addEventListener('click', (e) => {
@@ -178,8 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  const openAboutModal = () => { if (aboutModal) aboutModal.classList.remove('hidden'); };
-  const closeAboutModal = () => { if (aboutModal) aboutModal.classList.add('hidden'); };
+  const openAboutModal = () => { if (aboutModal) { aboutModal.style.display = ''; aboutModal.classList.remove('hidden'); } };
+  const closeAboutModal = () => { if (aboutModal) { aboutModal.style.display = 'none'; aboutModal.classList.add('hidden'); } };
 
   const openProfileModal = () => {
     if (profileModal) {
@@ -190,10 +201,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (pwdAlertEl) pwdAlertEl.classList.add('hidden');
       if (changeCurrPwdEl) changeCurrPwdEl.value = '';
       if (changeNewPwdEl) changeNewPwdEl.value = '';
+      profileModal.style.display = '';
       profileModal.classList.remove('hidden');
     }
   };
-  const closeProfileModal = () => { if (profileModal) profileModal.classList.add('hidden'); };
+  const closeProfileModal = () => { if (profileModal) { profileModal.style.display = 'none'; profileModal.classList.add('hidden'); } };
 
   if (myProfileCard) myProfileCard.addEventListener('click', (e) => {
     if (e.target.closest('#logoutBtn')) return;
@@ -940,7 +952,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeContextMsg = null;
 
   const closeMessageContextMenu = () => {
-    if (msgContextMenu) msgContextMenu.classList.add('hidden');
+    if (msgContextMenu) {
+      msgContextMenu.style.display = 'none';
+      msgContextMenu.classList.add('hidden');
+    }
     activeContextMsg = null;
   };
 
@@ -990,7 +1005,10 @@ document.addEventListener('DOMContentLoaded', () => {
       msgContextMenuCard.style.top = `${posY}px`;
     }
 
-    if (msgContextMenu) msgContextMenu.classList.remove('hidden');
+    if (msgContextMenu) {
+      msgContextMenu.style.display = '';
+      msgContextMenu.classList.remove('hidden');
+    }
   };
 
   // Quick Reactions in Context Menu
