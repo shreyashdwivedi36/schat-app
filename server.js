@@ -296,6 +296,51 @@ app.put('/api/messages/:id', authMiddleware, async (req, res) => {
   }
 });
 
+
+// Helper function for message deletion and pinned banner synchronization
+async function handleMessageDeletion(msg, messageId) {
+  await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
+
+  broadcast({
+    type: 'delete_message',
+    messageId: messageId
+  });
+
+  if (msg && msg.is_pinned === 1) {
+    try {
+      let nextPinned;
+      if (msg.recipient_id) {
+        nextPinned = await db.get(
+          'SELECT id, content FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND is_pinned = 1 ORDER BY id DESC LIMIT 1',
+          [msg.user_id, msg.recipient_id, msg.recipient_id, msg.user_id]
+        );
+      } else {
+        nextPinned = await db.get(
+          'SELECT id, content FROM messages WHERE recipient_id IS NULL AND channel = ? AND is_pinned = 1 ORDER BY id DESC LIMIT 1',
+          [msg.channel || 'global']
+        );
+      }
+
+      if (nextPinned) {
+        broadcast({
+          type: 'update_pinned',
+          messageId: nextPinned.id,
+          is_pinned: 1,
+          content: nextPinned.content
+        });
+      } else {
+        broadcast({
+          type: 'update_pinned',
+          messageId: messageId,
+          is_pinned: 0
+        });
+      }
+    } catch (e) {
+      console.error('Error syncing pinned message deletion:', e);
+    }
+  }
+}
+
 // Delete Message REST API
 app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   try {
@@ -314,12 +359,7 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Forbidden: You can only delete your own messages.' });
     }
 
-    await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
-
-    broadcast({
-      type: 'delete_message',
-      messageId: messageId
-    });
+    await handleMessageDeletion(msg, messageId);
 
     res.json({ message: 'Message deleted successfully.' });
   } catch (err) {
@@ -592,13 +632,9 @@ wss.on('connection', (ws, req) => {
         if (isNaN(messageId)) return;
 
         try {
-          const msg = await db.get('SELECT user_id FROM messages WHERE id = ?', [messageId]);
+          const msg = await db.get('SELECT * FROM messages WHERE id = ?', [messageId]);
           if (msg && msg.user_id === currentUser.id) {
-            await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
-            broadcast({
-              type: 'delete_message',
-              messageId: messageId
-            });
+            await handleMessageDeletion(msg, messageId);
           } else {
             ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: You can only delete your own messages.' }));
           }

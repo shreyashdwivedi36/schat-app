@@ -857,13 +857,20 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           if (isPinned && pinnedBanner) {
             if (pinnedTextSnippet) {
-              pinnedTextSnippet.textContent = (card && card._msgData && card._msgData.content) 
+              pinnedTextSnippet.textContent = data.content
+                || (card && card._msgData && card._msgData.content) 
                 || (card && card.querySelector('.msg-bubble')?.textContent) 
                 || 'Pinned message';
             }
             showElement(pinnedBanner);
           } else if (!isPinned && pinnedBanner) {
-            hideElement(pinnedBanner);
+            const otherPinned = document.querySelector('.message-card[data-is-pinned="1"]');
+            if (otherPinned && pinnedTextSnippet) {
+              pinnedTextSnippet.textContent = otherPinned._msgData?.content || 'Pinned message';
+              showElement(pinnedBanner);
+            } else {
+              hideElement(pinnedBanner);
+            }
           }
         } else if (data.type === 'delete_message') {
           removeMessageFromDOM(data.messageId);
@@ -962,8 +969,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const removeMessageFromDOM = (messageId) => {
     const card = document.querySelector(`.message-card[data-msg-id="${messageId}"]`);
     if (card) {
+      const wasPinned = card.dataset.isPinned === '1';
       card.classList.add('removing');
       setTimeout(() => card.remove(), 300);
+
+      if (wasPinned) {
+        const nextPinned = document.querySelector(`.message-card[data-is-pinned="1"]:not([data-msg-id="${messageId}"])`);
+        if (nextPinned) {
+          if (pinnedTextSnippet) {
+            pinnedTextSnippet.textContent = nextPinned._msgData?.content || nextPinned.querySelector('.msg-bubble')?.textContent || 'Pinned message';
+          }
+          showElement(pinnedBanner);
+        } else {
+          hideElement(pinnedBanner);
+        }
+      }
     }
   };
 
