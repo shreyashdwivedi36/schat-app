@@ -847,13 +847,22 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (data.type === 'update_reactions') {
           updateMessageReactionsDOM(data.messageId, data.reactions);
         } else if (data.type === 'update_pinned') {
-          if (data.is_pinned) {
-            const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
-            if (card && pinnedBanner) {
-              pinnedTextSnippet.textContent = card.querySelector('.msg-bubble')?.textContent || 'Pinned message';
-              showElement(pinnedBanner);
+          const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
+          const isPinned = data.is_pinned ? 1 : 0;
+          if (card) {
+            card.dataset.isPinned = isPinned;
+            if (card._msgData) card._msgData.is_pinned = isPinned;
+            const pinBtn = card.querySelector('.msg-pin-btn');
+            if (pinBtn) pinBtn.title = isPinned ? 'Unpin Message' : 'Pin Message';
+          }
+          if (isPinned && pinnedBanner) {
+            if (pinnedTextSnippet) {
+              pinnedTextSnippet.textContent = (card && card._msgData && card._msgData.content) 
+                || (card && card.querySelector('.msg-bubble')?.textContent) 
+                || 'Pinned message';
             }
-          } else if (pinnedBanner) {
+            showElement(pinnedBanner);
+          } else if (!isPinned && pinnedBanner) {
             hideElement(pinnedBanner);
           }
         } else if (data.type === 'delete_message') {
@@ -986,9 +995,10 @@ document.addEventListener('DOMContentLoaded', () => {
       el.style.display = isOutgoing ? 'flex' : 'none';
     });
 
+    const isPinned = Number(msgCard ? (msgCard.dataset.isPinned || msg.is_pinned) : msg.is_pinned) === 1;
     const ctxPinLabel = document.getElementById('ctxPinLabel');
     if (ctxPinLabel) {
-      ctxPinLabel.textContent = msg.is_pinned ? 'Unpin Message' : 'Pin Message';
+      ctxPinLabel.textContent = isPinned ? 'Unpin Message' : 'Pin Message';
     }
 
     let clientX = window.innerWidth / 2;
@@ -1105,6 +1115,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const msgCard = document.createElement('div');
     msgCard.className = `message-card ${isOutgoing ? 'outgoing' : 'incoming'}`;
     msgCard.dataset.msgId = msgUniqueId;
+    msgCard.dataset.isPinned = msg.is_pinned ? '1' : '0';
+    msgCard._msgData = msg;
 
     const timeFormatted = new Date(msg.created_at || Date.now()).toLocaleTimeString([], {
       hour: '2-digit',
