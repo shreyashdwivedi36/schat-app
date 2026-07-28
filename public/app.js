@@ -738,6 +738,19 @@ document.addEventListener('DOMContentLoaded', () => {
             sender_id: activeRecipient.id
           }));
         }
+
+        // Verify if any message in loaded history is actively pinned
+        const activePinned = data.messages.find(m => m.is_pinned === 1);
+        if (activePinned && pinnedBanner) {
+          if (pinnedTextSnippet) pinnedTextSnippet.textContent = activePinned.content;
+          showElement(pinnedBanner);
+        } else if (pinnedBanner) {
+          if (pinnedTextSnippet) pinnedTextSnippet.textContent = '';
+          hideElement(pinnedBanner);
+        }
+      } else if (pinnedBanner) {
+        if (pinnedTextSnippet) pinnedTextSnippet.textContent = '';
+        hideElement(pinnedBanner);
       }
     } catch (err) {
       console.error('Failed to load history:', err);
@@ -1292,6 +1305,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (unpinBtn) {
     unpinBtn.addEventListener('click', () => {
+      const pinnedCard = document.querySelector('.message-card[data-is-pinned="1"]');
+      if (pinnedCard) {
+        togglePinMessage(pinnedCard.dataset.msgId);
+      }
+      if (pinnedTextSnippet) pinnedTextSnippet.textContent = '';
       if (pinnedBanner) hideElement(pinnedBanner);
     });
   }

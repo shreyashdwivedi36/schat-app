@@ -603,8 +603,12 @@ wss.on('connection', (ws, req) => {
       } else if (data.type === 'toggle_pin') {
         const messageId = parseInt(data.messageId, 10);
         if (!isNaN(messageId)) {
-          const msg = await db.get('SELECT is_pinned FROM messages WHERE id = ?', [messageId]);
+          const msg = await db.get('SELECT user_id, is_pinned FROM messages WHERE id = ?', [messageId]);
           if (msg) {
+            if (msg.user_id !== currentUser.id) {
+              ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: Only the message sender can pin or unpin this message.' }));
+              return;
+            }
             const newPinState = msg.is_pinned ? 0 : 1;
             await db.run('UPDATE messages SET is_pinned = ? WHERE id = ?', [newPinState, messageId]);
             broadcast({
