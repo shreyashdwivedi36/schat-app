@@ -1156,16 +1156,7 @@ document.addEventListener('DOMContentLoaded', () => {
       minute: '2-digit'
     });
 
-    const deleteBtnHtml = isOutgoing 
-      ? `<button class="msg-delete-btn" title="Delete Message" data-id="${msgUniqueId}">🗑️</button>` 
-      : '';
-
-    const editBtnHtml = isOutgoing 
-      ? `<button class="msg-action-btn msg-edit-btn" title="Edit Message">✏️</button>` 
-      : '';
-
-    const pinBtnHtml = `<button class="msg-action-btn msg-pin-btn" title="Pin Message">📌</button>`;
-    const replyBtnHtml = `<button class="msg-reply-btn" title="Reply to Message">↩️</button>`;
+    const optionsTriggerHtml = `<button class="msg-options-trigger-btn" title="Message Options" aria-label="Message options">⋮</button>`;
 
     let statusIconHtml = '';
     if (isOutgoing) {
@@ -1217,10 +1208,7 @@ document.addEventListener('DOMContentLoaded', () => {
           ${statusIconHtml}
           ${timerBadgeHtml}
           ${editedBadgeHtml}
-          ${replyBtnHtml}
-          ${pinBtnHtml}
-          ${editBtnHtml}
-          ${deleteBtnHtml}
+          ${optionsTriggerHtml}
         </div>
         <div class="msg-bubble ${isBlurredClass}">
           ${replyBoxHtml}
@@ -1260,11 +1248,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    const replyBtn = msgCard.querySelector('.msg-reply-btn');
-    if (replyBtn) {
-      replyBtn.addEventListener('click', (e) => {
+    const optTriggerBtn = msgCard.querySelector('.msg-options-trigger-btn');
+    if (optTriggerBtn) {
+      optTriggerBtn.addEventListener('click', (e) => {
         e.stopPropagation();
-        setReplyState(msg);
+        openMessageContextMenu(e, msg, msgCard, isOutgoing);
       });
     }
 
