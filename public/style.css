@@ -44,21 +44,26 @@
   opacity: 0.25;
 }
 
-/* Light Mode Variables */
+/* Light Mode Variables - Frosted Crystal Theme */
 [data-theme="light"] {
-  --bg-dark: #f8fafc;
-  --panel-bg: rgba(255, 255, 255, 0.9);
-  --sidebar-bg: rgba(241, 245, 249, 0.95);
-  --header-bg: rgba(255, 255, 255, 0.95);
-  --input-bg: rgba(0, 0, 0, 0.04);
-  --panel-border: rgba(0, 0, 0, 0.08);
+  --bg-dark: #f1f5f9;
+  --panel-bg: rgba(255, 255, 255, 0.85);
+  --sidebar-bg: rgba(248, 250, 252, 0.92);
+  --header-bg: rgba(255, 255, 255, 0.92);
+  --input-bg: rgba(241, 245, 249, 0.9);
+  --panel-border: rgba(226, 232, 240, 0.9);
+  
+  --primary-accent: #7c3aed;
+  --primary-glow: #8b5cf6;
+  --secondary-accent: #0284c7;
+  --secondary-glow: #06b6d4;
   
   --text-main: #0f172a;
   --text-muted: #475569;
   --text-dim: #64748b;
   
-  --msg-incoming-bg: rgba(241, 245, 249, 0.95);
-  --welcome-bg: rgba(241, 245, 249, 0.7);
+  --msg-incoming-bg: rgba(255, 255, 255, 0.95);
+  --welcome-bg: rgba(255, 255, 255, 0.8);
 }
 
 * {
@@ -1839,4 +1844,232 @@ body {
 
 .context-label {
   flex: 1;
+}
+
+
+/* ================= LIGHT MODE FROSTED CRYSTAL OVERHAUL ================= */
+
+/* Pinned Message Ribbon in Light Mode */
+[data-theme="light"] .pinned-banner {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(2, 132, 199, 0.08) 100%), rgba(255, 255, 255, 0.92) !important;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.18) !important;
+  box-shadow: inset 0 1px 0 #ffffff, 0 4px 15px rgba(15, 23, 42, 0.03) !important;
+}
+
+[data-theme="light"] .pinned-label {
+  color: #7c3aed !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .pinned-text-snippet {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .unpin-btn {
+  background: rgba(241, 245, 249, 0.9) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  color: #64748b !important;
+}
+
+[data-theme="light"] .unpin-btn:hover {
+  background: rgba(244, 63, 94, 0.15) !important;
+  color: #e11d48 !important;
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+/* Chat Header in Light Mode */
+[data-theme="light"] .chat-header {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%) !important;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.03), inset 0 -1px 0 #ffffff !important;
+}
+
+[data-theme="light"] .room-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .room-subtitle {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .icon-btn {
+  background: rgba(241, 245, 249, 0.9) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .icon-btn:hover {
+  background: rgba(124, 58, 237, 0.12) !important;
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  color: #7c3aed !important;
+}
+
+/* Sidebar in Light Mode */
+[data-theme="light"] .chat-sidebar {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.9) 100%) !important;
+  border-right: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 4px 0 25px rgba(15, 23, 42, 0.03) !important;
+}
+
+[data-theme="light"] .user-profile-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04) !important;
+}
+
+[data-theme="light"] .profile-username {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .profile-status {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .section-title {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .channel-item,
+[data-theme="light"] .online-user-item {
+  background: rgba(241, 245, 249, 0.7) !important;
+  border: 1px solid rgba(226, 232, 240, 0.8) !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .channel-item.active,
+[data-theme="light"] .online-user-item.active {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(2, 132, 199, 0.1) 100%) !important;
+  border: 1px solid rgba(124, 58, 237, 0.3) !important;
+  color: #7c3aed !important;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.12) !important;
+}
+
+[data-theme="light"] .search-box input {
+  background: rgba(241, 245, 249, 0.9) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .search-box input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Welcome Banner in Light Mode */
+[data-theme="light"] .welcome-banner {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.85) 100%) !important;
+  border: 1px dashed rgba(124, 58, 237, 0.22) !important;
+  box-shadow: 0 10px 30px rgba(124, 58, 237, 0.04), inset 0 1px 0 #ffffff !important;
+}
+
+[data-theme="light"] .welcome-banner h3 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .welcome-banner p {
+  color: #475569 !important;
+}
+
+/* Message Cards in Light Mode */
+[data-theme="light"] .message-card.incoming .msg-bubble {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.03), inset 0 1px 0 #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .message-card.outgoing .msg-bubble {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .msg-username {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="light"] .msg-time {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .msg-reply-box {
+  background: rgba(124, 58, 237, 0.08) !important;
+  border-left: 3px solid #7c3aed !important;
+  color: #334155 !important;
+}
+
+/* Chat Footer & Message Input in Light Mode */
+[data-theme="light"] .chat-footer {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%) !important;
+  border-top: 1px solid rgba(226, 232, 240, 0.9) !important;
+  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.03) !important;
+}
+
+[data-theme="light"] .message-input-form {
+  background: #ffffff !important;
+  border: 1.5px solid rgba(203, 213, 225, 0.9) !important;
+  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.04), inset 0 1px 0 #ffffff !important;
+}
+
+[data-theme="light"] .message-input-form:focus-within {
+  border-color: #7c3aed !important;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15), 0 4px 20px rgba(124, 58, 237, 0.08) !important;
+}
+
+[data-theme="light"] #messageInput {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] #messageInput::placeholder {
+  color: #94a3b8 !important;
+}
+
+[data-theme="light"] .control-select,
+[data-theme="light"] .control-btn {
+  background: rgba(241, 245, 249, 0.9) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .control-btn.active {
+  background: rgba(124, 58, 237, 0.12) !important;
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  color: #7c3aed !important;
+}
+
+/* Modals & Popovers in Light Mode */
+[data-theme="light"] .liquid-glass-dropdown,
+[data-theme="light"] .msg-context-card,
+[data-theme="light"] .modal-card,
+[data-theme="light"] .auth-card-container {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.9) 100%), rgba(255, 255, 255, 0.98) !important;
+  border: 1.5px solid rgba(203, 213, 225, 0.8) !important;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.12), inset 0 1.5px 1.5px #ffffff !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .dropdown-item,
+[data-theme="light"] .context-item {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .dropdown-item:hover,
+[data-theme="light"] .context-item:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(2, 132, 199, 0.08) 100%) !important;
+  border: 1px solid rgba(124, 58, 237, 0.2) !important;
+  color: #7c3aed !important;
+}
+
+[data-theme="light"] .msg-options-trigger-btn {
+  background: rgba(241, 245, 249, 0.9) !important;
+  border: 1px solid rgba(203, 213, 225, 0.8) !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .msg-options-trigger-btn:hover {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(2, 132, 199, 0.1) 100%) !important;
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  color: #7c3aed !important;
 }
