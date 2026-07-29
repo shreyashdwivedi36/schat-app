@@ -5,7 +5,7 @@
 
 A full-stack, real-time messaging application engineered with **Node.js**, **Express**, **WebSockets (`ws`)**, **JWT Authentication**, **PostgreSQL / SQLite Database**, and an interactive **Animated Glassmorphism Frontend**.
 
----
+--- 
 
 ## ✨ Key Features
 
