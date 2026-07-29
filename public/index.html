@@ -38,6 +38,10 @@
           <span class="context-icon">↩️</span>
           <span class="context-label">Reply</span>
         </div>
+        <div class="context-item" id="ctxTranslateBtn" role="menuitem">
+          <span class="context-icon">🌐</span>
+          <span class="context-label">Translate Message</span>
+        </div>
         <div class="context-item" id="ctxCopyBtn" role="menuitem">
           <span class="context-icon">📋</span>
           <span class="context-label">Copy Text</span>
@@ -66,7 +70,9 @@
 <body>
 
   <!-- 3D Interactive WebGL Motion Canvas -->
+    <!-- Interactive WebGL Motion Canvas & Cursor Aurora Glow -->
   <canvas id="bg3dCanvas" aria-hidden="true"></canvas>
+  <div id="interactiveAuroraGlow" class="interactive-aurora-glow" aria-hidden="true"></div>
 
   <div id="app" class="app-container">
     
@@ -189,7 +195,35 @@
       <div id="sidebarOverlay" class="sidebar-overlay" aria-hidden="true"></div>
 
       <!-- About & System Modal Popup -->
-      <div id="aboutModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="aboutModalTitle">
+      <div       <!-- Language Selector Modal -->
+      <div id="langModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="langModalTitle">
+        <div class="modal-card">
+          <button id="closeLangBtn" class="modal-close-btn" aria-label="Close language modal">✕</button>
+          <div class="modal-header">
+            <h2>🌐 Language Settings</h2>
+            <span class="modal-version">Select translation target language</span>
+          </div>
+          <div class="lang-options-grid">
+            <button class="lang-opt-btn active" data-lang="en" data-name="English">🇬🇧 English</button>
+            <button class="lang-opt-btn" data-lang="hi" data-name="Hindi">🇮🇳 Hindi (हिन्दी)</button>
+            <button class="lang-opt-btn" data-lang="bn" data-name="Bengali">🇮🇳 Bengali (বাংলা)</button>
+            <button class="lang-opt-btn" data-lang="mr" data-name="Marathi">🇮🇳 Marathi (मराठी)</button>
+            <button class="lang-opt-btn" data-lang="te" data-name="Telugu">🇮🇳 Telugu (తెలుగు)</button>
+            <button class="lang-opt-btn" data-lang="ta" data-name="Tamil">🇮🇳 Tamil (தமிழ்)</button>
+            <button class="lang-opt-btn" data-lang="gu" data-name="Gujarati">🇮🇳 Gujarati (ગુજરાતી)</button>
+            <button class="lang-opt-btn" data-lang="pa" data-name="Punjabi">🇮🇳 Punjabi (ਪੰਜਾਬੀ)</button>
+            <button class="lang-opt-btn" data-lang="ur" data-name="Urdu">🇮🇳 Urdu (اردو)</button>
+            <button class="lang-opt-btn" data-lang="es" data-name="Spanish">🇪🇸 Spanish (Español)</button>
+            <button class="lang-opt-btn" data-lang="fr" data-name="French">🇫🇷 French (Français)</button>
+            <button class="lang-opt-btn" data-lang="de" data-name="German">🇩🇪 German (Deutsch)</button>
+            <button class="lang-opt-btn" data-lang="ja" data-name="Japanese">🇯🇵 Japanese (日本語)</button>
+            <button class="lang-opt-btn" data-lang="zh" data-name="Chinese">🇨🇳 Chinese (中文)</button>
+            <button class="lang-opt-btn" data-lang="ru" data-name="Russian">🇷🇺 Russian (Русский)</button>
+            <button class="lang-opt-btn" data-lang="ar" data-name="Arabic">🇸🇦 Arabic (العربية)</button>
+          </div>
+        </div>
+      </div>
+id="aboutModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="aboutModalTitle">
         <div class="modal-card">
           <button id="closeAboutBtn" class="modal-close-btn" aria-label="Close dialog">✕</button>
           
@@ -371,6 +405,16 @@
                 <span class="dropdown-icon" id="dropdownThemeIcon">🌙</span>
                 <span class="dropdown-label">Theme Mode</span>
                 <span id="dropdownThemeValue" class="dropdown-badge">Dark</span>
+              </div>
+              <div class="dropdown-item" id="dropdownLangBtn" role="menuitem">
+                <span class="dropdown-icon">🌐</span>
+                <span class="dropdown-label">Translation Lang</span>
+                <span id="dropdownLangValue" class="dropdown-badge">English</span>
+              </div>
+              <div class="dropdown-item" id="dropdownAutoTranslateBtn" role="menuitem">
+                <span class="dropdown-icon">⚡</span>
+                <span class="dropdown-label">Auto-Translate</span>
+                <span id="dropdownAutoTranslateValue" class="dropdown-badge">Off</span>
               </div>
               <div class="dropdown-item" id="dropdownExportBtn" role="menuitem">
                 <span class="dropdown-icon">📥</span>

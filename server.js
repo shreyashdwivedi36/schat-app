@@ -29,6 +29,45 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+const https = require('https');
+
+// Real-Time Translation Engine Helper
+function translateText(text, targetLang = 'en', sourceLang = 'auto') {
+  if (!text || typeof text !== 'string') return Promise.resolve({ translatedText: text, targetLang });
+
+  const encodedText = encodeURIComponent(text.trim().slice(0, 1500));
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceLang}&tl=${targetLang}&dt=t&q=${encodedText}`;
+
+  return new Promise((resolve) => {
+    const req = https.get(url, { timeout: 6000, headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+      let data = '';
+      res.on('data', (chunk) => { data += chunk; });
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed && Array.isArray(parsed[0])) {
+            const translatedText = parsed[0].map(item => item[0]).filter(Boolean).join('');
+            const detectedSourceLang = parsed[2] || sourceLang;
+            resolve({
+              translatedText: translatedText || text,
+              detectedSourceLang,
+              targetLang
+            });
+          } else {
+            resolve({ translatedText: text, targetLang });
+          }
+        } catch (e) {
+          resolve({ translatedText: text, targetLang });
+        }
+      });
+    });
+
+    req.on('error', () => resolve({ translatedText: text, targetLang }));
+    req.on('timeout', () => { req.destroy(); resolve({ translatedText: text, targetLang }); });
+  });
+}
+
 // Input Sanitization & Validation Helpers
 function sanitizeString(str, maxLen = 2000) {
   if (typeof str !== 'string') return '';
@@ -248,6 +287,25 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Fetch Messages Error:', err);
     res.status(500).json({ error: 'Failed to retrieve message history.' });
+  }
+});
+
+// Real-Time Multi-Language Translation REST API
+app.post('/api/translate', authMiddleware, async (req, res) => {
+  try {
+    const text = req.body.text;
+    const targetLang = sanitizeString(req.body.targetLang, 10) || 'en';
+    const sourceLang = sanitizeString(req.body.sourceLang, 10) || 'auto';
+
+    if (!text || typeof text !== 'string') {
+      return res.status(400).json({ error: 'Text to translate is required.' });
+    }
+
+    const result = await translateText(text, targetLang, sourceLang);
+    res.json(result);
+  } catch (err) {
+    console.error('Translation Endpoint Error:', err);
+    res.status(500).json({ error: 'Failed to translate message.' });
   }
 });
 

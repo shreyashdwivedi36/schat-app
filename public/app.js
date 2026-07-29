@@ -818,6 +818,12 @@ document.addEventListener('DOMContentLoaded', () => {
           if (isCurrentTab) {
             renderMessage(data);
             scrollToBottom();
+            if (autoTranslateEnabled && Number(data.user_id) !== Number(currentUser.id)) {
+              setTimeout(() => {
+                const newCard = document.querySelector(`.message-card[data-msg-id="${data.id || data.messageId}"]`);
+                if (newCard) translateMessageCard(newCard, data.content, targetLanguage);
+              }, 150);
+            }
 
             if (activeRecipient && Number(data.user_id) === Number(activeRecipient.id)) {
               ws.send(JSON.stringify({
@@ -936,6 +942,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  
+  // Reaction Micro-Particle Physics Burst
+  const triggerReactionBurst = (targetEl, emoji) => {
+    if (!targetEl || !emoji) return;
+    const rect = targetEl.getBoundingClientRect();
+    const originX = rect.left + rect.width / 2;
+    const originY = rect.top + rect.height / 2;
+
+    const particleCount = 6;
+    for (let i = 0; i < particleCount; i++) {
+      const p = document.createElement('div');
+      p.className = 'reaction-burst-particle';
+      p.textContent = emoji;
+
+      const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.4;
+      const dist1 = Math.random() * 35 + 25;
+      const dist2 = dist1 + Math.random() * 30 + 15;
+
+      p.style.left = `${originX}px`;
+      p.style.top = `${originY}px`;
+      p.style.setProperty('--dx', `${Math.cos(angle) * dist1}px`);
+      p.style.setProperty('--dy', `${Math.sin(angle) * dist1 - 15}px`);
+      p.style.setProperty('--dx2', `${Math.cos(angle) * dist2}px`);
+      p.style.setProperty('--dy2', `${Math.sin(angle) * dist2 - 35}px`);
+      p.style.setProperty('--rot', `${(Math.random() - 0.5) * 45}deg`);
+      p.style.setProperty('--rot2', `${(Math.random() - 0.5) * 90}deg`);
+
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 700);
+    }
+
+    if (window.triggerCanvasShockwave) {
+      window.triggerCanvasShockwave(originX, originY, '#6366f1');
+    }
+  };
+
   const toggleReaction = (messageId, emoji) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({
@@ -1019,6 +1061,127 @@ document.addEventListener('DOMContentLoaded', () => {
     msgContextMenuOverlay.addEventListener('click', closeMessageContextMenu);
   }
 
+  
+  // Language & Translation State
+  const langNames = {
+    en: 'English', hi: 'Hindi (हिन्दी)', bn: 'Bengali (বাংলা)', mr: 'Marathi (मराठी)',
+    te: 'Telugu (తెలుగు)', ta: 'Tamil (தமிழ்)', gu: 'Gujarati (ગુજરાતી)', pa: 'Punjabi (ਪੰਜਾਬੀ)',
+    ur: 'Urdu (اردو)', es: 'Spanish (Español)', fr: 'French (Français)', de: 'German (Deutsch)',
+    ja: 'Japanese (日本語)', zh: 'Chinese (中文)', ru: 'Russian (Русский)', ar: 'Arabic (العربية)',
+    pt: 'Portuguese (Português)'
+  };
+  let targetLanguage = localStorage.getItem('schat_target_lang') || 'en';
+  let autoTranslateEnabled = localStorage.getItem('schat_auto_translate') === 'true';
+
+  const langModal = document.getElementById('langModal');
+  const closeLangBtn = document.getElementById('closeLangBtn');
+  const dropdownLangBtn = document.getElementById('dropdownLangBtn');
+  const dropdownLangValue = document.getElementById('dropdownLangValue');
+  const dropdownAutoTranslateBtn = document.getElementById('dropdownAutoTranslateBtn');
+  const dropdownAutoTranslateValue = document.getElementById('dropdownAutoTranslateValue');
+  const ctxTranslateBtn = document.getElementById('ctxTranslateBtn');
+
+  const updateLangUI = () => {
+    if (dropdownLangValue) dropdownLangValue.textContent = (langNames[targetLanguage] || 'English').split(' ')[0];
+    if (dropdownAutoTranslateValue) dropdownAutoTranslateValue.textContent = autoTranslateEnabled ? 'On' : 'Off';
+    document.querySelectorAll('.lang-opt-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.lang === targetLanguage);
+    });
+  };
+  updateLangUI();
+
+  const openLangModal = () => {
+    if (langModal) {
+      showElement(langModal);
+      closeOptionsDropdown();
+    }
+  };
+  const closeLangModal = () => {
+    if (langModal) hideElement(langModal);
+  };
+
+  if (dropdownLangBtn) dropdownLangBtn.addEventListener('click', openLangModal);
+  if (closeLangBtn) closeLangBtn.addEventListener('click', closeLangModal);
+
+  if (dropdownAutoTranslateBtn) {
+    dropdownAutoTranslateBtn.addEventListener('click', () => {
+      autoTranslateEnabled = !autoTranslateEnabled;
+      localStorage.setItem('schat_auto_translate', autoTranslateEnabled ? 'true' : 'false');
+      updateLangUI();
+      showAlert(`Auto-Translate ${autoTranslateEnabled ? 'Enabled' : 'Disabled'}`, 'success');
+      closeOptionsDropdown();
+    });
+  }
+
+  document.querySelectorAll('.lang-opt-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      targetLanguage = btn.dataset.lang || 'en';
+      localStorage.setItem('schat_target_lang', targetLanguage);
+      updateLangUI();
+      closeLangModal();
+      showAlert(`Translation language set to ${btn.dataset.name || targetLanguage}`, 'success');
+    });
+  });
+
+  // Message Translation Handler
+  const translateMessageCard = async (card, text, targetLang = targetLanguage) => {
+    if (!card || !text) return;
+    const bubble = card.querySelector('.msg-bubble');
+    if (!bubble) return;
+
+    let existingBox = bubble.querySelector('.msg-translation-box');
+    if (existingBox) existingBox.remove();
+
+    const loadingBox = document.createElement('div');
+    loadingBox.className = 'msg-translation-box';
+    loadingBox.innerHTML = `
+      <div class="translation-header">
+        <span class="translation-tag">🌐 Translating to ${(langNames[targetLang] || targetLang).split(' ')[0]}...</span>
+      </div>
+    `;
+    bubble.appendChild(loadingBox);
+
+    try {
+      const res = await fetch('/api/translate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ text, targetLang })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Translation failed');
+
+      loadingBox.innerHTML = `
+        <div class="translation-header">
+          <span class="translation-tag">🌐 ${(langNames[targetLang] || targetLang).split(' ')[0]}</span>
+          <button class="close-translation-btn" title="Hide translation">✕</button>
+        </div>
+        <div class="translation-content">${escapeHtml(data.translatedText || text)}</div>
+      `;
+
+      const closeBtn = loadingBox.querySelector('.close-translation-btn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          loadingBox.remove();
+        });
+      }
+    } catch (err) {
+      loadingBox.innerHTML = `
+        <div class="translation-header">
+          <span class="translation-tag" style="color: var(--danger-color);">⚠️ Translation Error</span>
+          <button class="close-translation-btn">✕</button>
+        </div>
+        <div class="translation-content" style="font-size:0.8rem; color: var(--text-dim);">Unable to translate message at this time.</div>
+      `;
+      const closeBtn = loadingBox.querySelector('.close-translation-btn');
+      if (closeBtn) closeBtn.addEventListener('click', () => loadingBox.remove());
+    }
+  };
+
   const openMessageContextMenu = (e, msg, msgCard, isOutgoing) => {
     if (e && e.preventDefault) e.preventDefault();
     activeContextMsg = { msg, msgCard, isOutgoing };
@@ -1075,6 +1238,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
       if (!activeContextMsg) return;
       const emoji = btn.dataset.emoji;
+      triggerReactionBurst(btn, emoji);
       toggleReaction(activeContextMsg.msg.id, emoji);
       closeMessageContextMenu();
     });
@@ -1086,6 +1250,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctxPinBtn = document.getElementById('ctxPinBtn');
   const ctxEditBtn = document.getElementById('ctxEditBtn');
   const ctxDeleteBtn = document.getElementById('ctxDeleteBtn');
+
+    if (ctxTranslateBtn) {
+    ctxTranslateBtn.addEventListener('click', () => {
+      if (!activeContextMsg) return;
+      const { msg, msgCard } = activeContextMsg;
+      closeMessageContextMenu();
+      translateMessageCard(msgCard, msg.content, targetLanguage);
+    });
+  }
 
   if (ctxReplyBtn) {
     ctxReplyBtn.addEventListener('click', () => {
@@ -1445,85 +1618,206 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ================= THREE.JS 3D WEBGL MOTION ENGINE =================
+// ================= HIGH-PERFORMANCE INTERACTIVE FLUID MOTION ENGINE =================
 function init3DMotionBackground() {
   const canvas = document.getElementById('bg3dCanvas');
-  if (!canvas || typeof THREE === 'undefined') return;
+  const aurora = document.getElementById('interactiveAuroraGlow');
+  if (!canvas) return;
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 400;
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  let particles = [];
+  let shockwaves = [];
+  const maxParticles = window.innerWidth < 768 ? 45 : 85;
 
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const resizeCanvas = () => {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  };
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
-  // Create 3D Particle Mesh Constellation
-  const particleCount = 700;
-  const geometry = new THREE.BufferGeometry();
-  const positions = new Float32Array(particleCount * 3);
-  const colors = new Float32Array(particleCount * 3);
+  const pointer = {
+    x: width / 2,
+    y: height / 2,
+    targetX: width / 2,
+    targetY: height / 2,
+    isActive: false,
+    radius: 170
+  };
 
-  const color1 = new THREE.Color(0x8b5cf6); // Purple
-  const color2 = new THREE.Color(0x06b6d4); // Cyan
+  const updatePointer = (clientX, clientY) => {
+    pointer.targetX = clientX;
+    pointer.targetY = clientY;
+    pointer.isActive = true;
 
-  for (let i = 0; i < particleCount; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 1200;
-    positions[i * 3 + 1] = (Math.random() - 0.5) * 1200;
-    positions[i * 3 + 2] = (Math.random() - 0.5) * 1200;
+    if (aurora) {
+      aurora.style.left = `${clientX}px`;
+      aurora.style.top = `${clientY}px`;
+    }
+  };
 
-    const mixedColor = color1.clone().lerp(color2, Math.random());
-    colors[i * 3] = mixedColor.r;
-    colors[i * 3 + 1] = mixedColor.g;
-    colors[i * 3 + 2] = mixedColor.b;
+  window.addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY), { passive: true });
+  window.addEventListener('touchmove', (e) => {
+    if (e.touches && e.touches[0]) {
+      updatePointer(e.touches[0].clientX, e.touches[0].clientY);
+    }
+  }, { passive: true });
+
+  class FluidNode {
+    constructor() {
+      this.init();
+    }
+
+    init() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.vx = (Math.random() - 0.5) * 0.7;
+      this.vy = (Math.random() - 0.5) * 0.7;
+      this.radius = Math.random() * 2.2 + 1.2;
+      this.angle = Math.random() * Math.PI * 2;
+      this.angularSpeed = Math.random() * 0.015 + 0.005;
+      this.colorRatio = Math.random();
+    }
+
+    update() {
+      this.angle += this.angularSpeed;
+      this.x += this.vx + Math.sin(this.angle) * 0.35;
+      this.y += this.vy + Math.cos(this.angle) * 0.35;
+
+      if (this.x < -30) this.x = width + 30;
+      if (this.x > width + 30) this.x = -30;
+      if (this.y < -30) this.y = height + 30;
+      if (this.y > height + 30) this.y = -30;
+
+      if (pointer.isActive) {
+        const dx = pointer.x - this.x;
+        const dy = pointer.y - this.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < pointer.radius) {
+          const force = (1 - dist / pointer.radius) * 4.5;
+          const angle = Math.atan2(dy, dx);
+          this.x -= Math.cos(angle) * force;
+          this.y -= Math.sin(angle) * force;
+        }
+      }
+
+      shockwaves.forEach(sw => {
+        const dx = this.x - sw.x;
+        const dy = this.y - sw.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const waveDist = Math.abs(dist - sw.radius);
+
+        if (waveDist < 40) {
+          const waveForce = (1 - waveDist / 40) * sw.strength;
+          const angle = Math.atan2(dy, dx);
+          this.x += Math.cos(angle) * waveForce;
+          this.y += Math.sin(angle) * waveForce;
+        }
+      });
+    }
+
+    draw(theme) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      if (theme === 'light') {
+        ctx.fillStyle = this.colorRatio > 0.5 ? 'rgba(124, 58, 237, 0.5)' : 'rgba(2, 132, 199, 0.5)';
+      } else {
+        ctx.fillStyle = this.colorRatio > 0.5 ? 'rgba(99, 102, 241, 0.8)' : 'rgba(14, 165, 233, 0.8)';
+      }
+      ctx.fill();
+    }
   }
 
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-  const material = new THREE.PointsMaterial({
-    size: 4,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.8,
-    blending: THREE.AdditiveBlending
-  });
-
-  const particleSystem = new THREE.Points(geometry, material);
-  scene.add(particleSystem);
-
-  // Mouse Interactive Motion Tracking
-  let mouseX = 0;
-  let mouseY = 0;
-  let targetX = 0;
-  let targetY = 0;
-
-  document.addEventListener('mousemove', (e) => {
-    mouseX = (e.clientX - window.innerWidth / 2) * 0.0008;
-    mouseY = (e.clientY - window.innerHeight / 2) * 0.0008;
-  });
-
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-  });
-
-  function animate3D() {
-    requestAnimationFrame(animate3D);
-
-    targetX += (mouseX - targetX) * 0.05;
-    targetY += (mouseY - targetY) * 0.05;
-
-    particleSystem.rotation.y += 0.0012 + targetX * 0.2;
-    particleSystem.rotation.x += 0.0008 + targetY * 0.2;
-
-    camera.position.x += (targetX * 200 - camera.position.x) * 0.05;
-    camera.position.y += (-targetY * 200 - camera.position.y) * 0.05;
-    camera.lookAt(scene.position);
-
-    renderer.render(scene, camera);
+  for (let i = 0; i < maxParticles; i++) {
+    particles.push(new FluidNode());
   }
 
-  animate3D();
+  window.triggerCanvasShockwave = (x = width / 2, y = height / 2, color = '#6366f1') => {
+    shockwaves.push({
+      x: x || width / 2,
+      y: y || height / 2,
+      radius: 5,
+      maxRadius: Math.max(width, height) * 0.8,
+      speed: 16,
+      opacity: 0.85,
+      color: color,
+      strength: 8
+    });
+  };
+
+  const animate = () => {
+    ctx.clearRect(0, 0, width, height);
+
+    pointer.x += (pointer.targetX - pointer.x) * 0.1;
+    pointer.y += (pointer.targetY - pointer.y) * 0.1;
+
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+
+    for (let s = shockwaves.length - 1; s >= 0; s--) {
+      const sw = shockwaves[s];
+      sw.radius += sw.speed;
+      sw.opacity *= 0.96;
+      sw.strength *= 0.95;
+
+      if (sw.opacity > 0.02 && sw.radius < sw.maxRadius) {
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = sw.color === '#6366f1' 
+          ? `rgba(99, 102, 241, ${sw.opacity * 0.45})` 
+          : `rgba(14, 165, 233, ${sw.opacity * 0.45})`;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      } else {
+        shockwaves.splice(s, 1);
+      }
+    }
+
+    const maxConnectionDistance = window.innerWidth < 768 ? 95 : 135;
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw(currentTheme);
+
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < maxConnectionDistance) {
+          const alpha = (1 - dist / maxConnectionDistance) * (currentTheme === 'light' ? 0.16 : 0.32);
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = currentTheme === 'light' 
+            ? `rgba(124, 58, 237, ${alpha})` 
+            : `rgba(99, 102, 241, ${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+
+      if (pointer.isActive) {
+        const pdx = pointer.x - particles[i].x;
+        const pdy = pointer.y - particles[i].y;
+        const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
+
+        if (pdist < pointer.radius) {
+          const palpha = (1 - pdist / pointer.radius) * 0.48;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(pointer.x, pointer.y);
+          ctx.strokeStyle = currentTheme === 'light' 
+            ? `rgba(2, 132, 199, ${palpha})` 
+            : `rgba(14, 165, 233, ${palpha})`;
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+        }
+      }
+    }
+
+    requestAnimationFrame(animate);
+  };
+
+  animate();
 }
