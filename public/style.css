@@ -757,15 +757,6 @@ body {
 }
 
 /* LIQUID GLASS POPOVER DROPDOWN MENU */
-
-
-@keyframes liquidPopIn {
-  0% { opacity: 0; transform: scale(0.85) translateY(-10px) translateZ(0); }
-  100% { opacity: 1; transform: scale(1) translateY(0) translateZ(0); }
-}
-
-
-/* LIQUID GLASS POPOVER DROPDOWN MENU */
 .liquid-glass-dropdown {
   position: absolute;
   top: calc(100% + 10px);
@@ -882,15 +873,6 @@ body {
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-muted);
-}
-
-.pulse-dot {
-  width: 8px;
-  height: 8px;
-  background-color: var(--success-color);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--success-color);
-  animation: blink 1.5s infinite;
 }
 
 @keyframes blink {
@@ -1717,12 +1699,6 @@ body {
   }
 }
 
-
-/* ANDROID / MOBILE LIQUID GLASS OVERLAY FIX */
-@media (max-width: 600px) {
-
-}
-
 /* LIQUID GLASS TRANSLUCENT CONTEXT MENU POPUP */
 .msg-context-menu {
   position: fixed;
@@ -1850,10 +1826,8 @@ body {
   flex: 1;
 }
 
-
 /* ================= LIGHT MODE FROSTED CRYSTAL OVERHAUL ================= */
 
-/* Pinned Message Ribbon in Light Mode */
 [data-theme="light"] .pinned-banner {
   background: linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, rgba(2, 132, 199, 0.08) 100%), rgba(255, 255, 255, 0.92) !important;
   border-bottom: 1px solid rgba(124, 58, 237, 0.18) !important;
@@ -1882,7 +1856,6 @@ body {
   border-color: rgba(244, 63, 94, 0.3) !important;
 }
 
-/* Chat Header in Light Mode */
 [data-theme="light"] .chat-header {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%) !important;
   border-bottom: 1px solid rgba(226, 232, 240, 0.9) !important;
@@ -1909,7 +1882,6 @@ body {
   color: #7c3aed !important;
 }
 
-/* Sidebar in Light Mode */
 [data-theme="light"] .chat-sidebar {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(241, 245, 249, 0.9) 100%) !important;
   border-right: 1px solid rgba(226, 232, 240, 0.9) !important;
@@ -1959,7 +1931,6 @@ body {
   color: #94a3b8 !important;
 }
 
-/* Welcome Banner in Light Mode */
 [data-theme="light"] .welcome-banner {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.85) 100%) !important;
   border: 1px dashed rgba(124, 58, 237, 0.22) !important;
@@ -1974,7 +1945,6 @@ body {
   color: #475569 !important;
 }
 
-/* Message Cards in Light Mode */
 [data-theme="light"] .message-card.incoming .msg-bubble {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
   border: 1px solid rgba(226, 232, 240, 0.9) !important;
@@ -2004,7 +1974,6 @@ body {
   color: #334155 !important;
 }
 
-/* Chat Footer & Message Input in Light Mode */
 [data-theme="light"] .chat-footer {
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%) !important;
   border-top: 1px solid rgba(226, 232, 240, 0.9) !important;
@@ -2043,7 +2012,6 @@ body {
   color: #7c3aed !important;
 }
 
-/* Modals & Popovers in Light Mode */
 [data-theme="light"] .liquid-glass-dropdown,
 [data-theme="light"] .msg-context-card,
 [data-theme="light"] .modal-card,
@@ -2078,10 +2046,8 @@ body {
   color: #7c3aed !important;
 }
 
-
 /* ================= EMIL KOWALSKI MOTION & TACTILE POLISH ================= */
 
-/* Tactile Click Physics on Buttons */
 button, .btn, .icon-btn, .quick-rx-btn, .dropdown-item, .context-item, .channel-item, .online-user-item {
   transition: transform 0.12s var(--spring-easing), background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease !important;
   will-change: transform;
@@ -2091,24 +2057,6 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   transform: scale(0.95) !important;
 }
 
-/* Staggered Message Entry Spring Animation */
-.message-card {
-  animation: messageCascade 0.28s var(--spring-easing) forwards;
-  will-change: transform, opacity;
-}
-
-@keyframes messageCascade {
-  0% {
-    opacity: 0;
-    transform: translateY(14px) scale(0.98);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-/* Message Bubble Refinements & Bespoke Outgoing Gradient */
 .message-card.outgoing .msg-bubble {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
   box-shadow: 0 8px 24px rgba(99, 102, 241, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
@@ -2123,7 +2071,6 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   letter-spacing: -0.01em;
 }
 
-/* Emoji Reaction Spring Pop */
 .rx-pill {
   transition: transform 0.15s var(--spring-bounce), background-color 0.15s ease !important;
 }
@@ -2137,7 +2084,6 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   border-color: rgba(99, 102, 241, 0.45) !important;
 }
 
-/* Typing Indicator Organic Pulse */
 .dancing-dots span {
   animation: organicDotPulse 1.2s infinite ease-in-out !important;
 }
@@ -2147,7 +2093,6 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   40% { transform: translateY(-6px) scale(1.15); opacity: 1; }
 }
 
-/* Primary Button High-Craft Aesthetics */
 .btn-primary {
   background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -2161,10 +2106,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   transform: translateY(-1px);
 }
 
-
 /* ================= REAL-TIME TRANSLATION STYLES ================= */
-
-/* Inline Message Translation Box */
 .msg-translation-box {
   margin-top: 8px;
   padding: 8px 12px;
@@ -2234,7 +2176,6 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   word-break: break-word;
 }
 
-/* Language Selection Modal Grid */
 .lang-options-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2296,7 +2237,6 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   color: #7c3aed;
 }
 
-
 /* ================= INTERACTIVE FLUID AURORA & CANVAS MOTION ================= */
 #bg3dCanvas {
   position: fixed;
@@ -2333,7 +2273,6 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   opacity: 0.65;
 }
 
-/* Micro-Particle Reaction Burst */
 .reaction-burst-particle {
   position: fixed;
   pointer-events: none;
@@ -2356,4 +2295,31 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
     opacity: 0;
     transform: translate(var(--dx2), var(--dy2)) scale(0.4) rotate(var(--rot2));
   }
+}
+
+/* =========================================
+   21st.dev Modern Glass & Gestures
+   ========================================= */
+
+.modal-card {
+  transition: none !important; /* Managed by Motion.dev */
+}
+
+.swipe-reply-icon {
+  position: absolute;
+  left: -40px; 
+  top: 50%;
+  transform: translateY(-50%) scale(0);
+  opacity: 0;
+  font-size: 1.4rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+  padding: 8px;
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+}
+
+.msg-bubble {
+  touch-action: pan-y; /* Traps horizontal swipe for reply gesture */
+  will-change: transform;
 }

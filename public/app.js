@@ -1,5 +1,13 @@
-// SChat Realtime Animated Chat App Core Frontend Logic
+import { 
+  toggleModal, 
+  toggleSidebar, 
+  openContextMenu, 
+  closeContextMenu, 
+  animateNewMessage, 
+  attachSwipeToReply 
+} from './ui-motion.js';
 
+// SChat Realtime Animated Chat App Core Frontend Logic
 document.addEventListener('DOMContentLoaded', () => {
   // Application State
   let authToken = localStorage.getItem('schat_token') || null;
@@ -55,7 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  
   // Helper functions for showing/hiding elements with both style.display and classList
   const showElement = (el) => {
     if (!el) return;
@@ -203,8 +210,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  const openAboutModal = () => { if (aboutModal) { aboutModal.style.display = ''; aboutModal.classList.remove('hidden'); } };
-  const closeAboutModal = () => { if (aboutModal) { aboutModal.style.display = 'none'; aboutModal.classList.add('hidden'); } };
+  // ======= MOTION.DEV INTEGRATIONS FOR MODALS =======
+  const openAboutModal = () => toggleModal('aboutModal', true);
+  const closeAboutModal = () => toggleModal('aboutModal', false);
 
   const openProfileModal = () => {
     if (profileModal) {
@@ -215,11 +223,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (pwdAlertEl) pwdAlertEl.classList.add('hidden');
       if (changeCurrPwdEl) changeCurrPwdEl.value = '';
       if (changeNewPwdEl) changeNewPwdEl.value = '';
-      profileModal.style.display = '';
-      profileModal.classList.remove('hidden');
+      toggleModal('profileModal', true);
     }
   };
-  const closeProfileModal = () => { if (profileModal) { profileModal.style.display = 'none'; profileModal.classList.add('hidden'); } };
+  const closeProfileModal = () => toggleModal('profileModal', false);
 
   if (myProfileCard) myProfileCard.addEventListener('click', (e) => {
     if (e.target.closest('#logoutBtn')) return;
@@ -227,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
 
-    if (profileForm) {
+  if (profileForm) {
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const newBio = profileBioInput.value.trim();
@@ -432,15 +439,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Mobile Sidebar Drawer
-  const openSidebar = () => {
-    chatSidebar.classList.add('open');
-    sidebarOverlay.classList.add('active');
-  };
-
-  const closeSidebar = () => {
-    chatSidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('active');
-  };
+  const openSidebar = () => toggleSidebar(true);
+  const closeSidebar = () => toggleSidebar(false);
 
   if (mobileSidebarToggle) mobileSidebarToggle.addEventListener('click', openSidebar);
   if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
@@ -739,7 +739,6 @@ document.addEventListener('DOMContentLoaded', () => {
           }));
         }
 
-        // Verify if any message in loaded history is actively pinned
         const activePinned = data.messages.find(m => m.is_pinned === 1);
         if (activePinned && pinnedBanner) {
           if (pinnedTextSnippet) pinnedTextSnippet.textContent = activePinned.content;
@@ -942,7 +941,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  
   // Reaction Micro-Particle Physics Burst
   const triggerReactionBurst = (targetEl, emoji) => {
     if (!targetEl || !emoji) return;
@@ -1042,7 +1040,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  
   // Liquid Glass Context Menu Management
   const msgContextMenu = document.getElementById('msgContextMenu');
   const msgContextMenuOverlay = document.getElementById('msgContextMenuOverlay');
@@ -1050,10 +1047,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeContextMsg = null;
 
   const closeMessageContextMenu = () => {
-    if (msgContextMenu) {
-      msgContextMenu.style.display = 'none';
-      msgContextMenu.classList.add('hidden');
-    }
+    closeContextMenu('msgContextMenu');
     activeContextMsg = null;
   };
 
@@ -1061,7 +1055,6 @@ document.addEventListener('DOMContentLoaded', () => {
     msgContextMenuOverlay.addEventListener('click', closeMessageContextMenu);
   }
 
-  
   // Language & Translation State
   const langNames = {
     en: 'English', hi: 'Hindi (हिन्दी)', bn: 'Bengali (বাংলা)', mr: 'Marathi (मराठी)',
@@ -1092,13 +1085,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openLangModal = () => {
     if (langModal) {
-      showElement(langModal);
+      toggleModal('langModal', true);
       closeOptionsDropdown();
     }
   };
-  const closeLangModal = () => {
-    if (langModal) hideElement(langModal);
-  };
+  const closeLangModal = () => toggleModal('langModal', false);
 
   if (dropdownLangBtn) dropdownLangBtn.addEventListener('click', openLangModal);
   if (closeLangBtn) closeLangBtn.addEventListener('click', closeLangModal);
@@ -1208,27 +1199,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (e.touches && e.touches[0]) clientY = e.touches[0].clientY;
     }
 
-    const cardWidth = 260;
-    const cardHeight = 280;
-
-    let posX = clientX - cardWidth / 2;
-    let posY = clientY - 40;
-
-    if (posX < 12) posX = 12;
-    if (posX + cardWidth > window.innerWidth - 12) posX = window.innerWidth - cardWidth - 12;
-
-    if (posY < 12) posY = 12;
-    if (posY + cardHeight > window.innerHeight - 12) posY = window.innerHeight - cardHeight - 12;
-
-    if (msgContextMenuCard) {
-      msgContextMenuCard.style.left = `${posX}px`;
-      msgContextMenuCard.style.top = `${posY}px`;
-    }
-
-    if (msgContextMenu) {
-      msgContextMenu.style.display = '';
-      msgContextMenu.classList.remove('hidden');
-    }
+    openContextMenu('msgContextMenu', clientX, clientY);
   };
 
   // Quick Reactions in Context Menu
@@ -1251,7 +1222,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctxEditBtn = document.getElementById('ctxEditBtn');
   const ctxDeleteBtn = document.getElementById('ctxDeleteBtn');
 
-    if (ctxTranslateBtn) {
+  if (ctxTranslateBtn) {
     ctxTranslateBtn.addEventListener('click', () => {
       if (!activeContextMsg) return;
       const { msg, msgCard } = activeContextMsg;
@@ -1308,7 +1279,6 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteMessage(msg.id);
     });
   }
-
 
   const renderMessage = (msg) => {
     const msgUniqueId = msg.id || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -1429,7 +1399,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-        // Right-Click Desktop & Long-Press Mobile Listeners
     let longPressTimer = null;
     msgCard.addEventListener('contextmenu', (e) => {
       e.preventDefault();
@@ -1451,6 +1420,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     messagesFeed.appendChild(msgCard);
+
+    // ==========================================
+    // INJECT MOTION.DEV ENTRANCE & SWIPE-TO-REPLY
+    animateNewMessage(msgCard);
+    
+    if (bubbleEl) {
+      attachSwipeToReply(bubbleEl, () => {
+        setReplyState(msg);
+      });
+    }
+    // ==========================================
 
     if (msg.reactions) {
       let rx = {};
