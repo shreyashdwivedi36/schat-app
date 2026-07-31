@@ -1,3 +1,4 @@
+import { animate } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
 import { 
   toggleModal, 
   toggleSidebar, 
@@ -439,8 +440,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Mobile Sidebar Drawer
-  const openSidebar = () => toggleSidebar(true);
-  const closeSidebar = () => toggleSidebar(false);
+  const openSidebar = () => {
+    chatSidebar.classList.add('open');
+    sidebarOverlay.classList.add('active');
+    animate(sidebarOverlay, { opacity: [0, 1] }, { duration: 0.2 });
+    animate(chatSidebar, { transform: ["translateX(-100%)", "translateX(0%)"] }, { type: "spring", stiffness: 300, damping: 30 });
+  };
+  const closeSidebar = () => {
+    animate(sidebarOverlay, { opacity: [1, 0] }, { duration: 0.2 }).finished.then(() => sidebarOverlay.classList.remove('active'));
+    animate(chatSidebar, { transform: ["translateX(0%)", "translateX(-100%)"] }, { type: "spring", stiffness: 300, damping: 30 }).finished.then(() => chatSidebar.classList.remove('open'));
+  };
 
   if (mobileSidebarToggle) mobileSidebarToggle.addEventListener('click', openSidebar);
   if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
@@ -1047,7 +1056,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeContextMsg = null;
 
   const closeMessageContextMenu = () => {
-    closeContextMenu('msgContextMenu');
+    if (msgContextMenu) {
+      animate(msgContextMenu, { opacity: [1, 0] }, { duration: 0.15 });
+      animate(msgContextMenuCard, { opacity: [1, 0], scale: [1, 0.8] }, { duration: 0.15 })
+        .finished.then(() => {
+          msgContextMenu.style.display = 'none';
+          msgContextMenu.classList.add('hidden');
+        });
+    }
     activeContextMsg = null;
   };
 
@@ -1420,6 +1436,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     messagesFeed.appendChild(msgCard);
+
+    // --- MOTION.DEV ANIMATION & SWIPE-TO-REPLY START ---
+    animate(msgCard, { opacity: [0, 1], y: [20, 0], scale: [0.95, 1] }, { type: "spring", stiffness: 400, damping: 25 });
+
+    const bubbleEl2 = msgCard.querySelector('.msg-bubble');
+    if (bubbleEl2) {
+      let startX = 0, currentX = 0, isDragging = false;
+      const threshold = 55;
+      const replyIcon = document.createElement('div');
+      replyIcon.innerHTML = '↩️';
+      replyIcon.className = 'swipe-reply-icon';
+      bubbleEl2.style.position = 'relative';
+      bubbleEl2.insertBefore(replyIcon, bubbleEl2.firstChild);
+
+      bubbleEl2.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse') return;
+        isDragging = true; startX = e.clientX; bubbleEl2.setPointerCapture(e.pointerId);
+      });
+      bubbleEl2.addEventListener('pointermove', (e) => {
+        if (!isDragging) return;
+        currentX = e.clientX - startX;
+        if (currentX > 0 && currentX < 90) {
+          animate(bubbleEl2, { x: currentX }, { duration: 0 });
+          animate(replyIcon, { scale: Math.min(currentX / threshold, 1), opacity: Math.min(currentX / threshold, 1) }, { duration: 0 });
+        }
+      });
+      bubbleEl2.addEventListener('pointerup', (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        if (currentX >= threshold) {
+          if (navigator.vibrate) navigator.vibrate(40);
+          setReplyState(msg);
+        }
+        animate(bubbleEl2, { x: 0 }, { type: "spring", stiffness: 500, damping: 25 });
+        animate(replyIcon, { scale: 0, opacity: 0 }, { duration: 0.2 });
+        currentX = 0; bubbleEl2.releasePointerCapture(e.pointerId);
+      });
+    }
+    // --- MOTION.DEV ANIMATION & SWIPE-TO-REPLY END ---
 
     // ==========================================
     // INJECT MOTION.DEV ENTRANCE & SWIPE-TO-REPLY
