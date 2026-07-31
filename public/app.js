@@ -1,14 +1,5 @@
-import { animate } from "https://cdn.jsdelivr.net/npm/motion@11.11.13/+esm";
-import { 
-  toggleModal, 
-  toggleSidebar, 
-  openContextMenu, 
-  closeContextMenu, 
-  animateNewMessage, 
-  attachSwipeToReply 
-} from './ui-motion.js';
-
 // SChat Realtime Animated Chat App Core Frontend Logic
+
 document.addEventListener('DOMContentLoaded', () => {
   // Application State
   let authToken = localStorage.getItem('schat_token') || null;
@@ -64,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  
   // Helper functions for showing/hiding elements with both style.display and classList
   const showElement = (el) => {
     if (!el) return;
@@ -211,9 +203,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ======= MOTION.DEV INTEGRATIONS FOR MODALS =======
-  const openAboutModal = () => toggleModal('aboutModal', true);
-  const closeAboutModal = () => toggleModal('aboutModal', false);
+  const openAboutModal = () => { if (aboutModal) { aboutModal.style.display = ''; aboutModal.classList.remove('hidden'); } };
+  const closeAboutModal = () => { if (aboutModal) { aboutModal.style.display = 'none'; aboutModal.classList.add('hidden'); } };
 
   const openProfileModal = () => {
     if (profileModal) {
@@ -224,10 +215,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (pwdAlertEl) pwdAlertEl.classList.add('hidden');
       if (changeCurrPwdEl) changeCurrPwdEl.value = '';
       if (changeNewPwdEl) changeNewPwdEl.value = '';
-      toggleModal('profileModal', true);
+      profileModal.style.display = '';
+      profileModal.classList.remove('hidden');
     }
   };
-  const closeProfileModal = () => toggleModal('profileModal', false);
+  const closeProfileModal = () => { if (profileModal) { profileModal.style.display = 'none'; profileModal.classList.add('hidden'); } };
 
   if (myProfileCard) myProfileCard.addEventListener('click', (e) => {
     if (e.target.closest('#logoutBtn')) return;
@@ -235,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
 
-  if (profileForm) {
+    if (profileForm) {
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const newBio = profileBioInput.value.trim();
@@ -443,12 +435,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const openSidebar = () => {
     chatSidebar.classList.add('open');
     sidebarOverlay.classList.add('active');
-    animate(sidebarOverlay, { opacity: [0, 1] }, { duration: 0.2 });
-    animate(chatSidebar, { transform: ["translateX(-100%)", "translateX(0%)"] }, { type: "spring", stiffness: 300, damping: 30 });
   };
+
   const closeSidebar = () => {
-    animate(sidebarOverlay, { opacity: [1, 0] }, { duration: 0.2 }).finished.then(() => sidebarOverlay.classList.remove('active'));
-    animate(chatSidebar, { transform: ["translateX(0%)", "translateX(-100%)"] }, { type: "spring", stiffness: 300, damping: 30 }).finished.then(() => chatSidebar.classList.remove('open'));
+    chatSidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('active');
   };
 
   if (mobileSidebarToggle) mobileSidebarToggle.addEventListener('click', openSidebar);
@@ -748,6 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }));
         }
 
+        // Verify if any message in loaded history is actively pinned
         const activePinned = data.messages.find(m => m.is_pinned === 1);
         if (activePinned && pinnedBanner) {
           if (pinnedTextSnippet) pinnedTextSnippet.textContent = activePinned.content;
@@ -950,6 +942,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  
   // Reaction Micro-Particle Physics Burst
   const triggerReactionBurst = (targetEl, emoji) => {
     if (!targetEl || !emoji) return;
@@ -1049,6 +1042,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  
   // Liquid Glass Context Menu Management
   const msgContextMenu = document.getElementById('msgContextMenu');
   const msgContextMenuOverlay = document.getElementById('msgContextMenuOverlay');
@@ -1057,14 +1051,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const closeMessageContextMenu = () => {
     if (msgContextMenu) {
-      msgContextMenu.style.pointerEvents = 'none'; // ADD THIS LINE: Instantly let clicks pass through
-      animate(msgContextMenu, { opacity: [1, 0] }, { duration: 0.15 });
-      animate(msgContextMenuCard, { opacity: [1, 0], scale: [1, 0.8] }, { duration: 0.15 })
-        .finished.then(() => {
-          msgContextMenu.style.display = 'none';
-          msgContextMenu.classList.add('hidden');
-          msgContextMenu.style.pointerEvents = 'auto'; // Reset it
-        });
+      msgContextMenu.style.display = 'none';
+      msgContextMenu.classList.add('hidden');
     }
     activeContextMsg = null;
   };
@@ -1073,6 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
     msgContextMenuOverlay.addEventListener('click', closeMessageContextMenu);
   }
 
+  
   // Language & Translation State
   const langNames = {
     en: 'English', hi: 'Hindi (हिन्दी)', bn: 'Bengali (বাংলা)', mr: 'Marathi (मराठी)',
@@ -1103,11 +1092,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openLangModal = () => {
     if (langModal) {
-      toggleModal('langModal', true);
+      showElement(langModal);
       closeOptionsDropdown();
     }
   };
-  const closeLangModal = () => toggleModal('langModal', false);
+  const closeLangModal = () => {
+    if (langModal) hideElement(langModal);
+  };
 
   if (dropdownLangBtn) dropdownLangBtn.addEventListener('click', openLangModal);
   if (closeLangBtn) closeLangBtn.addEventListener('click', closeLangModal);
@@ -1217,7 +1208,27 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (e.touches && e.touches[0]) clientY = e.touches[0].clientY;
     }
 
-    openContextMenu('msgContextMenu', clientX, clientY);
+    const cardWidth = 260;
+    const cardHeight = 280;
+
+    let posX = clientX - cardWidth / 2;
+    let posY = clientY - 40;
+
+    if (posX < 12) posX = 12;
+    if (posX + cardWidth > window.innerWidth - 12) posX = window.innerWidth - cardWidth - 12;
+
+    if (posY < 12) posY = 12;
+    if (posY + cardHeight > window.innerHeight - 12) posY = window.innerHeight - cardHeight - 12;
+
+    if (msgContextMenuCard) {
+      msgContextMenuCard.style.left = `${posX}px`;
+      msgContextMenuCard.style.top = `${posY}px`;
+    }
+
+    if (msgContextMenu) {
+      msgContextMenu.style.display = '';
+      msgContextMenu.classList.remove('hidden');
+    }
   };
 
   // Quick Reactions in Context Menu
@@ -1240,7 +1251,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const ctxEditBtn = document.getElementById('ctxEditBtn');
   const ctxDeleteBtn = document.getElementById('ctxDeleteBtn');
 
-  if (ctxTranslateBtn) {
+    if (ctxTranslateBtn) {
     ctxTranslateBtn.addEventListener('click', () => {
       if (!activeContextMsg) return;
       const { msg, msgCard } = activeContextMsg;
@@ -1297,6 +1308,7 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteMessage(msg.id);
     });
   }
+
 
   const renderMessage = (msg) => {
     const msgUniqueId = msg.id || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
@@ -1417,6 +1429,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+        // Right-Click Desktop & Long-Press Mobile Listeners
     let longPressTimer = null;
     msgCard.addEventListener('contextmenu', (e) => {
       e.preventDefault();
@@ -1438,61 +1451,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     messagesFeed.appendChild(msgCard);
-
-    // --- MOTION.DEV ANIMATION & SWIPE-TO-REPLY START ---
-    animate(msgCard, { opacity: [0, 1], y: [20, 0], scale: [0.95, 1] }, { type: "spring", stiffness: 400, damping: 25 });
-
-    const bubbleEl2 = msgCard.querySelector('.msg-bubble');
-    if (bubbleEl2) {
-      let startX = 0, currentX = 0, isDragging = false;
-      const threshold = 55;
-      const replyIcon = document.createElement('div');
-      replyIcon.innerHTML = '↩️';
-      replyIcon.className = 'swipe-reply-icon';
-      bubbleEl2.style.position = 'relative';
-      bubbleEl2.insertBefore(replyIcon, bubbleEl2.firstChild);
-
-      bubbleEl2.addEventListener('pointerdown', (e) => {
-        // FIXED: Do not hijack clicks if the user is touching a button, link, or blurred message!
-        if (e.pointerType === 'mouse' || e.target.closest('button') || e.target.closest('a') || e.target.classList.contains('blurred')) return;
-        
-        isDragging = true; 
-        startX = e.clientX; 
-        bubbleEl2.setPointerCapture(e.pointerId);
-      });
-      bubbleEl2.addEventListener('pointermove', (e) => {
-        if (!isDragging) return;
-        currentX = e.clientX - startX;
-        if (currentX > 0 && currentX < 90) {
-          animate(bubbleEl2, { x: currentX }, { duration: 0 });
-          animate(replyIcon, { scale: Math.min(currentX / threshold, 1), opacity: Math.min(currentX / threshold, 1) }, { duration: 0 });
-        }
-      });
-      bubbleEl2.addEventListener('pointerup', (e) => {
-        if (!isDragging) return;
-        isDragging = false;
-        if (currentX >= threshold) {
-          if (navigator.vibrate) navigator.vibrate(40);
-          setReplyState(msg);
-        }
-        animate(bubbleEl2, { x: 0 }, { type: "spring", stiffness: 500, damping: 25 });
-        animate(replyIcon, { scale: 0, opacity: 0 }, { duration: 0.2 });
-        currentX = 0; 
-        bubbleEl2.releasePointerCapture(e.pointerId);
-      });
-    }
-    // --- MOTION.DEV ANIMATION & SWIPE-TO-REPLY END ---
-
-    // ==========================================
-    // INJECT MOTION.DEV ENTRANCE & SWIPE-TO-REPLY
-    animateNewMessage(msgCard);
-    
-    if (bubbleEl) {
-      attachSwipeToReply(bubbleEl, () => {
-        setReplyState(msg);
-      });
-    }
-    // ==========================================
 
     if (msg.reactions) {
       let rx = {};
