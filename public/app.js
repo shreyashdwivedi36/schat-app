@@ -1057,11 +1057,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const closeMessageContextMenu = () => {
     if (msgContextMenu) {
+      msgContextMenu.style.pointerEvents = 'none'; // ADD THIS LINE: Instantly let clicks pass through
       animate(msgContextMenu, { opacity: [1, 0] }, { duration: 0.15 });
       animate(msgContextMenuCard, { opacity: [1, 0], scale: [1, 0.8] }, { duration: 0.15 })
         .finished.then(() => {
           msgContextMenu.style.display = 'none';
           msgContextMenu.classList.add('hidden');
+          msgContextMenu.style.pointerEvents = 'auto'; // Reset it
         });
     }
     activeContextMsg = null;
@@ -1451,8 +1453,12 @@ document.addEventListener('DOMContentLoaded', () => {
       bubbleEl2.insertBefore(replyIcon, bubbleEl2.firstChild);
 
       bubbleEl2.addEventListener('pointerdown', (e) => {
-        if (e.pointerType === 'mouse') return;
-        isDragging = true; startX = e.clientX; bubbleEl2.setPointerCapture(e.pointerId);
+        // FIXED: Do not hijack clicks if the user is touching a button, link, or blurred message!
+        if (e.pointerType === 'mouse' || e.target.closest('button') || e.target.closest('a') || e.target.classList.contains('blurred')) return;
+        
+        isDragging = true; 
+        startX = e.clientX; 
+        bubbleEl2.setPointerCapture(e.pointerId);
       });
       bubbleEl2.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
@@ -1471,7 +1477,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         animate(bubbleEl2, { x: 0 }, { type: "spring", stiffness: 500, damping: 25 });
         animate(replyIcon, { scale: 0, opacity: 0 }, { duration: 0.2 });
-        currentX = 0; bubbleEl2.releasePointerCapture(e.pointerId);
+        currentX = 0; 
+        bubbleEl2.releasePointerCapture(e.pointerId);
       });
     }
     // --- MOTION.DEV ANIMATION & SWIPE-TO-REPLY END ---

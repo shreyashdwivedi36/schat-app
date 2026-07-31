@@ -2350,25 +2350,28 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   --msg-incoming-bg: #ffffff !important;
 }
 
-/* 2. Floating Dynamic Island Input */
+/* 2. Floating Dynamic Island Input (FIXED LAYOUT) */
+.chat-main {
+  padding-bottom: 12px !important;
+}
+
 .chat-footer {
-  position: absolute !important;
-  bottom: 24px !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: calc(100% - 48px) !important;
-  max-width: 900px !important;
-  background: rgba(24, 24, 27, 0.85) !important;
-  backdrop-filter: blur(30px) !important;
-  -webkit-backdrop-filter: blur(30px) !important;
+  position: relative !important; /* Removed absolute to prevent invisible overlaps */
+  margin: 0 24px 12px 24px !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
   border-radius: 28px !important;
   padding: 12px 16px !important;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+  background: rgba(24, 24, 27, 0.85) !important;
+  backdrop-filter: blur(30px) !important;
+  -webkit-backdrop-filter: blur(30px) !important;
   z-index: 100 !important;
 }
 
-.messages-feed { padding-bottom: 120px !important; }
+/* Reset the feed padding so it flows naturally */
+.messages-feed {
+  padding-bottom: 24px !important; 
+}
 
 /* 3. iOS-Style Minimalist Bubbles */
 .msg-bubble { border-radius: 20px !important; border: none !important; box-shadow: none !important; }
