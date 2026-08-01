@@ -1,6 +1,7 @@
 // SChat Realtime Animated Chat App Core Frontend Logic
+import { MotionFX } from './motion-fx.js';
 
-document.addEventListener('DOMContentLoaded', () => {
+const startSChat = () => {
   // Application State
   let authToken = localStorage.getItem('schat_token') || null;
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
@@ -19,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
-  // Initialize Three.js 3D Interactive WebGL Motion Engine
   init3DMotionBackground();
+  MotionFX.boot();
 
   // Register PWA Service Worker
   if ('serviceWorker' in navigator) {
@@ -178,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (optionsDropdown.classList.contains('hidden')) {
         optionsDropdown.style.display = '';
         optionsDropdown.classList.remove('hidden');
+        MotionFX.popIn(optionsDropdown);
       } else {
         optionsDropdown.style.display = 'none';
         optionsDropdown.classList.add('hidden');
@@ -203,7 +205,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  const openAboutModal = () => { if (aboutModal) { aboutModal.style.display = ''; aboutModal.classList.remove('hidden'); } };
+  const openAboutModal = () => {
+    if (!aboutModal) return;
+    aboutModal.style.display = '';
+    aboutModal.classList.remove('hidden');
+    const card = aboutModal.querySelector('.modal-card');
+    if (card) MotionFX.popIn(card);
+  };
   const closeAboutModal = () => { if (aboutModal) { aboutModal.style.display = 'none'; aboutModal.classList.add('hidden'); } };
 
   const openProfileModal = () => {
@@ -217,6 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (changeNewPwdEl) changeNewPwdEl.value = '';
       profileModal.style.display = '';
       profileModal.classList.remove('hidden');
+      const card = profileModal.querySelector('.modal-card');
+      if (card) MotionFX.popIn(card);
     }
   };
   const closeProfileModal = () => { if (profileModal) { profileModal.style.display = 'none'; profileModal.classList.add('hidden'); } };
@@ -497,20 +507,28 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => authAlert.classList.add('hidden'), 4000);
   };
 
-  switchToRegisterBtn.addEventListener('click', () => {
-    loginForm.classList.remove('active');
-    loginForm.classList.add('hidden');
-    registerForm.classList.remove('hidden');
-    registerForm.classList.add('active');
+  const swapAuthForms = async (fromForm, toForm) => {
     hideElement(authAlert);
+    if (!MotionFX.reduced) {
+      await MotionFX.exit(fromForm, { y: -10 });
+    }
+    fromForm.classList.remove('active');
+    fromForm.classList.add('hidden');
+    fromForm.style.opacity = '';
+    fromForm.style.filter = '';
+    fromForm.style.transform = '';
+    toForm.classList.remove('hidden');
+    toForm.classList.add('active');
+    await MotionFX.enter(toForm, { y: 16, bounce: 0.16 });
+    MotionFX.staggerIn(toForm.querySelectorAll('.input-group, .avatar-selector, .btn-primary, .auth-switch'), { y: 10, step: 0.04 });
+  };
+
+  switchToRegisterBtn.addEventListener('click', () => {
+    swapAuthForms(loginForm, registerForm);
   });
 
   switchToLoginBtn.addEventListener('click', () => {
-    registerForm.classList.remove('active');
-    registerForm.classList.add('hidden');
-    loginForm.classList.remove('hidden');
-    loginForm.classList.add('active');
-    hideElement(authAlert);
+    swapAuthForms(registerForm, loginForm);
   });
 
   avatarPicker.addEventListener('click', (e) => {
@@ -519,6 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
     avatarPicker.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
     opt.classList.add('selected');
     selectedAvatar = opt.dataset.avatar;
+    MotionFX.press(opt);
   });
 
   if (soundToggleBtn) {
@@ -600,8 +619,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (pingInterval) clearInterval(pingInterval);
     if (ws) ws.close();
 
-    chatView.classList.add('hidden');
-    authView.classList.remove('hidden');
+    const leaveChat = async () => {
+      await MotionFX.exit(chatView, { y: 16 });
+      chatView.classList.add('hidden');
+      chatView.style.opacity = '';
+      chatView.style.filter = '';
+      chatView.style.transform = '';
+      authView.classList.remove('hidden');
+      await MotionFX.enter(authView, { y: 18 });
+    };
+    leaveChat();
     closeSidebar();
   };
 
@@ -687,8 +714,17 @@ document.addEventListener('DOMContentLoaded', () => {
     myUsernameEl.textContent = currentUser.username;
     if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
 
-    authView.classList.add('hidden');
-    chatView.classList.remove('hidden');
+    const enterChat = async () => {
+      await MotionFX.exit(authView, { y: -14 });
+      authView.classList.add('hidden');
+      authView.style.opacity = '';
+      authView.style.filter = '';
+      authView.style.transform = '';
+      chatView.classList.remove('hidden');
+      await MotionFX.enter(chatView, { y: 22, bounce: 0.14 });
+      MotionFX.staggerIn(chatView.querySelectorAll('.chat-sidebar > *, .chat-header, .welcome-banner, .chat-footer'), { y: 12, step: 0.04 });
+    };
+    await enterChat();
 
     requestNotificationPermission();
     await loadMessageHistory();
@@ -729,7 +765,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
 
       if (data.messages && data.messages.length > 0) {
-        data.messages.forEach(renderMessage);
+        data.messages.forEach((msg) => renderMessage(msg, { animateEnter: false }));
         scrollToBottom();
 
         if (activeRecipient && ws && ws.readyState === WebSocket.OPEN) {
@@ -1093,6 +1129,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const openLangModal = () => {
     if (langModal) {
       showElement(langModal);
+      const langCard = langModal.querySelector('.modal-card');
+      if (langCard) MotionFX.popIn(langCard);
       closeOptionsDropdown();
     }
   };
@@ -1228,6 +1266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (msgContextMenu) {
       msgContextMenu.style.display = '';
       msgContextMenu.classList.remove('hidden');
+      if (msgContextMenuCard) MotionFX.popIn(msgContextMenuCard);
     }
   };
 
@@ -1310,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
-  const renderMessage = (msg) => {
+  const renderMessage = (msg, { animateEnter = true } = {}) => {
     const msgUniqueId = msg.id || `temp_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
 
     if (msg.id && document.querySelector(`.message-card[data-msg-id="${msg.id}"]`)) {
@@ -1451,6 +1490,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     messagesFeed.appendChild(msgCard);
+    if (animateEnter) {
+      MotionFX.enterMessage(msgCard, isOutgoing);
+      if (!MotionFX.reduced && typeof window.triggerCanvasShockwave === 'function') {
+        const rect = msgCard.getBoundingClientRect();
+        window.triggerCanvasShockwave(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2,
+          isOutgoing ? '#6366f1' : '#0ea5e9'
+        );
+      }
+    }
 
     if (msg.reactions) {
       let rx = {};
@@ -1493,7 +1543,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateOnlineUsers = (users = []) => {
     const otherUsers = users.filter(u => Number(u.id) !== Number(currentUser.id));
-    onlineCountBadge.textContent = otherUsers.length;
+    MotionFX.tickNumber(onlineCountBadge, otherUsers.length);
     onlineUsersList.innerHTML = '';
 
     if (otherUsers.length === 0) {
@@ -1616,7 +1666,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (authToken && currentUser) {
     initializeChatSession();
   }
-});
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', startSChat);
+} else {
+  startSChat();
+}
 
 // ================= HIGH-PERFORMANCE INTERACTIVE FLUID MOTION ENGINE =================
 function init3DMotionBackground() {
@@ -1628,7 +1684,9 @@ function init3DMotionBackground() {
   let width, height;
   let particles = [];
   let shockwaves = [];
-  const maxParticles = window.innerWidth < 768 ? 45 : 85;
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const maxParticles = prefersReduced ? 12 : (window.innerWidth < 768 ? 45 : 85);
+  let motionPaused = document.hidden;
 
   const resizeCanvas = () => {
     width = canvas.width = window.innerWidth;
@@ -1735,6 +1793,7 @@ function init3DMotionBackground() {
   }
 
   window.triggerCanvasShockwave = (x = width / 2, y = height / 2, color = '#6366f1') => {
+    if (prefersReduced) return;
     shockwaves.push({
       x: x || width / 2,
       y: y || height / 2,
@@ -1747,7 +1806,13 @@ function init3DMotionBackground() {
     });
   };
 
+  document.addEventListener('visibilitychange', () => {
+    motionPaused = document.hidden;
+    if (!motionPaused) animate();
+  });
+
   const animate = () => {
+    if (motionPaused) return;
     ctx.clearRect(0, 0, width, height);
 
     pointer.x += (pointer.targetX - pointer.x) * 0.1;

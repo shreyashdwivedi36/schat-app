@@ -65,14 +65,16 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
   <!-- Cache-Busting Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=v7_liquid_glass_dropdown">
+  <link rel="stylesheet" href="style.css?v=v8_motion_engine">
 </head>
 <body>
 
-  <!-- 3D Interactive WebGL Motion Canvas -->
-    <!-- Interactive WebGL Motion Canvas & Cursor Aurora Glow -->
+  <!-- Interactive motion canvas, aurora, and 21st.dev-style background beams -->
   <canvas id="bg3dCanvas" aria-hidden="true"></canvas>
   <div id="interactiveAuroraGlow" class="interactive-aurora-glow" aria-hidden="true"></div>
+  <div class="bg-beams" aria-hidden="true">
+    <span></span><span></span><span></span>
+  </div>
 
   <div id="app" class="app-container">
     
@@ -84,7 +86,7 @@
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
           </svg>
         </div>
-        <h1 class="brand-title">SChat<span class="dot">.</span></h1>
+        <h1 class="brand-title text-shimmer">SChat<span class="dot">.</span></h1>
         <p class="brand-subtitle">Real-Time Messaging Platform</p>
       </div>
 
@@ -530,6 +532,6 @@
 
   </div>
 
-  <script src="app.js?v=v7_liquid_glass_dropdown"></script>
+  <script type="module" src="app.js?v=v8_motion_engine"></script>
 </body>
 </html>

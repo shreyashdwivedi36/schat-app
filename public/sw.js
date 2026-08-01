@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schat-v4-auto-reload';
+const CACHE_NAME = 'schat-v8-motion-engine';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
