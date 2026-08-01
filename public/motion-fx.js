@@ -219,18 +219,46 @@ export const MotionFX = {
 
     document.querySelectorAll('.btn-primary, .send-btn, .logo-icon').forEach((el) => this.magnetic(el));
 
-    document.querySelectorAll('.btn, .send-btn, .icon-btn, .avatar-opt, .channel-item').forEach((el) => {
-      el.addEventListener('pointerdown', () => {
+    document.querySelectorAll('.btn, .send-btn, .icon-btn, .avatar-opt, .channel-item, .online-user-item, .context-item').forEach((el) => {
+      let isScrolling = false;
+      
+      const release = () => {
         if (reduced) return;
-        animate(el, { scale: 0.96 }, { duration: 0.12 });
+        animate(el, { scale: 1, x: 0, y: 0 }, { type: 'spring', duration: 0.4, bounce: 0.4 });
+      };
+
+      el.addEventListener('pointerdown', (e) => {
+        if (reduced) return;
+        isScrolling = false;
+        // Delay slightly for touch to avoid animating during scroll
+        if (e.pointerType === 'touch') {
+          el._touchTimer = setTimeout(() => {
+            if (!isScrolling) animate(el, { scale: 0.94 }, { duration: 0.1 });
+          }, 50);
+        } else {
+          animate(el, { scale: 0.96 }, { duration: 0.1 });
+        }
       });
-      el.addEventListener('pointerup', () => {
-        if (reduced) return;
-        animate(el, { scale: 1 }, { type: 'spring', duration: 0.4, bounce: 0.4 });
+      
+      el.addEventListener('touchmove', () => {
+        isScrolling = true;
+        clearTimeout(el._touchTimer);
+        release();
+      }, { passive: true });
+
+      el.addEventListener('pointerup', (e) => {
+        clearTimeout(el._touchTimer);
+        if (!isScrolling) release();
       });
-      el.addEventListener('pointerleave', () => {
-        if (reduced) return;
-        animate(el, { scale: 1, x: 0, y: 0 }, { type: 'spring', duration: 0.35, bounce: 0.2 });
+      
+      el.addEventListener('pointerleave', (e) => {
+        clearTimeout(el._touchTimer);
+        release();
+      });
+      
+      el.addEventListener('pointercancel', (e) => {
+        clearTimeout(el._touchTimer);
+        release();
       });
     });
 
