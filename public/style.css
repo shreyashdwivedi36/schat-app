@@ -8,10 +8,10 @@
   --panel-border: rgba(255, 255, 255, 0.08);
   
   /* Restrained, Refined Accents (Electric Indigo & Slate Cyan) */
-  --primary-accent: #6366f1;
-  --primary-glow: #818cf8;
-  --secondary-accent: #0ea5e9;
-  --secondary-glow: #38bdf8;
+  --primary-accent: #ffffff;
+  --primary-glow: rgba(255, 255, 255, 0.15);
+  --secondary-accent: #e2e8f0;
+  --secondary-glow: rgba(255, 255, 255, 0.05);
   
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -57,10 +57,10 @@
   --input-bg: rgba(241, 245, 249, 0.9);
   --panel-border: rgba(226, 232, 240, 0.9);
   
-  --primary-accent: #7c3aed;
-  --primary-glow: #8b5cf6;
-  --secondary-accent: #0284c7;
-  --secondary-glow: #06b6d4;
+  --primary-accent: #0f172a;
+  --primary-glow: rgba(0, 0, 0, 0.1);
+  --secondary-accent: #334155;
+  --secondary-glow: rgba(0, 0, 0, 0.05);
   
   --text-main: #0f172a;
   --text-muted: #475569;
@@ -80,6 +80,7 @@
 body {
   font-family: var(--font-family);
   background-color: var(--bg-dark);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
   color: var(--text-main);
   width: 100vw;
   height: 100vh;
@@ -114,7 +115,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px;
+  padding: 24px;
   animation: springCard 0.6s var(--spring-easing);
 }
 
@@ -133,12 +134,12 @@ body {
   height: 56px;
   margin: 0 auto 12px;
   background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
-  border-radius: 16px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  box-shadow: 0 0 30px rgba(139, 92, 246, 0.35);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 .logo-icon svg {
@@ -147,9 +148,9 @@ body {
 }
 
 .brand-title {
-  font-size: 2.3rem;
-  font-weight: 800;
-  letter-spacing: -1px;
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
   color: #ffffff;
 }
 
@@ -170,7 +171,7 @@ body {
   backdrop-filter: blur(32px) saturate(200%);
   border: 1.5px solid rgba(255, 255, 255, 0.2);
   border-radius: 26px;
-  padding: 32px;
+  padding: 40px;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.4), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.25);
   
   transform: translateZ(0);
@@ -202,7 +203,7 @@ body {
 
 .alert-banner {
   padding: 12px 16px;
-  border-radius: 12px;
+  border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 12px;
@@ -243,7 +244,7 @@ body {
 .avatar-opt {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: 20px;
   border: 1px solid var(--panel-border);
   background: var(--input-bg);
   font-size: 1.2rem;
@@ -297,7 +298,7 @@ body {
   padding: 12px 16px 12px 42px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 12px;
+  border-radius: 20px;
   color: var(--text-main);
   font-family: var(--font-family);
   font-size: 0.92rem;
@@ -307,7 +308,7 @@ body {
 
 .input-wrapper input:focus {
   border-color: var(--primary-accent);
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
 }
 
 .toggle-pwd-btn {
@@ -324,7 +325,7 @@ body {
   width: 100%;
   padding: 12px;
   border: none;
-  border-radius: 12px;
+  border-radius: 20px;
   font-family: var(--font-family);
   font-size: 0.92rem;
   font-weight: 800;
@@ -343,6 +344,11 @@ body {
   overflow: hidden;
   isolation: isolate;
   background: var(--primary-accent);
+  color: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .btn-primary {
   color: #ffffff;
 }
 
@@ -849,7 +855,7 @@ body {
 .dropdown-badge {
   font-size: 0.72rem;
   padding: 3px 10px;
-  border-radius: 12px;
+  border-radius: 20px;
   background: rgba(255, 255, 255, 0.12);
   color: var(--text-muted);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -875,7 +881,7 @@ body {
   justify-content: space-between;
   gap: 10px;
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 20px;
   color: var(--text-main);
   font-size: 0.86rem;
   font-weight: 700;
@@ -931,7 +937,7 @@ body {
 
 .welcome-banner {
   text-align: center;
-  padding: 20px;
+  padding: 24px;
   background: var(--welcome-bg);
   border: 1px dashed var(--panel-border);
   border-radius: 18px;
@@ -1020,25 +1026,27 @@ body {
 }
 
 .msg-bubble {
-  padding: 10px 14px;
-  border-radius: 16px;
-  font-size: 0.92rem;
-  line-height: 1.45;
-  position: relative;
-  word-break: break-word;
+  padding: 14px 20px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .message-card.incoming .msg-bubble {
-  background: var(--msg-incoming-bg);
-  border: 1px solid var(--panel-border);
-  border-top-left-radius: 4px;
-  color: var(--text-main);
+  padding: 14px 20px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .message-card.outgoing .msg-bubble {
-  background: var(--primary-accent);
-  color: #ffffff;
-  border-top-right-radius: 4px;
+  padding: 14px 20px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 /* Fluid Animated Message Options Trigger Button */
@@ -1397,7 +1405,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
 }
 
 .modal-card {
@@ -1501,7 +1509,7 @@ body {
   justify-content: center;
   gap: 10px;
   padding: 11px;
-  border-radius: 12px;
+  border-radius: 20px;
   font-size: 0.88rem;
   font-weight: 700;
   text-decoration: none;
@@ -1995,17 +2003,19 @@ body {
 
 /* Message Cards in Light Mode */
 [data-theme="light"] .message-card.incoming .msg-bubble {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
-  border: 1px solid rgba(226, 232, 240, 0.9) !important;
-  box-shadow: 0 4px 15px rgba(15, 23, 42, 0.03), inset 0 1px 0 #ffffff !important;
-  color: #0f172a !important;
+  padding: 14px 20px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 [data-theme="light"] .message-card.outgoing .msg-bubble {
-  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
-  color: #ffffff !important;
+  padding: 14px 20px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 [data-theme="light"] .msg-username {
@@ -2129,17 +2139,19 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 
 /* Message Bubble Refinements & Bespoke Outgoing Gradient */
 .message-card.outgoing .msg-bubble {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.35) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
-  letter-spacing: -0.01em;
+  padding: 14px 20px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 .message-card.incoming .msg-bubble {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.09) !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-  letter-spacing: -0.01em;
+  padding: 14px 20px;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
 /* Emoji Reaction Spring Pop */
@@ -2168,11 +2180,16 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 
 /* Primary Button High-Craft Aesthetics */
 .btn-primary {
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
-  font-weight: 700 !important;
-  letter-spacing: -0.01em !important;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--primary-accent);
+  color: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .btn-primary {
+  color: #ffffff;
 }
 
 .btn-primary:hover {
@@ -2187,7 +2204,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .msg-translation-box {
   margin-top: 8px;
   padding: 8px 12px;
-  border-radius: 12px;
+  border-radius: 20px;
   background: rgba(14, 165, 233, 0.12);
   border: 1px solid rgba(14, 165, 233, 0.25);
   border-left: 3.5px solid #0ea5e9;
@@ -2272,7 +2289,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   border: 1px solid var(--panel-border);
   color: var(--text-main);
   padding: 10px 14px;
-  border-radius: 12px;
+  border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
@@ -2473,7 +2490,16 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .logo-icon,
 .send-btn,
 .btn-primary {
-  will-change: transform;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: var(--primary-accent);
+  color: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+[data-theme="light"] .btn-primary {
+  color: #ffffff;
 }
 
 .send-btn {

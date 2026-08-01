@@ -519,7 +519,7 @@ const startSChat = () => {
     fromForm.style.transform = '';
     toForm.classList.remove('hidden');
     toForm.classList.add('active');
-    await MotionFX.enter(toForm, { y: 16, bounce: 0.16 });
+    await MotionFX.enter(toForm, { y: 16, bounce: 0.10 });
     MotionFX.staggerIn(toForm.querySelectorAll('.input-group, .avatar-selector, .btn-primary, .auth-switch'), { y: 10, step: 0.04 });
   };
 
@@ -721,7 +721,7 @@ const startSChat = () => {
       authView.style.filter = '';
       authView.style.transform = '';
       chatView.classList.remove('hidden');
-      await MotionFX.enter(chatView, { y: 22, bounce: 0.14 });
+      await MotionFX.enter(chatView, { y: 22, bounce: 0.08 });
       MotionFX.staggerIn(chatView.querySelectorAll('.chat-sidebar > *, .chat-header, .welcome-banner, .chat-footer'), { y: 12, step: 0.04 });
     };
     await enterChat();
