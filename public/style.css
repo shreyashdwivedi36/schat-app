@@ -47,17 +47,17 @@
 }
 
 [data-theme="light"] #bg3dCanvas {
-  opacity: 0.25;
+  opacity: 0.85;
 }
 
 /* Light Mode Variables - Frosted Crystal Theme */
 [data-theme="light"] {
   --bg-dark: #f1f5f9;
-  --panel-bg: rgba(255, 255, 255, 0.85);
-  --sidebar-bg: rgba(248, 250, 252, 0.92);
-  --header-bg: rgba(255, 255, 255, 0.92);
-  --input-bg: rgba(241, 245, 249, 0.9);
-  --panel-border: rgba(226, 232, 240, 0.9);
+  --panel-bg: rgba(255, 255, 255, 0.45);
+  --sidebar-bg: rgba(255, 255, 255, 0.55);
+  --header-bg: rgba(255, 255, 255, 0.65);
+  --input-bg: rgba(255, 255, 255, 0.5);
+  --panel-border: rgba(255, 255, 255, 0.6);
   
   --primary-accent: #0f172a;
   --primary-glow: rgba(0, 0, 0, 0.1);
@@ -153,9 +153,9 @@ body {
 
 .brand-title {
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: -0.04em;
-  color: #ffffff;
+  color: var(--text-main);
 }
 
 .brand-title .dot {
@@ -2572,4 +2572,12 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
     transform: scale(1.1) translateY(-2px);
     box-shadow: var(--hover-shadow);
   }
+}
+
+[data-theme="light"] .logo-icon {
+  color: #ffffff;
+}
+
+[data-theme="light"] .send-btn {
+  color: #ffffff;
 }
