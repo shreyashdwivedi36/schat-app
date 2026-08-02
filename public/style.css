@@ -83,7 +83,7 @@
 
 body {
   font-family: var(--font-family);
-  background-color: var(--bg-dark);
+  background: radial-gradient(circle at 15% 50%, rgba(255, 255, 255, 0.03), transparent 25%), radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.04), transparent 25%), var(--bg-dark);
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.04'/%3E%3C/svg%3E");
   color: var(--text-main);
   width: 100vw;
@@ -266,7 +266,7 @@ body {
 
 .avatar-opt.selected {
   border-color: var(--primary-accent);
-  background: rgba(139, 92, 246, 0.2);
+  background: var(--hover-bg);
 }
 
 .input-group {
@@ -686,7 +686,7 @@ body {
 }
 
 .online-user-item.active {
-  background: rgba(139, 92, 246, 0.2);
+  background: var(--hover-bg);
   border-color: var(--primary-accent);
 }
 
@@ -839,9 +839,9 @@ body {
 }
 
 .dropdown-item:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.32) 0%, rgba(6, 182, 212, 0.22) 100%);
+  background: linear-gradient(135deg, var(--hover-bg) 0%, rgba(6, 182, 212, 0.22) 100%);
   border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 15px var(--hover-bg), inset 0 1px 1px rgba(255, 255, 255, 0.4);
   color: #ffffff;
   transform: translateY(-1px);
 }
@@ -892,7 +892,7 @@ body {
 }
 
 .dropdown-item:hover {
-  background: rgba(139, 92, 246, 0.22);
+  background: var(--hover-bg);
   color: #ffffff;
 }
 
@@ -1081,10 +1081,10 @@ body {
 
 .msg-options-trigger-btn:hover {
   opacity: 1 !important;
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.35) 0%, rgba(6, 182, 212, 0.25) 100%) !important;
+  background: linear-gradient(135deg, var(--hover-bg) 0%, rgba(6, 182, 212, 0.25) 100%) !important;
   border-color: rgba(255, 255, 255, 0.25) !important;
   color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 12px var(--hover-bg);
 }
 .msg-action-btn, .msg-reply-btn, .msg-delete-btn {
   background: var(--input-bg) !important;
@@ -1240,7 +1240,7 @@ body {
 }
 
 .control-toggle-btn.active {
-  background: rgba(139, 92, 246, 0.2);
+  background: var(--hover-bg);
   border-color: var(--primary-accent);
   color: var(--primary-glow);
 }
@@ -1341,7 +1341,7 @@ body {
 }
 
 .channel-item:hover, .channel-item.active {
-  background: rgba(139, 92, 246, 0.2);
+  background: var(--hover-bg);
   border-color: var(--primary-accent);
 }
 
@@ -1360,7 +1360,7 @@ body {
 }
 
 .online-user-item.active {
-  background: rgba(139, 92, 246, 0.2);
+  background: var(--hover-bg);
   border: 1px solid var(--primary-accent);
 }
 
@@ -1478,7 +1478,7 @@ body {
 .owner-avatar-icon {
   width: 40px;
   height: 40px;
-  background: rgba(139, 92, 246, 0.2);
+  background: var(--hover-bg);
   border: 1px solid var(--primary-accent);
   border-radius: 10px;
   display: flex;
@@ -1621,7 +1621,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, rgba(139, 92, 246, 0.12) 100%), rgba(10, 14, 28, 0.92);
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.18) 0%, var(--hover-bg) 100%), rgba(10, 14, 28, 0.92);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
   backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
@@ -1687,7 +1687,7 @@ body {
 }
 
 .reaction-badge.active, .reaction-badge:hover {
-  background: rgba(139, 92, 246, 0.2);
+  background: var(--hover-bg);
   border-color: var(--primary-accent);
 }
 
@@ -1856,9 +1856,9 @@ body {
 }
 
 .context-item:hover {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(6, 182, 212, 0.2) 100%);
+  background: linear-gradient(135deg, var(--hover-bg) 0%, rgba(6, 182, 212, 0.2) 100%);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);
+  box-shadow: 0 4px 15px var(--hover-bg);
   transform: translateY(-1px);
 }
 
@@ -2170,8 +2170,8 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 }
 
 .rx-pill.active {
-  background: rgba(99, 102, 241, 0.25) !important;
-  border-color: rgba(99, 102, 241, 0.45) !important;
+  background: var(--hover-bg) !important;
+  border-color: var(--hover-bg) !important;
 }
 
 /* Typing Indicator Organic Pulse */
@@ -2303,17 +2303,17 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 }
 
 .lang-opt-btn:hover {
-  background: rgba(99, 102, 241, 0.2);
-  border-color: rgba(99, 102, 241, 0.4);
+  background: var(--hover-bg);
+  border-color: var(--hover-bg);
   color: #ffffff;
   transform: translateY(-1px);
 }
 
 .lang-opt-btn.active {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(14, 165, 233, 0.2) 100%);
+  background: linear-gradient(135deg, var(--hover-bg) 0%, rgba(14, 165, 233, 0.2) 100%);
   border-color: #6366f1;
   color: #ffffff;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.25);
+  box-shadow: 0 4px 15px var(--hover-bg);
 }
 
 [data-theme="light"] .lang-opt-btn {
@@ -2355,7 +2355,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, rgba(14, 165, 233, 0.12) 40%, rgba(0, 0, 0, 0) 70%);
+  background: radial-gradient(circle, var(--hover-bg) 0%, rgba(14, 165, 233, 0.12) 40%, rgba(0, 0, 0, 0) 70%);
   pointer-events: none;
   z-index: 2;
   transform: translate(-50%, -50%);
@@ -2412,7 +2412,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   background: linear-gradient(
     to bottom,
     transparent,
-    rgba(99, 102, 241, 0.0),
+    var(--hover-bg),
     rgba(129, 140, 248, 0.55),
     rgba(14, 165, 233, 0.0),
     transparent
@@ -2580,4 +2580,40 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 
 [data-theme="light"] .send-btn {
   color: #ffffff;
+}
+
+
+.message-card.incoming .msg-bubble {
+  background: var(--msg-incoming-bg) !important;
+  color: var(--text-main) !important;
+  border-radius: 20px 20px 20px 4px !important;
+  border: 1px solid var(--panel-border) !important;
+}
+
+.message-card.outgoing .msg-bubble {
+  background: var(--primary-accent) !important;
+  color: #000000 !important;
+  border-radius: 20px 20px 4px 20px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="light"] .message-card.outgoing .msg-bubble {
+  color: #ffffff !important;
+}
+
+
+.auth-card-container {
+  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.01) 100%), var(--panel-bg) !important;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.15), inset 0 1px 1px rgba(255,255,255,0.2) !important;
+}
+[data-theme="light"] .auth-card-container {
+  background: linear-gradient(135deg, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 100%), var(--panel-bg) !important;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.05), inset 0 1px 1px rgba(255,255,255,0.8) !important;
+}
+
+
+[data-theme="light"] .chat-footer {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  border-top: 1px solid var(--panel-border) !important;
 }
