@@ -7,12 +7,7 @@ require('dotenv').config();
 const db = require('./db');
 const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware } = require('./auth');
 
-let WebSocket;
-try {
-  WebSocket = require('ws');
-} catch (e) {
-  WebSocket = require('ws');
-}
+const WebSocket = require('ws');
 
 const app = express();
 const server = http.createServer(app);
