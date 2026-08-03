@@ -2617,3 +2617,17 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   backdrop-filter: blur(20px) !important;
   border-top: 1px solid var(--panel-border) !important;
 }
+
+
+/* Guarantee Icon Contrast */
+.send-btn svg, .logo-icon svg, .btn-primary svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+}
+
+[data-theme="light"] .send-btn svg,
+[data-theme="light"] .logo-icon svg,
+[data-theme="light"] .btn-primary svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
