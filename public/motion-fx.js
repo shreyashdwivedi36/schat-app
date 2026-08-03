@@ -139,6 +139,30 @@ export const MotionFX = {
       .catch(() => {});
   },
 
+  
+  injectGradualBlur() {
+    const feed = document.getElementById('messagesFeed');
+    if (!feed) return;
+    
+    // Check if already injected
+    if (document.querySelector('.gradual-blur-container.top')) return;
+    
+    const buildBlur = (pos) => {
+      const container = document.createElement('div');
+      container.className = `gradual-blur-container ${pos}`;
+      for (let i = 1; i <= 5; i++) {
+        const slice = document.createElement('div');
+        slice.className = `blur-slice slice-${i}`;
+        container.appendChild(slice);
+      }
+      return container;
+    };
+
+    const chatMain = feed.parentNode;
+    chatMain.insertBefore(buildBlur('top'), feed);
+    chatMain.insertBefore(buildBlur('bottom'), feed.nextSibling);
+  },
+
   magnetic(el, strength = 0.28) {
     if (!el || reduced || window.matchMedia('(pointer: coarse)').matches) return;
 
@@ -216,6 +240,7 @@ export const MotionFX = {
 
     this.splitBrand(document.querySelector('.brand-title'));
     this.spotlight(document.querySelector('.auth-card-container'));
+    this.injectGradualBlur();
 
     document.querySelectorAll('.btn-primary, .send-btn, .logo-icon').forEach((el) => this.magnetic(el));
 
