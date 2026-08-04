@@ -2672,7 +2672,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   flex: 1;
   position: absolute;
   inset: 0;
-  padding-top: 85px !important;
+  padding-top: 115px !important;
   padding-bottom: 130px !important;
   z-index: 10;
 }
