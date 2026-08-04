@@ -140,11 +140,13 @@ export const MotionFX = {
   },
 
   
+  
+
+  
   injectGradualBlur() {
-    const feed = document.getElementById('messagesFeed');
-    if (!feed) return;
+    const chatMain = document.querySelector('.chat-main');
+    if (!chatMain) return;
     
-    // Check if already injected
     if (document.querySelector('.gradual-blur-container.top')) return;
     
     const buildBlur = (pos) => {
@@ -158,9 +160,8 @@ export const MotionFX = {
       return container;
     };
 
-    const chatMain = feed.parentNode;
-    chatMain.insertBefore(buildBlur('top'), feed);
-    chatMain.insertBefore(buildBlur('bottom'), feed.nextSibling);
+    chatMain.appendChild(buildBlur('top'));
+    chatMain.appendChild(buildBlur('bottom'));
   },
 
   magnetic(el, strength = 0.28) {
@@ -241,7 +242,7 @@ export const MotionFX = {
     this.splitBrand(document.querySelector('.brand-title'));
     this.spotlight(document.querySelector('.auth-card-container'));
     this.injectGradualBlur();
-
+    
     document.querySelectorAll('.btn-primary, .send-btn, .logo-icon').forEach((el) => this.magnetic(el));
 
     document.querySelectorAll('.btn, .send-btn, .icon-btn, .avatar-opt, .channel-item, .online-user-item, .context-item').forEach((el) => {
