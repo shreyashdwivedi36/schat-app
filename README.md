@@ -1,7 +1,7 @@
 # SChat — Animated Realtime WebSocket Chat Application
 
 > **Lead Developer & Owner**: [Shreyash Dwivedi](https://github.com/shreyashdwivedi36)  
-> **Live Demo**: [https://schat-app.onrender.com](https://schat-app-hmqw.onrender.com)
+> **Live Demo**: [SCHAT-APP](https://schat-app-hmqw.onrender.com)
 
 A full-stack, real-time messaging application engineered with **Node.js**, **Express**, **WebSockets (`ws`)**, **JWT Authentication**, **PostgreSQL / SQLite Database**, and an interactive **Animated Glassmorphism Frontend**.
 
