@@ -14,10 +14,10 @@ RUN npm install --production
 COPY . .
 
 # Expose port
-EXPOSE 3000
+EXPOSE 7860
 
 # Set environment variable
-ENV PORT=3000
+ENV PORT=7860
 
 # Start server
 CMD ["node", "server.js"]

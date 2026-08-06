@@ -160,7 +160,6 @@ export const MotionFX = {
       return container;
     };
 
-    chatMain.appendChild(buildBlur('top'));
     chatMain.appendChild(buildBlur('bottom'));
   },
 
