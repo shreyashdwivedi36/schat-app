@@ -1246,27 +1246,35 @@ const startSChat = () => {
       else if (e.touches && e.touches[0]) clientY = e.touches[0].clientY;
     }
 
-    const cardWidth = 260;
-    const cardHeight = 280;
-
-    let posX = clientX - cardWidth / 2;
-    let posY = clientY - 40;
-
-    if (posX < 12) posX = 12;
-    if (posX + cardWidth > window.innerWidth - 12) posX = window.innerWidth - cardWidth - 12;
-
-    if (posY < 12) posY = 12;
-    if (posY + cardHeight > window.innerHeight - 12) posY = window.innerHeight - cardHeight - 12;
-
-    if (msgContextMenuCard) {
-      msgContextMenuCard.style.left = `${posX}px`;
-      msgContextMenuCard.style.top = `${posY}px`;
-    }
-
     if (msgContextMenu) {
+      // 1. Make visible first to measure actual dimensions
       msgContextMenu.style.display = '';
       msgContextMenu.classList.remove('hidden');
-      if (msgContextMenuCard) MotionFX.popIn(msgContextMenuCard);
+
+      if (msgContextMenuCard) {
+        const actualWidth = msgContextMenuCard.offsetWidth || 260;
+        const actualHeight = msgContextMenuCard.offsetHeight || 320;
+
+        // 2. Calculate initial position
+        let posX = clientX - actualWidth / 2;
+        let posY = clientY - 40;
+
+        // 3. Clamp to screen bounds dynamically
+        if (posX < 12) posX = 12;
+        if (posX + actualWidth > window.innerWidth - 12) posX = window.innerWidth - actualWidth - 12;
+
+        if (posY < 12) posY = 12;
+        if (posY + actualHeight > window.innerHeight - 12) {
+          posY = window.innerHeight - actualHeight - 12;
+          if (posY < 12) posY = 12; // Prevent overlapping top edge on very small screens
+        }
+
+        // 4. Apply precise coordinates
+        msgContextMenuCard.style.left = `${posX}px`;
+        msgContextMenuCard.style.top = `${posY}px`;
+
+        MotionFX.popIn(msgContextMenuCard);
+      }
     }
   };
 
