@@ -2727,3 +2727,100 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .gradual-blur-container.bottom .slice-3 { backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,1) 60%, transparent 80%); -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 40%, rgba(0,0,0,1) 60%, transparent 80%); }
 .gradual-blur-container.bottom .slice-4 { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); mask-image: linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,1) 80%, transparent 100%); -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 60%, rgba(0,0,0,1) 80%, transparent 100%); }
 .gradual-blur-container.bottom .slice-5 { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); mask-image: linear-gradient(to top, rgba(0,0,0,1) 80%, rgba(0,0,0,1) 100%, transparent 100%); -webkit-mask-image: linear-gradient(to top, rgba(0,0,0,1) 80%, rgba(0,0,0,1) 100%, transparent 100%); }
+
+/* ================= VOICE MESSAGES ================= */
+.mic-btn {
+  color: var(--text-dim);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mic-btn.recording {
+  color: #ff3b30;
+  animation: pulseRecord 1.5s infinite;
+  background: rgba(255, 59, 48, 0.1);
+  border-radius: 50%;
+}
+
+@keyframes pulseRecord {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+.audio-player-ui {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 8px 16px;
+  border-radius: 30px;
+  min-width: 220px;
+}
+
+[data-theme="light"] .audio-player-ui {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.play-pause-btn {
+  background: var(--primary-accent);
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #000;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+
+[data-theme="light"] .play-pause-btn {
+  color: #fff;
+}
+
+.play-pause-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.play-pause-btn:active {
+  transform: scale(0.95);
+}
+
+.audio-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+[data-theme="light"] .audio-progress-bar {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.audio-progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: var(--primary-accent);
+  width: 0%;
+  transition: width 0.1s linear;
+}
+
+.audio-time {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+  min-width: 35px;
+  text-align: right;
+}

@@ -1419,6 +1419,20 @@ const startSChat = () => {
       `;
     }
 
+    let contentHtml = '';
+    if (msg.content && msg.content.startsWith('data:audio/')) {
+      contentHtml = `
+        <div class="audio-player-ui">
+          <button class="play-pause-btn" aria-label="Play">▶</button>
+          <div class="audio-progress-bar"><div class="audio-progress-fill"></div></div>
+          <span class="audio-time">0:00</span>
+          <audio src="${msg.content}" style="display: none;" preload="metadata"></audio>
+        </div>
+      `;
+    } else {
+      contentHtml = escapeHtml(msg.content || '');
+    }
+
     msgCard.innerHTML = `
       <div class="msg-avatar">${msg.avatar || '⚡'}</div>
       <div class="msg-body">
@@ -1432,7 +1446,7 @@ const startSChat = () => {
         </div>
         <div class="msg-bubble ${isBlurredClass}">
           ${replyBoxHtml}
-          ${escapeHtml(msg.content || '')}
+          ${contentHtml}
         </div>
       </div>
     `;
@@ -1441,6 +1455,74 @@ const startSChat = () => {
     if (msg.is_blurred && bubbleEl) {
       bubbleEl.addEventListener('click', () => {
         bubbleEl.classList.toggle('unmasked');
+      });
+    }
+
+    // Audio Player Logic
+    const audioUI = msgCard.querySelector('.audio-player-ui');
+    if (audioUI) {
+      const audioEl = audioUI.querySelector('audio');
+      const playBtn = audioUI.querySelector('.play-pause-btn');
+      const progressFill = audioUI.querySelector('.audio-progress-fill');
+      const timeSpan = audioUI.querySelector('.audio-time');
+      const progressBar = audioUI.querySelector('.audio-progress-bar');
+      
+      let isPlaying = false;
+      
+      const formatTime = (seconds) => {
+        if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+      };
+
+      audioEl.addEventListener('loadedmetadata', () => {
+        if (audioEl.duration && audioEl.duration !== Infinity) {
+          timeSpan.textContent = formatTime(audioEl.duration);
+        } else {
+          // Chrome webm duration bug fallback
+          audioEl.currentTime = 1e101; 
+          audioEl.addEventListener('timeupdate', function getDuration() {
+            audioEl.removeEventListener('timeupdate', getDuration);
+            audioEl.currentTime = 0;
+            timeSpan.textContent = formatTime(audioEl.duration);
+          });
+        }
+      });
+
+      audioEl.addEventListener('timeupdate', () => {
+        if (audioEl.duration) {
+          const percent = (audioEl.currentTime / audioEl.duration) * 100;
+          progressFill.style.width = `${percent}%`;
+          timeSpan.textContent = formatTime(audioEl.currentTime);
+        }
+      });
+
+      audioEl.addEventListener('ended', () => {
+        isPlaying = false;
+        playBtn.textContent = '▶';
+        progressFill.style.width = '0%';
+        timeSpan.textContent = formatTime(audioEl.duration);
+      });
+
+      playBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (isPlaying) {
+          audioEl.pause();
+          playBtn.textContent = '▶';
+        } else {
+          audioEl.play();
+          playBtn.textContent = '⏸';
+        }
+        isPlaying = !isPlaying;
+      });
+
+      progressBar.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!audioEl.duration) return;
+        const rect = progressBar.getBoundingClientRect();
+        const percent = (e.clientX - rect.left) / rect.width;
+        audioEl.currentTime = percent * audioEl.duration;
       });
     }
 
@@ -1580,6 +1662,84 @@ const startSChat = () => {
       onlineUsersList.appendChild(li);
     });
   };
+
+  // ================= VOICE MESSAGES =================
+  const micBtn = document.getElementById('micBtn');
+  let mediaRecorder;
+  let audioChunks = [];
+  let isRecording = false;
+
+  const startRecording = async () => {
+    if (isRecording) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.readAsDataURL(audioBlob);
+        reader.onloadend = () => {
+          const base64AudioMessage = reader.result;
+          
+          if (!ws || ws.readyState !== WebSocket.OPEN) {
+            showAlert('Connecting to server... Please try sending again in a moment.', 'error');
+            return;
+          }
+
+          const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
+
+          ws.send(JSON.stringify({
+            type: 'chat_message',
+            recipient_id: activeRecipient ? activeRecipient.id : null,
+            content: base64AudioMessage,
+            is_blurred: isPrivacyBlurActive ? 1 : 0,
+            timer_seconds: timerSeconds,
+            reply_to_id: activeReply ? activeReply.id : null,
+            reply_to_user: activeReply ? activeReply.username : null,
+            reply_to_text: activeReply ? activeReply.text : null
+          }));
+
+          setReplyState(null);
+          playSound('send');
+        };
+        // Stop all tracks to release mic
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      if (micBtn) micBtn.classList.add('recording');
+      
+      // Haptic feedback if available
+      if (navigator.vibrate) navigator.vibrate(50);
+      
+    } catch (err) {
+      console.error('Microphone access denied or error:', err);
+      showAlert('Microphone access denied. Please allow microphone permissions.', 'error');
+    }
+  };
+
+  const stopRecording = () => {
+    if (!isRecording || !mediaRecorder) return;
+    mediaRecorder.stop();
+    isRecording = false;
+    if (micBtn) micBtn.classList.remove('recording');
+  };
+
+  if (micBtn) {
+    // Desktop
+    micBtn.addEventListener('mousedown', startRecording);
+    window.addEventListener('mouseup', () => { if (isRecording) stopRecording(); });
+    // Mobile
+    micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, { passive: false });
+    window.addEventListener('touchend', () => { if (isRecording) stopRecording(); });
+  }
 
   messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
