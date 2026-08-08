@@ -10,18 +10,18 @@ A full-stack, real-time messaging application engineered with **Node.js**, **Exp
 ## ✨ Key Features
 
 - **Real-Time Messaging**: Built on persistent WebSocket connections (`ws`) for instant two-way message delivery.
-- **Live Presence & Typing Indicators**: Dynamic online user count, user presence tracking, and real-time dancing-dot typing indicators.
-- **Message Management**: Users can delete their own sent messages with real-time broadcast removal across all connected clients.
-- **Message Delivery Status & Read Receipts**: Real-time status checkmarks (`✓` Sent, `✓✓` Delivered, `✓✓` Read).
-- **Privacy Blur & Self-Destruct Timer**: Toggleable Gaussian privacy blur (`👁️`) and customizable self-destruct timers (`⏱️ 10s`, `1m`, `5m`, `1h`).
-- **Dark & Light Mode**: Customizable UI theme toggle with persistent state saved in browser storage.
+- **Voice Messages 🎙️**: Native `MediaRecorder` integration allowing users to record voice notes, encoded as Base64 blobs, and sent over WebSockets with a custom UI audio player.
+- **Live Inline Translation 🌐**: One-click Google Translate API integration to instantly translate incoming messages to the user's preferred language.
+- **Private & Global Chat**: Support for 1-on-1 Direct Messages and a Global Channel.
+- **Progressive Web App (PWA)**: Fully installable to mobile home screens with offline caching and an auto-updating Network-First Service Worker (`sw.js`).
+- **Rich Message Interactions**: 
+  - **Context Menus**: Right-click/long-press messages to Reply, Pin, Edit, Translate, or Copy text.
+  - **Quick Emoji Reactions**: Add floating quick reactions (👍, ❤️, 😂, 🔥, etc.) to messages.
+- **Message Management**: Users can edit or delete their own messages with real-time broadcast updates.
+- **Delivery Status & Read Receipts**: Real-time status checkmarks (`✓` Sent, `✓✓` Delivered, `✓✓` Read).
+- **Privacy Blur & Self-Destruct**: Toggleable Gaussian privacy blur (`👁️`) and customizable self-destruct timers (`⏱️ 10s`, `1m`, `5m`, `1h`).
 - **User Authentication & Security**: Secure signup and login powered by JSON Web Tokens (JWT) and Bcrypt password hashing.
-- **Responsive Glassmorphism UI**:
-  - Adaptive design optimized for both mobile smartphones and desktop PC screens.
-  - Mobile drawer navigation overlay for active users list.
-  - Synthesized audio feedback via Web Audio API for message interactions.
-  - Interactive avatar picker and emoji popup drawer.
-- **Database Persistence**: Flexible database layer supporting cloud PostgreSQL in production and local SQLite for development.
+- **Responsive Glassmorphism UI**: Adaptive, beautifully frosted layout for mobile and desktop with synthesized audio feedback.
 
 ---
 
