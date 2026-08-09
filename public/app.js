@@ -1833,6 +1833,9 @@ const startSChat = () => {
 
   if (authToken && currentUser) {
     initializeChatSession();
+  } else {
+    authView.classList.remove('hidden');
+    MotionFX.enter(authView, { y: 18 });
   }
 };
 
