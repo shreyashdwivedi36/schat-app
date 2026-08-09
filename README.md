@@ -35,11 +35,9 @@ A full-stack, real-time messaging application engineered with **Node.js**, **Exp
 
 ## 🚀 Zero-Config Local Development Setup
 
-To make reviewing this project as frictionless as possible for hiring managers and developers, I engineered a **Zero-Configuration Local Database Fallback**. 
+You can run this entire full-stack application locally in under 10 seconds without needing Docker or a PostgreSQL server. 
 
-If no PostgreSQL database connection is provided in your environment, the app seamlessly and automatically falls back to a custom-built JSON-file database (`db_fallback.json`). 
-
-This means you can clone and run this entire full-stack application in under 10 seconds without installing Docker or setting up a database:
+If no `DATABASE_URL` is provided in the environment, the app automatically switches to a custom local JSON fallback database (`db_fallback.json`). 
 
 1. **Clone the Repository**:
    ```bash
