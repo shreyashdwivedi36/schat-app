@@ -1,4 +1,4 @@
-const CACHE_NAME = 'schat-v19-live-update';
+const CACHE_NAME = 'schat-v20-live-update';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();

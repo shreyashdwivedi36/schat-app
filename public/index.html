@@ -77,7 +77,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 
@@ -533,7 +533,7 @@
           <form id="messageForm" class="message-input-form">
             <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji" aria-label="Add emoji">😊</button>
             <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required aria-label="Type a message">
-            <button type="button" id="micBtn" class="input-action-btn mic-btn" title="Hold to Record" aria-label="Record voice note">
+            <button type="button" id="micBtn" class="input-action-btn mic-btn" title="Tap to Record" aria-label="Record voice note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -548,12 +548,34 @@
               </svg>
             </button>
           </form>
+
+          <!-- Voice Recording UI (Hidden by default) -->
+          <div id="recordingUi" class="recording-ui hidden" style="display: none;">
+            <div class="recording-indicator">
+              <span class="pulsing-dot"></span>
+              <span id="recordingTimer" class="recording-timer">00:00</span>
+            </div>
+            <div class="recording-actions">
+              <button type="button" id="cancelRecordBtn" class="action-btn cancel-record-btn" title="Cancel Recording">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+              <button type="button" id="sendRecordBtn" class="send-btn" title="Send Voice Note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 2L11 13"></path>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
+          </div>
         </footer>
 
       
 
       </main>
-    <script src="motion-fx.js?v=19" type="module"></script>
-  <script src="app.js?v=19" type="module"></script>
+    <script src="motion-fx.js?v=20" type="module"></script>
+  <script src="app.js?v=20" type="module"></script>
 </body>
 </html>

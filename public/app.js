@@ -1760,23 +1760,71 @@ const startSChat = () => {
 
   // ================= VOICE MESSAGES =================
   const micBtn = document.getElementById('micBtn');
+  const messageForm = document.getElementById('messageForm');
+  const recordingUi = document.getElementById('recordingUi');
+  const cancelRecordBtn = document.getElementById('cancelRecordBtn');
+  const sendRecordBtn = document.getElementById('sendRecordBtn');
+  const recordingTimer = document.getElementById('recordingTimer');
+
   let mediaRecorder;
   let audioChunks = [];
   let isRecording = false;
+  let isCancelled = false;
+  let recordingStartTime = 0;
+  let timerInterval;
+
+  const updateTimer = () => {
+    if (!recordingStartTime) return;
+    const elapsedSeconds = Math.floor((Date.now() - recordingStartTime) / 1000);
+    const mins = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
+    const secs = String(elapsedSeconds % 60).padStart(2, '0');
+    if (recordingTimer) recordingTimer.textContent = `${mins}:${secs}`;
+  };
 
   const startRecording = async () => {
     if (isRecording) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
+      
+      // Extreme Storage Optimization
+      let options = {};
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        options = { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 16000 };
+      } else if (MediaRecorder.isTypeSupported('audio/mp4;codecs=mp4a')) {
+        options = { mimeType: 'audio/mp4;codecs=mp4a', audioBitsPerSecond: 16000 };
+      }
+
+      mediaRecorder = new MediaRecorder(stream, options);
       audioChunks = [];
+      isCancelled = false;
 
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) audioChunks.push(e.data);
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        clearInterval(timerInterval);
+        
+        // Restore UI
+        if (messageForm && recordingUi) {
+          recordingUi.style.display = 'none';
+          messageForm.style.display = 'flex';
+        }
+        
+        const duration = Date.now() - recordingStartTime;
+        recordingStartTime = 0;
+        
+        // Stop all tracks to release mic
+        stream.getTracks().forEach(track => track.stop());
+
+        // Cancel or Empty Check
+        if (isCancelled) return;
+        if (duration < 1000) {
+          showAlert('Recording too short to send.', 'warning');
+          return;
+        }
+
+        const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = () => {
@@ -1803,15 +1851,20 @@ const startSChat = () => {
           setReplyState(null);
           playSound('send');
         };
-        // Stop all tracks to release mic
-        stream.getTracks().forEach(track => track.stop());
       };
 
+      // Update UI
+      if (messageForm && recordingUi) {
+        messageForm.style.display = 'none';
+        recordingUi.style.display = 'flex';
+      }
+      if (recordingTimer) recordingTimer.textContent = '00:00';
+      
       mediaRecorder.start();
       isRecording = true;
-      if (micBtn) micBtn.classList.add('recording');
+      recordingStartTime = Date.now();
+      timerInterval = setInterval(updateTimer, 1000);
       
-      // Haptic feedback if available
       if (navigator.vibrate) navigator.vibrate(50);
       
     } catch (err) {
@@ -1820,20 +1873,32 @@ const startSChat = () => {
     }
   };
 
-  const stopRecording = () => {
+  const stopRecording = (discard = false) => {
     if (!isRecording || !mediaRecorder) return;
+    isCancelled = discard;
     mediaRecorder.stop();
     isRecording = false;
-    if (micBtn) micBtn.classList.remove('recording');
   };
 
   if (micBtn) {
-    // Desktop
-    micBtn.addEventListener('mousedown', startRecording);
-    window.addEventListener('mouseup', () => { if (isRecording) stopRecording(); });
-    // Mobile
-    micBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecording(); }, { passive: false });
-    window.addEventListener('touchend', () => { if (isRecording) stopRecording(); });
+    micBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      startRecording();
+    });
+  }
+
+  if (cancelRecordBtn) {
+    cancelRecordBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      stopRecording(true);
+    });
+  }
+
+  if (sendRecordBtn) {
+    sendRecordBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      stopRecording(false);
+    });
   }
 
   messageForm.addEventListener('submit', (e) => {

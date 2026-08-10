@@ -2817,8 +2817,73 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 
 @keyframes pulseRecord {
   0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4); }
-  70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
+  50% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(255, 59, 48, 0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0); }
+}
+
+/* Recording UI Overlays the Message Form */
+.recording-ui {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 16px;
+  background: var(--input-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 20px;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+  animation: liquidContextPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.recording-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pulsing-dot {
+  width: 10px;
+  height: 10px;
+  background-color: #ff3b30;
+  border-radius: 50%;
+  animation: pulseRedDot 1s infinite alternate;
+}
+
+@keyframes pulseRedDot {
+  0% { opacity: 0.3; transform: scale(0.8); box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.5); }
+  100% { opacity: 1; transform: scale(1.2); box-shadow: 0 0 8px 2px rgba(255, 59, 48, 0.6); }
+}
+
+.recording-timer {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.1rem;
+  color: #ff3b30;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.recording-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cancel-record-btn {
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.cancel-record-btn:hover {
+  color: #ff3b30;
+  background: rgba(255, 59, 48, 0.1);
 }
 
 .audio-player-ui {
