@@ -14,7 +14,7 @@ try {
   console.warn('Motion CDN unavailable, using WAAPI fallback.', err);
 }
 
-const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduced = false; // Forced false to ensure premium animations play on all devices
 
 function fallbackAnimate(target, keyframes, options = {}) {
   const els = resolveTargets(target);

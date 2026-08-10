@@ -54,9 +54,22 @@
           <span class="context-icon">✏️</span>
           <span class="context-label">Edit Message</span>
         </div>
-        <div class="context-item owner-only danger" id="ctxDeleteBtn" role="menuitem">
-          <span class="context-icon">🗑️</span>
-          <span class="context-label">Delete Message</span>
+        <div class="context-item owner-only" id="ctxDeleteBtn" role="menuitem">
+          <span class="context-icon delete-icon">🗑️</span>
+          <span class="context-label delete-label">Delete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channel Context Menu Popup -->
+  <div id="channelContextMenu" class="msg-context-menu hidden" style="display: none;" role="menu">
+    <div id="channelContextMenuOverlay" class="msg-context-overlay"></div>
+    <div id="channelContextMenuCard" class="msg-context-card">
+      <div class="context-actions-list">
+        <div class="context-item" id="ctxCloseChatBtn" role="menuitem">
+          <span class="context-icon">✕</span>
+          <span class="context-label">Close Chat</span>
         </div>
       </div>
     </div>
@@ -65,7 +78,7 @@
   
 
   <!-- Cache-Busting Stylesheet -->
-  <link rel="stylesheet" href="style.css?v=v8_motion_engine">
+  <link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 
@@ -385,6 +398,11 @@
 
       <!-- Main Chat Container -->
       <main class="chat-main">
+        <div class="empty-state-branding">
+          <div class="logo-icon-lg">💬</div>
+          <h1>SChat</h1>
+          <p>Select a chat to begin messaging.</p>
+        </div>
         <!-- Chat Header -->
         <header class="chat-header" role="banner">
           <div class="room-info">
@@ -538,8 +556,7 @@
       </main>
     </div>
 
-  </div>
-
-  <script type="module" src="app.js?v=v8_motion_engine"></script>
+  <script src="motion-fx.js?v=18" type="module"></script>
+  <script src="app.js?v=18" type="module"></script>
 </body>
 </html>

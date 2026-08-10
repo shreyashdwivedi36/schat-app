@@ -6,7 +6,7 @@ const startSChat = () => {
   let authToken = localStorage.getItem('schat_token') || null;
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
-  let activeRecipient = null; // null = Global Channel, { id, username, avatar } = Direct Message
+  let activeRecipient = 'empty'; // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
   let activeReply = null; // null or { id, username, text }
   let unreadCounts = {};
   let totalUnreadDM = 0;
@@ -639,12 +639,90 @@ const startSChat = () => {
     switchChatTab(null);
   });
 
+  // Channel Context Menu Management
+  const channelContextMenu = document.getElementById('channelContextMenu');
+  const channelContextMenuOverlay = document.getElementById('channelContextMenuOverlay');
+  const channelContextMenuCard = document.getElementById('channelContextMenuCard');
+  const ctxCloseChatBtn = document.getElementById('ctxCloseChatBtn');
+
+  const closeChannelContextMenu = () => {
+    if (channelContextMenu) {
+      channelContextMenu.style.display = 'none';
+      channelContextMenu.classList.add('hidden');
+    }
+  };
+
+  if (channelContextMenuOverlay) {
+    channelContextMenuOverlay.addEventListener('click', closeChannelContextMenu);
+  }
+
+  if (ctxCloseChatBtn) {
+    ctxCloseChatBtn.addEventListener('click', () => {
+      closeChannelContextMenu();
+      switchChatTab('empty');
+    });
+  }
+
+  const handleChannelContextMenu = (e) => {
+    e.preventDefault();
+    if (activeRecipient === 'empty') return; // Do not show menu if already empty
+    
+    if (channelContextMenu && channelContextMenuCard) {
+      // Show menu
+      channelContextMenu.style.display = '';
+      channelContextMenu.classList.remove('hidden');
+
+      const actualWidth = channelContextMenuCard.offsetWidth || 200;
+      const actualHeight = channelContextMenuCard.offsetHeight || 100;
+      
+      let clientX = e.clientX;
+      let clientY = e.clientY;
+
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      }
+
+      let posX = clientX - 20;
+      let posY = clientY - 20;
+
+      if (posX + actualWidth > window.innerWidth - 12) posX = window.innerWidth - actualWidth - 12;
+      if (posY + actualHeight > window.innerHeight - 12) posY = window.innerHeight - actualHeight - 12;
+      if (posX < 12) posX = 12;
+      if (posY < 12) posY = 12;
+
+      channelContextMenuCard.style.left = `${posX}px`;
+      channelContextMenuCard.style.top = `${posY}px`;
+
+      MotionFX.popIn(channelContextMenuCard);
+    }
+  };
+
+  globalChannelBtn.addEventListener('contextmenu', handleChannelContextMenu);
+  let channelLongPressTimer = null;
+  globalChannelBtn.addEventListener('touchstart', (e) => {
+    channelLongPressTimer = setTimeout(() => handleChannelContextMenu(e), 500);
+  }, { passive: true });
+  globalChannelBtn.addEventListener('touchend', () => clearTimeout(channelLongPressTimer));
+  globalChannelBtn.addEventListener('touchmove', () => clearTimeout(channelLongPressTimer));
+
   const switchChatTab = (recipient) => {
     activeRecipient = recipient;
     setReplyState(null);
 
     document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
     globalChannelBtn.classList.remove('active');
+
+    const chatWrapper = document.querySelector('.chat-wrapper');
+
+    if (activeRecipient === 'empty') {
+      chatWrapper.classList.add('empty-state');
+      document.querySelector('.chat-footer').style.display = '';
+      return;
+    }
+
+    chatWrapper.classList.remove('empty-state');
+    document.querySelector('.chat-footer').style.display = '';
 
     if (!activeRecipient) {
       globalChannelBtn.classList.add('active');
@@ -721,6 +799,11 @@ const startSChat = () => {
       authView.style.filter = '';
       authView.style.transform = '';
       chatView.classList.remove('hidden');
+
+      if (activeRecipient === 'empty') {
+        document.querySelector('.chat-wrapper').classList.add('empty-state');
+      }
+
       await MotionFX.enter(chatView, { y: 22, bounce: 0.08 });
       MotionFX.staggerIn(chatView.querySelectorAll('.chat-sidebar > *, .chat-header, .welcome-banner, .chat-footer'), { y: 12, step: 0.04 });
     };
@@ -732,6 +815,7 @@ const startSChat = () => {
   };
 
   const loadMessageHistory = async () => {
+    if (activeRecipient === 'empty') return;
     try {
       const url = activeRecipient 
         ? `/api/messages?recipient_id=${activeRecipient.id}` 
@@ -1659,6 +1743,14 @@ const startSChat = () => {
         switchChatTab(u);
       });
 
+      li.addEventListener('contextmenu', handleChannelContextMenu);
+      let userLongPressTimer = null;
+      li.addEventListener('touchstart', (e) => {
+        userLongPressTimer = setTimeout(() => handleChannelContextMenu(e), 500);
+      }, { passive: true });
+      li.addEventListener('touchend', () => clearTimeout(userLongPressTimer));
+      li.addEventListener('touchmove', () => clearTimeout(userLongPressTimer));
+
       onlineUsersList.appendChild(li);
     });
   };
@@ -1855,8 +1947,7 @@ function init3DMotionBackground() {
   let width, height;
   let particles = [];
   let shockwaves = [];
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const maxParticles = prefersReduced ? 12 : (window.innerWidth < 768 ? 45 : 85);
+  const maxParticles = window.innerWidth > 768 ? 75 : 40;
   let motionPaused = document.hidden;
 
   const resizeCanvas = () => {
@@ -1872,7 +1963,7 @@ function init3DMotionBackground() {
     targetX: width / 2,
     targetY: height / 2,
     isActive: false,
-    radius: 170
+    radius: window.innerWidth > 768 ? 280 : 170
   };
 
   const updatePointer = (clientX, clientY) => {
@@ -1925,7 +2016,8 @@ function init3DMotionBackground() {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < pointer.radius) {
-          const force = (1 - dist / pointer.radius) * 4.5;
+          const baseForce = window.innerWidth > 768 ? 8.5 : 4.5;
+          const force = (1 - dist / pointer.radius) * baseForce;
           const angle = Math.atan2(dy, dx);
           this.x -= Math.cos(angle) * force;
           this.y -= Math.sin(angle) * force;
@@ -1964,7 +2056,6 @@ function init3DMotionBackground() {
   }
 
   window.triggerCanvasShockwave = (x = width / 2, y = height / 2, color = '#6366f1') => {
-    if (prefersReduced) return;
     shockwaves.push({
       x: x || width / 2,
       y: y || height / 2,
@@ -2010,7 +2101,7 @@ function init3DMotionBackground() {
       }
     }
 
-    const maxConnectionDistance = window.innerWidth < 768 ? 95 : 135;
+    const maxConnectionDistance = window.innerWidth > 768 ? 150 : 95;
     for (let i = 0; i < particles.length; i++) {
       particles[i].update();
       particles[i].draw(currentTheme);
@@ -2021,7 +2112,7 @@ function init3DMotionBackground() {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < maxConnectionDistance) {
-          const alpha = (1 - dist / maxConnectionDistance) * (currentTheme === 'light' ? 0.16 : 0.32);
+          const alpha = (1 - dist / maxConnectionDistance) * (currentTheme === 'light' ? 0.25 : 0.45);
           ctx.beginPath();
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
