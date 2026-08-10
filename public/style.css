@@ -1804,6 +1804,11 @@ body {
     transform: translateX(-100%);
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
     background: var(--sidebar-bg);
+    z-index: 300 !important;
+  }
+
+  .sidebar-overlay {
+    z-index: 250 !important;
   }
 
   .chat-sidebar.open {

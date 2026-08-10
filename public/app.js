@@ -718,6 +718,9 @@ const startSChat = () => {
     if (activeRecipient === 'empty') {
       chatWrapper.classList.add('empty-state');
       document.querySelector('.chat-footer').style.display = '';
+      if (window.innerWidth <= 768) {
+        openSidebar();
+      }
       return;
     }
 
