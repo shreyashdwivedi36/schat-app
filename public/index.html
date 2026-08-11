@@ -77,7 +77,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=20">
+  <link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
 
@@ -550,10 +550,11 @@
           </form>
 
           <!-- Voice Recording UI (Hidden by default) -->
-          <div id="recordingUi" class="recording-ui hidden" style="display: none;">
+          <div id="recordingUi" class="recording-ui" style="display: none;">
             <div class="recording-indicator">
               <span class="pulsing-dot"></span>
               <span id="recordingTimer" class="recording-timer">00:00</span>
+              <canvas id="waveformCanvas" width="120" height="30" class="waveform-canvas"></canvas>
             </div>
             <div class="recording-actions">
               <button type="button" id="cancelRecordBtn" class="action-btn cancel-record-btn" title="Cancel Recording">
@@ -575,7 +576,10 @@
       
 
       </main>
-    <script src="motion-fx.js?v=20" type="module"></script>
-  <script src="app.js?v=20" type="module"></script>
+    </div>
+  </div>
+
+  <script src="motion-fx.js?v=24" type="module"></script>
+  <script src="app.js?v=24" type="module"></script>
 </body>
 </html>

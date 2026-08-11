@@ -1507,13 +1507,26 @@ const startSChat = () => {
     }
 
     let contentHtml = '';
-    if (msg.content && msg.content.startsWith('data:audio/')) {
+    let isAudio = false;
+    let audioSrc = '';
+    
+    if (msg.content) {
+      if (msg.content.startsWith('data:audio/')) {
+        isAudio = true;
+        audioSrc = msg.content;
+      } else if (msg.content.startsWith('[AUDIO]')) {
+        isAudio = true;
+        audioSrc = msg.content.substring(7); // Remove [AUDIO]
+      }
+    }
+
+    if (isAudio) {
       contentHtml = `
         <div class="audio-player-ui">
           <button class="play-pause-btn" aria-label="Play">▶</button>
           <div class="audio-progress-bar"><div class="audio-progress-fill"></div></div>
           <span class="audio-time">0:00</span>
-          <audio src="${msg.content}" style="display: none;" preload="metadata"></audio>
+          <audio src="${audioSrc}" style="display: none;" preload="metadata"></audio>
         </div>
       `;
     } else {
@@ -1760,7 +1773,7 @@ const startSChat = () => {
 
   // ================= VOICE MESSAGES =================
   const micBtn = document.getElementById('micBtn');
-  const messageForm = document.getElementById('messageForm');
+
   const recordingUi = document.getElementById('recordingUi');
   const cancelRecordBtn = document.getElementById('cancelRecordBtn');
   const sendRecordBtn = document.getElementById('sendRecordBtn');
@@ -1772,6 +1785,9 @@ const startSChat = () => {
   let isCancelled = false;
   let recordingStartTime = 0;
   let timerInterval;
+  let audioContext;
+  let analyser;
+  let animationFrameId;
 
   const updateTimer = () => {
     if (!recordingStartTime) return;
@@ -1779,6 +1795,62 @@ const startSChat = () => {
     const mins = String(Math.floor(elapsedSeconds / 60)).padStart(2, '0');
     const secs = String(elapsedSeconds % 60).padStart(2, '0');
     if (recordingTimer) recordingTimer.textContent = `${mins}:${secs}`;
+  };
+
+  const drawWaveform = () => {
+    if (!isRecording || !analyser) return;
+    const canvas = document.getElementById('waveformCanvas');
+    if (!canvas) return;
+    
+    const canvasCtx = canvas.getContext('2d');
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    
+    analyser.getByteFrequencyData(dataArray);
+    
+    canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Calculate total actual width needed for bars
+    // Using 16 bars for a clean look
+    const numBars = 16;
+    const barWidth = canvas.width / numBars; 
+    let x = 0;
+    
+    for(let i = 0; i < numBars; i++) {
+      // Scale frequency data to canvas height
+      // dataArray values go from 0 to 255
+      const value = dataArray[i * 2] || 0; 
+      const percent = value / 255;
+      const barHeight = Math.max(2, percent * canvas.height);
+      
+      canvasCtx.fillStyle = '#ff3b30';
+      canvasCtx.beginPath();
+      canvasCtx.roundRect(x, (canvas.height - barHeight) / 2, barWidth - 2, barHeight, 2);
+      canvasCtx.fill();
+      
+      x += barWidth;
+    }
+    
+    animationFrameId = requestAnimationFrame(drawWaveform);
+  };
+
+  const uploadToCloudinary = async (blob) => {
+    const formData = new FormData();
+    formData.append('file', blob);
+    formData.append('upload_preset', 'schat_uploads');
+    
+    try {
+      const response = await fetch('https://api.cloudinary.com/v1_1/tigv7xfy/video/upload', {
+        method: 'POST',
+        body: formData
+      });
+      if (!response.ok) throw new Error('Cloudinary upload failed');
+      const data = await response.json();
+      return data.secure_url;
+    } catch (err) {
+      console.error('Upload Error:', err);
+      return null;
+    }
   };
 
   const startRecording = async () => {
@@ -1798,12 +1870,26 @@ const startSChat = () => {
       audioChunks = [];
       isCancelled = false;
 
+      // Audio Visualizer Setup
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (AudioContextClass) {
+        audioContext = new AudioContextClass();
+        analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        analyser.fftSize = 64; // Gives us 32 bins
+      }
+
       mediaRecorder.ondataavailable = e => {
         if (e.data.size > 0) audioChunks.push(e.data);
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         clearInterval(timerInterval);
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        if (audioContext && audioContext.state !== 'closed') {
+          audioContext.close();
+        }
         
         // Restore UI
         if (messageForm && recordingUi) {
@@ -1825,32 +1911,38 @@ const startSChat = () => {
         }
 
         const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = () => {
-          const base64AudioMessage = reader.result;
-          
-          if (!ws || ws.readyState !== WebSocket.OPEN) {
-            showAlert('Connecting to server... Please try sending again in a moment.', 'error');
-            return;
-          }
+        
+        showAlert('Uploading voice note...', 'info');
+        
+        const fileUrl = await uploadToCloudinary(audioBlob);
+        
+        if (!fileUrl) {
+          showAlert('Failed to upload voice note. Please try again.', 'error');
+          return;
+        }
 
-          const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
+        const audioPayload = '[AUDIO]' + fileUrl;
+        
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+          showAlert('Connecting to server... Please try sending again in a moment.', 'error');
+          return;
+        }
 
-          ws.send(JSON.stringify({
-            type: 'chat_message',
-            recipient_id: activeRecipient ? activeRecipient.id : null,
-            content: base64AudioMessage,
-            is_blurred: isPrivacyBlurActive ? 1 : 0,
-            timer_seconds: timerSeconds,
-            reply_to_id: activeReply ? activeReply.id : null,
-            reply_to_user: activeReply ? activeReply.username : null,
-            reply_to_text: activeReply ? activeReply.text : null
-          }));
+        const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
 
-          setReplyState(null);
-          playSound('send');
-        };
+        ws.send(JSON.stringify({
+          type: 'chat_message',
+          recipient_id: activeRecipient ? activeRecipient.id : null,
+          content: audioPayload,
+          is_blurred: isPrivacyBlurActive ? 1 : 0,
+          timer_seconds: timerSeconds,
+          reply_to_id: activeReply ? activeReply.id : null,
+          reply_to_user: activeReply ? activeReply.username : null,
+          reply_to_text: activeReply ? activeReply.text : null
+        }));
+
+        setReplyState(null);
+        playSound('send');
       };
 
       // Update UI
@@ -1864,6 +1956,7 @@ const startSChat = () => {
       isRecording = true;
       recordingStartTime = Date.now();
       timerInterval = setInterval(updateTimer, 1000);
+      drawWaveform();
       
       if (navigator.vibrate) navigator.vibrate(50);
       

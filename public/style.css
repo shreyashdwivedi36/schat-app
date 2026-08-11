@@ -2862,6 +2862,13 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   letter-spacing: 1px;
 }
 
+.waveform-canvas {
+  margin-left: 12px;
+  height: 30px;
+  width: 120px;
+  border-radius: 4px;
+}
+
 .recording-actions {
   display: flex;
   align-items: center;
