@@ -10,7 +10,7 @@ A full-stack, real-time messaging application engineered with **Node.js**, **Exp
 ## ✨ Key Features
 
 - **Real-Time Messaging**: Built on persistent WebSocket connections (`ws`) for instant two-way message delivery.
-- **Voice Messages 🎙️**: Native `MediaRecorder` integration allowing users to record voice notes, encoded as Base64 blobs, and sent over WebSockets with a custom UI audio player.
+- **Voice Messages 🎙️**: Native `MediaRecorder` integration with **Cloudinary** for offloaded storage. Features a real-time **Audio Waveform Visualizer**, 16kbps Opus compression, and a custom UI audio player.
 - **Live Inline Translation 🌐**: One-click Google Translate API integration to instantly translate incoming messages to the user's preferred language.
 - **Private & Global Chat**: Support for 1-on-1 Direct Messages and a Global Channel.
 - **Progressive Web App (PWA)**: Fully installable to mobile home screens with offline caching and an auto-updating Network-First Service Worker (`sw.js`).
@@ -28,7 +28,7 @@ A full-stack, real-time messaging application engineered with **Node.js**, **Exp
 ## 🛠️ Tech Stack
 
 - **Backend**: Node.js, Express.js, WebSockets (`ws`), PostgreSQL (`pg`), SQLite3, JWT (`jsonwebtoken`), Bcrypt
-- **Frontend**: HTML5, CSS3 (Glassmorphism, Flexbox/Grid, Keyframe Animations), ES6 JavaScript, Web Audio API
+- **Frontend**: HTML5, CSS3 (Glassmorphism, Flexbox/Grid, Keyframe Animations), ES6 JavaScript, Web Audio API, Cloudinary REST API
 - **DevOps**: Docker, Render CI/CD Pipeline, Git
 
 ---
