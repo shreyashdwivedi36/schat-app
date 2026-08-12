@@ -1,3 +1,13 @@
+/**
+ * ============================================================================
+ * SChat - Real-Time Messaging Platform
+ * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
+ *
+ * This software and its associated documentation are the exclusive proprietary
+ * property of Shreyash Dwivedi. Unauthorized copying, modification, distribution,
+ * sublicensing, or commercial use is strictly prohibited.
+ * ============================================================================
+ */
 // SChat Realtime Animated Chat App Core Frontend Logic
 import { MotionFX } from './motion-fx.js';
 

@@ -1,4 +1,14 @@
 /**
+ * ============================================================================
+ * SChat - Real-Time Messaging Platform
+ * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
+ *
+ * This software and its associated documentation are the exclusive proprietary
+ * property of Shreyash Dwivedi. Unauthorized copying, modification, distribution,
+ * sublicensing, or commercial use is strictly prohibited.
+ * ============================================================================
+ */
+/**
  * SChat motion layer — Motion (motion.dev) springs + 21st.dev-style interactions.
  * Falls back to the Web Animations API if the CDN module cannot load.
  */
