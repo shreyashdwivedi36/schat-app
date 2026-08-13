@@ -360,6 +360,9 @@
             <h3 id="myUsername">Username</h3>
             <span id="myBio" class="status-label">Online</span>
           </div>
+          <button id="adminBtn" class="icon-btn logout-btn hidden" title="Admin Dashboard" aria-label="Admin Dashboard">
+            🛡️
+          </button>
           <button id="logoutBtn" class="icon-btn logout-btn" title="Sign Out" aria-label="Sign out">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -589,6 +592,37 @@
       
 
       </main>
+    </div>
+  </div>
+
+  <div id="adminModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="adminModalTitle">
+    <div class="modal-card" style="max-width: 600px; text-align: left;">
+      <button id="closeAdminModal" class="modal-close-btn" aria-label="Close modal">&times;</button>
+      <div class="modal-header">
+        <h2 id="adminModalTitle" style="color: var(--primary-accent); margin-bottom: 0.5rem;">🛡️ Admin Dashboard</h2>
+      </div>
+      <div class="modal-body" style="padding: 0 10px;">
+        
+        <div class="admin-section" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--panel-border); border-radius: 16px; padding: 18px; margin-bottom: 20px;">
+          <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">Global Announcement</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;">Broadcast an un-blockable system message to all currently online users.</p>
+          <div class="admin-announce-container" style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; width: 100%;">
+            <div class="input-group" style="flex: 1 1 200px; margin-bottom: 0; min-width: 0;">
+              <input type="text" id="adminAnnounceInput" placeholder="Enter system message..." style="height: 42px; width: 100%; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--panel-border); color: var(--text-main); padding: 0 14px;" />
+            </div>
+            <button id="adminAnnounceBtn" class="btn btn-primary" style="flex: 1 1 auto; width: auto; height: 42px; padding: 0 24px; font-weight: 700; border-radius: 12px; margin-top: 0;">Broadcast</button>
+          </div>
+        </div>
+
+        <div class="admin-section" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--panel-border); border-radius: 16px; padding: 18px;">
+          <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">User Management</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;">Total control over registered accounts.</p>
+          <div id="adminUserList" class="admin-user-list">
+            <!-- User items injected here -->
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 

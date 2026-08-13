@@ -47,7 +47,7 @@ function comparePassword(password, hash) {
 
 function generateToken(user) {
   return jwt.sign(
-    { id: user.id, username: user.username, email: user.email, avatar: user.avatar },
+    { id: user.id, username: user.username, email: user.email, avatar: user.avatar, role: user.role || 'user' },
     JWT_SECRET,
     { expiresIn: '30d' }
   );
@@ -80,11 +80,22 @@ function authMiddleware(req, res, next) {
   next();
 }
 
+function superAdminMiddleware(req, res, next) {
+  authMiddleware(req, res, () => {
+    if (req.user && req.user.role === 'super_admin') {
+      next();
+    } else {
+      res.status(403).json({ error: 'Access denied. Super Admin privileges required.' });
+    }
+  });
+}
+
 module.exports = {
   hashPassword,
   comparePassword,
   generateToken,
   verifyToken,
   authMiddleware,
+  superAdminMiddleware,
   JWT_SECRET
 };

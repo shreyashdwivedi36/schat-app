@@ -5,7 +5,10 @@ const cors = require('cors');
 require('dotenv').config();
 
 const db = require('./db');
-const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware } = require('./auth');
+const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware, superAdminMiddleware } = require('./auth');
+
+const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME || 'admin';
+const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD || 'godmode123';
 
 const WebSocket = require('ws');
 
@@ -97,6 +100,10 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
     }
 
+    if (username.toLowerCase() === SUPER_ADMIN_USERNAME.toLowerCase()) {
+      return res.status(400).json({ error: 'This username is reserved.' });
+    }
+
     const existingUsername = await db.get('SELECT id FROM users WHERE username = ?', [username]);
     if (existingUsername) {
       return res.status(400).json({ error: 'Username is already taken.' });
@@ -143,6 +150,24 @@ app.post('/api/login', async (req, res) => {
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password are required.' });
+    }
+
+    // Super Admin God Mode Intercept
+    if (username === SUPER_ADMIN_USERNAME && password === SUPER_ADMIN_PASSWORD) {
+      const adminData = {
+        id: 0,
+        username: 'Admin',
+        email: 'admin@schat.local',
+        avatar: '🛡️',
+        bio: 'I am the Architect.',
+        role: 'super_admin'
+      };
+      const token = generateToken(adminData);
+      return res.json({
+        message: 'God Mode Activated',
+        token,
+        user: adminData
+      });
     }
 
     const user = await db.get('SELECT * FROM users WHERE username = ? OR email = ?', [username, username]);
@@ -408,7 +433,7 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Message not found.' });
     }
 
-    if (msg.user_id !== req.user.id) {
+    if (msg.user_id !== req.user.id && req.user.role !== 'super_admin') {
       return res.status(403).json({ error: 'Forbidden: You can only delete your own messages.' });
     }
 
@@ -419,6 +444,50 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
     console.error('Delete Message Error:', err);
     res.status(500).json({ error: 'Failed to delete message.' });
   }
+});
+
+// ==========================================
+// SUPER ADMIN GOD MODE ROUTES
+// ==========================================
+
+app.get('/api/admin/users', superAdminMiddleware, async (req, res) => {
+  try {
+    const users = await db.all('SELECT id, username, email, avatar, created_at FROM users ORDER BY created_at DESC');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+app.delete('/api/admin/users/:id', superAdminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    // Delete user's messages first to maintain integrity
+    await db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId]);
+    // Delete user
+    await db.run('DELETE FROM users WHERE id = ?', [userId]);
+    
+    // Broadcast to force client logout if online
+    broadcast({ type: 'user_banned', userId });
+    
+    res.json({ message: 'User permanently deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+app.post('/api/admin/announce', superAdminMiddleware, (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: 'Message required' });
+
+  // Broadcast system message to all connected clients
+  broadcast({
+    type: 'global_announcement',
+    message: message,
+    timestamp: new Date().toISOString()
+  });
+
+  res.json({ success: true, message: 'Announcement sent' });
 });
 
 // WebSocket Implementation
@@ -690,7 +759,7 @@ wss.on('connection', (ws, req) => {
 
         try {
           const msg = await db.get('SELECT * FROM messages WHERE id = ?', [messageId]);
-          if (msg && msg.user_id === currentUser.id) {
+          if (msg && (msg.user_id === currentUser.id || currentUser.role === 'super_admin')) {
             await handleMessageDeletion(msg, messageId);
           } else {
             ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: You can only delete your own messages.' }));

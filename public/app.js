@@ -24,9 +24,10 @@ const startSChat = () => {
   let deferredPrompt = null;
   let ws = null;
   let pingInterval = null;
-  let selectedAvatar = '⚡';
+  let selectedAvatar = '👤';
   let soundEnabled = true;
   let typingTimeout = null;
+  let isSendingTyping = false;
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
@@ -120,6 +121,144 @@ const startSChat = () => {
   const myAvatarEl = document.getElementById('myAvatar');
   const myUsernameEl = document.getElementById('myUsername');
   const myBioEl = document.getElementById('myBio');
+  const msgAudio = document.getElementById('msgAudio');
+  if (msgAudio) msgAudio.volume = 0.3;
+
+  // ==========================================
+  // SUPER ADMIN GOD MODE LOGIC
+  // ==========================================
+  const adminBtn = document.getElementById('adminBtn');
+  const adminModal = document.getElementById('adminModal');
+  const closeAdminModal = document.getElementById('closeAdminModal');
+  const adminUserList = document.getElementById('adminUserList');
+  const adminAnnounceBtn = document.getElementById('adminAnnounceBtn');
+  const adminAnnounceInput = document.getElementById('adminAnnounceInput');
+
+  if (adminBtn && adminModal) {
+    adminBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      adminModal.style.display = '';
+      adminModal.classList.remove('hidden');
+      const card = adminModal.querySelector('.modal-card');
+      if (card) MotionFX.popIn(card);
+      await fetchAdminUsers();
+    });
+
+    closeAdminModal.addEventListener('click', () => {
+      adminModal.style.display = 'none';
+      adminModal.classList.add('hidden');
+    });
+
+    adminAnnounceBtn.addEventListener('click', async () => {
+      const message = adminAnnounceInput.value.trim();
+      if (!message) return;
+      
+      try {
+        const res = await fetch('/api/admin/announce', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ message })
+        });
+        if (res.ok) {
+          adminAnnounceInput.value = '';
+          
+          // Beautiful animated success modal for the admin
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0'; overlay.style.left = '0';
+          overlay.style.width = '100vw'; overlay.style.height = '100vh';
+          overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+          overlay.style.backdropFilter = 'blur(5px)';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.zIndex = '999999';
+          
+          const modal = document.createElement('div');
+          modal.style.background = 'var(--panel-bg)';
+          modal.style.padding = '30px 40px';
+          modal.style.borderRadius = '20px';
+          modal.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+          modal.style.boxShadow = '0 20px 40px rgba(0,0,0,0.4), 0 0 30px rgba(16, 185, 129, 0.15)';
+          modal.style.textAlign = 'center';
+          
+          modal.innerHTML = `
+            <div style="font-size: 3.5rem; margin-bottom: 10px; line-height: 1;">✨</div>
+            <h2 style="font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin-bottom: 8px;">Broadcast Sent</h2>
+            <p style="font-size: 0.95rem; color: var(--text-muted);">Your message is now echoing across all active sessions.</p>
+          `;
+          
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+          if (window.MotionFX) window.MotionFX.popIn(modal);
+          
+          setTimeout(() => {
+            if (window.MotionFX) {
+              window.MotionFX.exit(modal, { scale: 0.9 }).then(() => overlay.remove());
+            } else {
+              overlay.remove();
+            }
+          }, 2500);
+
+        } else {
+          const err = await res.json();
+          alert(err.error || 'Failed to send broadcast');
+        }
+      } catch (e) {
+        showAlert('Network error', 'error');
+      }
+    });
+  }
+
+  async function fetchAdminUsers() {
+    if (!adminUserList) return;
+    adminUserList.innerHTML = '<div style="text-align:center; padding: 1rem;">Loading users...</div>';
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        const users = await res.json();
+        adminUserList.innerHTML = users.map(u => `
+          <div class="admin-user-item">
+            <div class="admin-user-info">
+              <div class="avatar">${u.avatar || '👤'}</div>
+              <div>
+                <div style="font-weight: 600;">${u.username}</div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary);">${u.email} | ID: ${u.id}</div>
+              </div>
+            </div>
+            <button class="ban-btn" onclick="banUser(${u.id}, '${u.username}')">Ban User</button>
+          </div>
+        `).join('');
+      } else {
+        adminUserList.innerHTML = '<div style="color: #ef4444;">Failed to load users</div>';
+      }
+    } catch (e) {
+      adminUserList.innerHTML = '<div style="color: #ef4444;">Network error</div>';
+    }
+  }
+
+  window.banUser = async (userId, username) => {
+    if (!confirm(`Are you absolutely sure you want to permanently BAN and DELETE ${username} (ID: ${userId})?`)) return;
+    
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        showAlert(`${username} has been permanently banned.`, 'success');
+        fetchAdminUsers();
+      } else {
+        const err = await res.json();
+        showAlert(err.error || 'Failed to ban user', 'error');
+      }
+    } catch (e) {
+      showAlert('Network error', 'error');
+    }
+  };
+
   const logoutBtn = document.getElementById('logoutBtn');
   const soundToggleBtn = document.getElementById('soundToggleBtn');
   const themeModeBtn = document.getElementById('themeModeBtn');
@@ -801,9 +940,18 @@ const startSChat = () => {
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
-    myAvatarEl.textContent = currentUser.avatar || '⚡';
+    myAvatarEl.textContent = currentUser.avatar || '👤';
     myUsernameEl.textContent = currentUser.username;
     if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
+
+    const adminBtn = document.getElementById('adminBtn');
+    if (adminBtn) {
+      if (currentUser.role === 'super_admin') {
+        adminBtn.classList.remove('hidden');
+      } else {
+        adminBtn.classList.add('hidden');
+      }
+    }
 
     const enterChat = async () => {
       await MotionFX.exit(authView, { y: -14 });
@@ -934,6 +1082,54 @@ const startSChat = () => {
             localStorage.setItem('schat_token', authToken);
           }
           updateOnlineUsers(data.onlineUsers);
+        } else if (data.type === 'global_announcement') {
+          if (currentUser && currentUser.role === 'super_admin') {
+            return; // The sender already gets a "System broadcast sent!" toast in the send function.
+          }
+          
+          const overlay = document.createElement('div');
+          overlay.style.position = 'fixed';
+          overlay.style.top = '0'; overlay.style.left = '0';
+          overlay.style.width = '100vw'; overlay.style.height = '100vh';
+          overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+          overlay.style.backdropFilter = 'blur(10px)';
+          overlay.style.display = 'flex';
+          overlay.style.alignItems = 'center';
+          overlay.style.justifyContent = 'center';
+          overlay.style.zIndex = '999999';
+          
+          const modal = document.createElement('div');
+          modal.style.background = 'var(--panel-bg)';
+          modal.style.padding = '40px';
+          modal.style.borderRadius = '24px';
+          modal.style.border = '1px solid var(--primary-accent)';
+          modal.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.5), 0 0 40px rgba(138, 43, 226, 0.2)';
+          modal.style.maxWidth = '500px';
+          modal.style.width = '90%';
+          modal.style.textAlign = 'center';
+          
+          // Escape the message to prevent XSS
+          const escapedMessage = data.message.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          
+          modal.innerHTML = `
+            <div style="font-size: 3rem; margin-bottom: 20px;">📢</div>
+            <h2 style="font-size: 1.5rem; font-weight: 800; color: var(--text-main); margin-bottom: 16px;">Admin Broadcast</h2>
+            <p style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 30px;">${escapedMessage}</p>
+            <button class="btn btn-primary" style="width: 100%; border-radius: 12px; font-weight: 700;">Acknowledge</button>
+          `;
+          
+          const btn = modal.querySelector('button');
+          btn.onclick = () => {
+            if (window.MotionFX) {
+              window.MotionFX.exit(modal, { scale: 0.9 }).then(() => overlay.remove());
+            } else {
+              overlay.remove();
+            }
+          };
+          
+          overlay.appendChild(modal);
+          document.body.appendChild(overlay);
+          if (window.MotionFX) window.MotionFX.popIn(modal);
         } else if (data.type === 'new_message') {
           let isCurrentTab = false;
 
@@ -1323,7 +1519,7 @@ const startSChat = () => {
 
     const ownerElements = msgContextMenuCard ? msgContextMenuCard.querySelectorAll('.owner-only') : [];
     ownerElements.forEach(el => {
-      el.style.display = isOutgoing ? 'flex' : 'none';
+      el.style.display = (isOutgoing || currentUser.role === 'super_admin') ? 'flex' : 'none';
     });
 
     const isPinned = Number(msgCard ? (msgCard.dataset.isPinned || msg.is_pinned) : msg.is_pinned) === 1;
@@ -2042,14 +2238,18 @@ const startSChat = () => {
   messageInput.addEventListener('input', () => {
     if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-    ws.send(JSON.stringify({
-      type: 'typing',
-      recipient_id: activeRecipient ? activeRecipient.id : null,
-      isTyping: true
-    }));
+    if (!isSendingTyping) {
+      isSendingTyping = true;
+      ws.send(JSON.stringify({
+        type: 'typing',
+        recipient_id: activeRecipient ? activeRecipient.id : null,
+        isTyping: true
+      }));
+    }
 
     clearTimeout(typingTimeout);
     typingTimeout = setTimeout(() => {
+      isSendingTyping = false;
       ws.send(JSON.stringify({
         type: 'typing',
         recipient_id: activeRecipient ? activeRecipient.id : null,
@@ -2063,7 +2263,10 @@ const startSChat = () => {
       ? (Number(data.user_id) === Number(activeRecipient.id) && Number(data.recipient_id) === Number(currentUser.id))
       : (!data.recipient_id && Number(data.user_id) !== Number(currentUser.id));
 
-    if (isRelevantTyping && data.isTyping) {
+    // If it's a typing event for someone we aren't currently looking at, ignore it!
+    if (!isRelevantTyping) return;
+
+    if (data.isTyping) {
       typingText.textContent = `${data.username} is typing...`;
       showElement(typingBanner);
     } else {

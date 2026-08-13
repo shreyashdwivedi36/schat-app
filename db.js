@@ -237,6 +237,9 @@ if (process.env.DATABASE_URL) {
         const blocker_id = params[0];
         return data.blocked_users.filter(b => b.blocker_id === blocker_id);
       }
+      if (sql.includes('FROM users')) {
+        return data.users;
+      }
       if (sql.includes('FROM messages')) {
         const nowIso = new Date().toISOString();
         let validMsgs = data.messages.filter(m => !m.expires_at || m.expires_at > nowIso);
