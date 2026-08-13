@@ -33,41 +33,27 @@ A full-stack, real-time messaging application engineered with **Node.js**, **Exp
 
 ---
 
-## 🚀 Zero-Config Local Development Setup
+## 🏢 Architecture Evaluation Setup
 
-You can run this entire full-stack application locally in under 10 seconds without needing Docker or a PostgreSQL server. 
+This repository contains proprietary source code. The instructions below are provided strictly for **authorized technical evaluation and architectural review**. 
 
-If no `DATABASE_URL` is provided in the environment, the app automatically switches to a custom local JSON fallback database (`db_fallback.json`). 
+**Unauthorized commercial use, modification, cloning, or distribution is strictly prohibited.**
 
+### Local Evaluation Setup
 1. **Clone the Repository**:
    ```bash
    git clone https://github.com/shreyashdwivedi36/schat-app.git
    cd schat-app
    ```
-
 2. **Install Dependencies**:
    ```bash
    npm install
    ```
-
-3. **Start Development Server**:
+3. **Run Evaluation Server**:
    ```bash
    npm start
    ```
-
-4. **Access Application**:
-   Open `http://localhost:3000` in your web browser.
-
----
-
-## 🐳 Docker Deployment
-
-To build and run the application container using Docker:
-
-```bash
-docker build -t schat-app .
-docker run -p 3000:3000 schat-app
-```
+*(Note: If no `DATABASE_URL` is provided, the backend will automatically mock a database using a local JSON fallback `db_fallback.json`.)*
 
 ---
 
