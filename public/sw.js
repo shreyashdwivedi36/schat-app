@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v28-live-update';
+const CACHE_NAME = 'schat-v29-live-update';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
