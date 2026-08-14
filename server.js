@@ -214,6 +214,31 @@ app.get('/api/me', authMiddleware, async (req, res) => {
   }
 });
 
+// Get all users (for persistent sidebar)
+app.get('/api/users', authMiddleware, async (req, res) => {
+  try {
+    const users = await db.all('SELECT id, username, avatar, bio, created_at FROM users WHERE id != ? ORDER BY username ASC', [req.user.id]);
+    res.json({ users });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error fetching users.' });
+  }
+});
+
+// Get users we have conversed with
+app.get('/api/conversations', authMiddleware, async (req, res) => {
+  try {
+    const msgs = await db.all('SELECT user_id, recipient_id FROM messages WHERE user_id = ? OR recipient_id = ?', [req.user.id, req.user.id]);
+    const ids = new Set();
+    msgs.forEach(m => {
+      if (m.user_id && m.user_id !== req.user.id) ids.add(m.user_id);
+      if (m.recipient_id && m.recipient_id !== req.user.id) ids.add(m.recipient_id);
+    });
+    res.json({ conversationUserIds: Array.from(ids) });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error fetching conversations.' });
+  }
+});
+
 // Change Password REST API
 app.post('/api/user/change-password', authMiddleware, async (req, res) => {
   try {
@@ -577,6 +602,9 @@ wss.on('connection', (ws, req) => {
         avatar: currentUser.avatar,
         onlineUsers: getOnlineUsersList()
       });
+      db.run('UPDATE messages SET status = ? WHERE recipient_id = ? AND status = ?', ['delivered', currentUser.id, 'sent']).then(() => {
+        broadcast({ type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
+      }).catch(() => {});
     } else {
       ws.send(JSON.stringify({ type: 'auth_error', message: 'Token expired or invalid.' }));
     }
@@ -613,6 +641,10 @@ wss.on('connection', (ws, req) => {
           avatar: currentUser.avatar,
           onlineUsers: getOnlineUsersList()
         });
+        
+        // Mark pending messages as delivered
+        await db.run('UPDATE messages SET status = ? WHERE recipient_id = ? AND status = ?', ['delivered', currentUser.id, 'sent']);
+        broadcast({ type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
         return;
       }
 

@@ -3052,3 +3052,10 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .admin-user-info img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 .ban-btn { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.25rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease; }
 .ban-btn:hover { background: #ef4444; color: white; }
+
+.u-avatar-wrapper { position: relative; display: inline-block; }
+.status-dot { position: absolute; bottom: 0; right: -2px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--surface-light); }
+.status-dot.online { background-color: #2ECC71; }
+.status-dot.offline { background-color: #95A5A6; }
+
+.msg-status-icon.read { color: #34B7F1 !important; }

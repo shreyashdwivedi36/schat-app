@@ -249,6 +249,9 @@ if (process.env.DATABASE_URL) {
         if (params.length === 4) {
           const [u1, u2] = params;
           return validMsgs.filter(m => (m.user_id === u1 && m.recipient_id === u2) || (m.user_id === u2 && m.recipient_id === u1));
+        } else if (sql.includes('user_id = ? OR recipient_id = ?')) {
+          const [uId] = params;
+          return validMsgs.filter(m => m.user_id === uId || m.recipient_id === uId);
         } else {
           return validMsgs.filter(m => !m.recipient_id).slice(-100);
         }

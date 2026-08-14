@@ -28,6 +28,9 @@ const startSChat = () => {
   let soundEnabled = true;
   let typingTimeout = null;
   let isSendingTyping = false;
+  let allRegisteredUsers = [];
+  let onlineUserIds = new Set();
+  let chattedUserIds = new Set();
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
@@ -971,8 +974,32 @@ const startSChat = () => {
     await enterChat();
 
     requestNotificationPermission();
+    await loadAllUsers();
     await loadMessageHistory();
     connectWebSocket();
+  };
+
+  const loadAllUsers = async () => {
+    try {
+      const [usersRes, convRes] = await Promise.all([
+        fetch('/api/users', { headers: { 'Authorization': `Bearer ${authToken}` } }),
+        fetch('/api/conversations', { headers: { 'Authorization': `Bearer ${authToken}` } })
+      ]);
+      
+      if (usersRes.ok) {
+        const data = await usersRes.json();
+        allRegisteredUsers = data.users || [];
+      }
+      
+      if (convRes.ok) {
+        const convData = await convRes.json();
+        chattedUserIds = new Set(convData.conversationUserIds || []);
+      }
+      
+      updateOnlineUsers();
+    } catch (err) {
+      console.error('Failed to load users/conversations:', err);
+    }
   };
 
   const loadMessageHistory = async () => {
@@ -1131,6 +1158,12 @@ const startSChat = () => {
           document.body.appendChild(overlay);
           if (window.MotionFX) window.MotionFX.popIn(modal);
         } else if (data.type === 'new_message') {
+          if (data.user_id && Number(data.user_id) !== Number(currentUser.id)) {
+            if (!chattedUserIds.has(Number(data.user_id))) {
+              chattedUserIds.add(Number(data.user_id));
+              updateOnlineUsers();
+            }
+          }
           let isCurrentTab = false;
 
           if (!activeRecipient) {
@@ -1147,6 +1180,9 @@ const startSChat = () => {
           if (isCurrentTab) {
             renderMessage(data);
             scrollToBottom();
+            if (activeRecipient && ws && ws.readyState === WebSocket.OPEN && Number(data.user_id) !== Number(currentUser.id)) {
+              ws.send(JSON.stringify({ type: 'mark_read', sender_id: activeRecipient.id }));
+            }
             if (autoTranslateEnabled && Number(data.user_id) !== Number(currentUser.id)) {
               setTimeout(() => {
                 const newCard = document.querySelector(`.message-card[data-msg-id="${data.id || data.messageId}"]`);
@@ -1171,10 +1207,17 @@ const startSChat = () => {
             playSound('receive');
           }
         } else if (data.type === 'msg_status_update') {
-          if (data.status === 'read') {
+          if (data.status === 'read' || data.status === 'delivered') {
             document.querySelectorAll('.msg-status-icon').forEach(icon => {
-              icon.textContent = '✓✓';
-              icon.classList.add('read');
+              if (data.status === 'read') {
+                icon.textContent = '✓✓';
+                icon.classList.remove('sent', 'delivered');
+                icon.classList.add('read');
+              } else if (data.status === 'delivered' && !icon.classList.contains('read')) {
+                icon.textContent = '✓✓';
+                icon.classList.remove('sent');
+                icon.classList.add('delivered');
+              }
             });
           }
         } else if (data.type === 'edit_message') {
@@ -1938,25 +1981,44 @@ const startSChat = () => {
   };
 
   const updateOnlineUsers = (users = []) => {
-    const otherUsers = users.filter(u => Number(u.id) !== Number(currentUser.id));
-    MotionFX.tickNumber(onlineCountBadge, otherUsers.length);
+    const searchTerm = filterInput ? filterInput.value : '';
+    if (users && users.length > 0) {
+      onlineUserIds = new Set(users.map(u => Number(u.id)));
+    }
+    
+    MotionFX.tickNumber(onlineCountBadge, onlineUserIds.has(Number(currentUser.id)) ? onlineUserIds.size - 1 : onlineUserIds.size);
     onlineUsersList.innerHTML = '';
+    
+    const query = (searchTerm || '').toLowerCase().trim();
 
-    if (otherUsers.length === 0) {
-      onlineUsersList.innerHTML = `<li class="online-user-item disabled"><span class="u-name">No other users online</span></li>`;
+    let displayUsers = allRegisteredUsers.filter(u => {
+      if (Number(u.id) === Number(currentUser.id)) return false;
+      if (query) {
+         return u.username.toLowerCase().includes(query);
+      }
+      return chattedUserIds.has(Number(u.id));
+    });
+
+    if (displayUsers.length === 0) {
+      onlineUsersList.innerHTML = `<li class="online-user-item disabled"><span class="u-name">${query ? 'No users found' : 'No recent chats'}</span></li>`;
       return;
     }
 
-    otherUsers.forEach(u => {
+    displayUsers.forEach(u => {
+      const isOnline = onlineUserIds.has(Number(u.id));
       const li = document.createElement('li');
       li.className = `online-user-item ${activeRecipient && Number(activeRecipient.id) === Number(u.id) ? 'active' : ''}`;
       li.dataset.userId = u.id;
 
       const unreadCount = unreadCounts[u.id] || 0;
       const unreadBadgeHtml = unreadCount > 0 ? `<span class="unread-badge">${unreadCount}</span>` : '';
+      const statusIndicatorHtml = `<span class="status-dot ${isOnline ? 'online' : 'offline'}"></span>`;
 
       li.innerHTML = `
-        <span class="u-avatar">${u.avatar || '⚡'}</span>
+        <div class="u-avatar-wrapper">
+          <span class="u-avatar">${u.avatar || '👤'}</span>
+          ${statusIndicatorHtml}
+        </div>
         <span class="u-name">${escapeHtml(u.username)}</span>
         ${unreadBadgeHtml}
       `;
@@ -2136,8 +2198,13 @@ const startSChat = () => {
 
         const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
 
-        ws.send(JSON.stringify({
-          type: 'chat_message',
+        if (activeRecipient) {
+      chattedUserIds.add(Number(activeRecipient.id));
+      // Re-render in case they weren't in the list
+      updateOnlineUsers();
+    }
+    ws.send(JSON.stringify({
+      type: 'chat_message',
           recipient_id: activeRecipient ? activeRecipient.id : null,
           content: audioPayload,
           is_blurred: isPrivacyBlurActive ? 1 : 0,
@@ -2212,6 +2279,11 @@ const startSChat = () => {
 
     const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
 
+    if (activeRecipient) {
+      chattedUserIds.add(Number(activeRecipient.id));
+      // Re-render in case they weren't in the list
+      updateOnlineUsers();
+    }
     ws.send(JSON.stringify({
       type: 'chat_message',
       recipient_id: activeRecipient ? activeRecipient.id : null,
@@ -2286,11 +2358,8 @@ const startSChat = () => {
   });
 
   filterInput.addEventListener('input', (e) => {
+    updateOnlineUsers();
     const term = e.target.value.toLowerCase();
-    document.querySelectorAll('.online-user-item').forEach(item => {
-      const text = item.textContent.toLowerCase();
-      item.style.display = text.includes(term) ? 'flex' : 'none';
-    });
     document.querySelectorAll('.message-card').forEach(card => {
       const text = card.textContent.toLowerCase();
       card.style.display = text.includes(term) ? 'flex' : 'none';
