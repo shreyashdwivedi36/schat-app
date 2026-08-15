@@ -31,6 +31,7 @@ const startSChat = () => {
   let allRegisteredUsers = [];
   let onlineUserIds = new Set();
   let chattedUserIds = new Set();
+  let lastRenderedDate = null;
 
   document.documentElement.setAttribute('data-theme', currentTheme);
 
@@ -861,6 +862,7 @@ const startSChat = () => {
   const switchChatTab = (recipient) => {
     activeRecipient = recipient;
     setReplyState(null);
+hideElement(typingBanner);
 
     document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
     globalChannelBtn.classList.remove('active');
@@ -1035,6 +1037,7 @@ const startSChat = () => {
           <p id="welcomeSubtitle">${activeRecipient ? 'Private communication channel.' : 'Real-time messaging active across mobile & desktop.'}</p>
         </div>
       `;
+      lastRenderedDate = null;
 
       if (data.messages && data.messages.length > 0) {
         data.messages.forEach((msg) => renderMessage(msg, { animateEnter: false }));
@@ -1700,6 +1703,27 @@ const startSChat = () => {
       return;
     }
 
+    const msgDateObj = new Date(msg.created_at || Date.now());
+    const msgDateStr = msgDateObj.toDateString();
+    
+    if (msgDateStr !== lastRenderedDate) {
+      lastRenderedDate = msgDateStr;
+      const dateDivider = document.createElement('div');
+      dateDivider.className = 'date-divider';
+      
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      
+      if (msgDateStr === today) {
+        dateDivider.textContent = 'Today';
+      } else if (msgDateStr === yesterday) {
+        dateDivider.textContent = 'Yesterday';
+      } else {
+        dateDivider.textContent = msgDateObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      }
+      messagesFeed.appendChild(dateDivider);
+    }
+    
     const isOutgoing = Number(msg.user_id) === Number(currentUser.id);
     const msgCard = document.createElement('div');
     msgCard.className = `message-card ${isOutgoing ? 'outgoing' : 'incoming'}`;
@@ -2215,6 +2239,7 @@ const startSChat = () => {
         }));
 
         setReplyState(null);
+hideElement(typingBanner);
         playSound('send');
       };
 
@@ -2297,6 +2322,7 @@ const startSChat = () => {
 
     messageInput.value = '';
     setReplyState(null);
+hideElement(typingBanner);
     hideElement(emojiPicker);
     playSound('send');
 
@@ -2331,11 +2357,17 @@ const startSChat = () => {
   });
 
   const handleTypingEvent = (data) => {
-    const isRelevantTyping = activeRecipient 
-      ? (Number(data.user_id) === Number(activeRecipient.id) && Number(data.recipient_id) === Number(currentUser.id))
-      : (!data.recipient_id && Number(data.user_id) !== Number(currentUser.id));
+    // If we're in the global chat, show anyone's typing.
+    // If we're in a 1-on-1, only show if it's from the person we're chatting with.
+    let isRelevantTyping = false;
+    
+    if (activeRecipient && activeRecipient !== 'empty') {
+      isRelevantTyping = (Number(data.user_id) === Number(activeRecipient.id));
+    } else if (!activeRecipient) {
+      // Global chat
+      isRelevantTyping = (!data.recipient_id && Number(data.user_id) !== Number(currentUser.id));
+    }
 
-    // If it's a typing event for someone we aren't currently looking at, ignore it!
     if (!isRelevantTyping) return;
 
     if (data.isTyping) {

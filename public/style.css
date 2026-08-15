@@ -3059,3 +3059,5 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .status-dot.offline { background-color: #95A5A6; }
 
 .msg-status-icon.read { color: #34B7F1 !important; }
+
+.date-divider { text-align: center; font-size: 0.75rem; color: var(--text-muted); margin: 15px 0; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; opacity: 0.8; } .date-divider::before, .date-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin: 0 15px; } [data-theme='light'] .date-divider::before, [data-theme='light'] .date-divider::after { border-bottom: 1px solid rgba(0, 0, 0, 0.1); }
