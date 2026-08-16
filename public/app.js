@@ -10,6 +10,7 @@
  */
 // SChat Realtime Animated Chat App Core Frontend Logic
 import { MotionFX } from './motion-fx.js';
+import { scroll, animate } from 'https://cdn.jsdelivr.net/npm/motion@11.16.0/+esm';
 
 const startSChat = () => {
   // Application State
@@ -1953,6 +1954,7 @@ hideElement(typingBanner);
     });
 
     messagesFeed.appendChild(msgCard);
+    
     if (animateEnter) {
       MotionFX.enterMessage(msgCard, isOutgoing);
       if (!MotionFX.reduced && typeof window.triggerCanvasShockwave === 'function') {
@@ -1962,7 +1964,13 @@ hideElement(typingBanner);
           rect.top + rect.height / 2,
           isOutgoing ? '#6366f1' : '#0ea5e9'
         );
-      }
+      } else {
+      // Add motion.dev scroll animation for historical messages
+      scroll(
+        animate(msgCard, { opacity: [0, 1], scale: [0.85, 1], y: [20, 0] }),
+        { target: msgCard, offset: ["start end", "end center"] }
+      );
+    }
     }
 
     if (msg.reactions) {
