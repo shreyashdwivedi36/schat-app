@@ -10,7 +10,7 @@
  */
 // SChat Realtime Animated Chat App Core Frontend Logic
 import { MotionFX } from './motion-fx.js';
-import { scroll, animate } from 'https://cdn.jsdelivr.net/npm/motion@11.16.0/+esm';
+
 
 const startSChat = () => {
   // Application State
