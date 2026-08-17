@@ -9,6 +9,12 @@
  * ============================================================================
  */
 :root {
+  /* Shape Consistency Lock */
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 8px;
+  --radius-full: 9999px;
+
   /* Bespoke Obsidian & Tinted Slate Palette (Anti-Slop) */
   --bg-dark: #080a11;
   --panel-bg: rgba(13, 17, 28, 0.88);
@@ -155,7 +161,7 @@ body {
   height: 56px;
   margin: 0 auto 12px;
   background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -191,9 +197,9 @@ body {
   -webkit-backdrop-filter: blur(32px) saturate(200%);
   backdrop-filter: blur(32px) saturate(200%);
   border: 1.5px solid rgba(255, 255, 255, 0.2);
-  border-radius: 26px;
+  border-radius: var(--radius-lg);
   padding: 40px;
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.4), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.4), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.25);
   
   transform: translateZ(0);
   position: relative;
@@ -224,7 +230,7 @@ body {
 
 .alert-banner {
   padding: 12px 16px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 12px;
@@ -265,7 +271,7 @@ body {
 .avatar-opt {
   width: 42px;
   height: 42px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--panel-border);
   background: var(--input-bg);
   font-size: 1.2rem;
@@ -305,7 +311,7 @@ body {
   padding: 12px 16px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   color: var(--text-main);
   font-family: var(--font-family);
   font-size: 0.92rem;
@@ -337,7 +343,7 @@ body {
   padding: 12px 16px 12px 42px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   color: var(--text-main);
   font-family: var(--font-family);
   font-size: 0.92rem;
@@ -364,7 +370,7 @@ body {
   width: 100%;
   padding: 12px;
   border: none;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-family: var(--font-family);
   font-size: 0.92rem;
   font-weight: 800;
@@ -534,7 +540,7 @@ body {
   display: none;
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(6px);
   z-index: 90;
   opacity: 0;
@@ -577,7 +583,7 @@ body {
   width: 34px;
   height: 34px;
   background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -604,7 +610,7 @@ body {
   color: var(--text-muted);
   width: 38px;
   height: 38px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -635,7 +641,7 @@ body {
 .current-user-card {
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   padding: 10px;
   display: flex;
   align-items: center;
@@ -657,7 +663,7 @@ body {
   height: 38px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -729,7 +735,7 @@ body {
   padding: 8px 12px 8px 36px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   color: var(--text-main);
   font-size: 0.82rem;
   outline: none;
@@ -763,7 +769,7 @@ body {
   background: rgba(255, 255, 255, 0.08);
   color: var(--text-main);
   padding: 2px 7px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   font-size: 0.7rem;
   font-weight: 800;
 }
@@ -782,7 +788,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--input-bg);
   transition: all var(--transition-fast);
   border: 1px solid transparent;
@@ -860,7 +866,7 @@ body {
   height: 38px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -912,7 +918,7 @@ body {
   -webkit-backdrop-filter: blur(32px) saturate(210%);
   backdrop-filter: blur(32px) saturate(210%);
   border: 1.5px solid rgba(255, 255, 255, 0.22);
-  border-radius: 22px;
+  border-radius: var(--radius-lg);
   padding: 10px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.3);
   z-index: 99999;
@@ -937,7 +943,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   color: var(--text-main);
   font-size: 0.88rem;
   font-weight: 700;
@@ -965,7 +971,7 @@ body {
 .dropdown-badge {
   font-size: 0.72rem;
   padding: 3px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.12);
   color: var(--text-muted);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -991,7 +997,7 @@ body {
   justify-content: space-between;
   gap: 10px;
   padding: 10px 14px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   color: var(--text-main);
   font-size: 0.86rem;
   font-weight: 700;
@@ -1015,7 +1021,7 @@ body {
 .dropdown-badge {
   font-size: 0.72rem;
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.1);
   color: var(--text-muted);
 }
@@ -1050,7 +1056,7 @@ body {
   padding: 24px;
   background: var(--welcome-bg);
   border: 1px dashed var(--panel-border);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   margin-bottom: 8px;
 }
 
@@ -1103,7 +1109,7 @@ body {
   height: 36px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1137,7 +1143,7 @@ body {
 
 .msg-bubble {
   padding: 14px 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -1145,7 +1151,7 @@ body {
 
 .message-card.incoming .msg-bubble {
   padding: 14px 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -1153,7 +1159,7 @@ body {
 
 .message-card.outgoing .msg-bubble {
   padding: 14px 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -1170,7 +1176,7 @@ body {
   line-height: 1;
   width: 26px;
   height: 26px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1201,7 +1207,7 @@ body {
   cursor: pointer;
   font-size: 0.75rem;
   padding: 2px 5px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   transition: opacity 0.2s ease;
   opacity: 0;
   pointer-events: none;
@@ -1269,7 +1275,7 @@ body {
   gap: 8px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   padding: 4px 10px;
   transition: all var(--transition-fast);
 }
@@ -1284,7 +1290,7 @@ body {
   font-size: 1.2rem;
   cursor: pointer;
   padding: 6px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 .message-input-form input {
@@ -1303,7 +1309,7 @@ body {
   height: 38px;
   background: var(--primary-accent);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   color: #ffffff;
   cursor: pointer;
   display: flex;
@@ -1336,7 +1342,7 @@ body {
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
   color: var(--text-muted);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 5px 10px;
   font-size: 0.78rem;
   font-weight: 700;
@@ -1356,7 +1362,7 @@ body {
 .control-select-wrapper {
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 3px 10px;
   display: flex;
   align-items: center;
@@ -1406,7 +1412,7 @@ body {
   color: var(--secondary-glow);
   background: rgba(6, 182, 212, 0.15);
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   margin-left: 6px;
 }
 
@@ -1431,7 +1437,7 @@ body {
   font-size: 0.7rem;
   font-weight: 800;
   padding: 2px 7px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   margin-left: auto;
 }
 
@@ -1441,7 +1447,7 @@ body {
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   background: var(--input-bg);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -1488,7 +1494,7 @@ body {
   padding: 8px 12px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   font-family: var(--font-family);
   font-size: 0.78rem;
@@ -1525,7 +1531,7 @@ body {
   -webkit-backdrop-filter: blur(32px) saturate(200%);
   backdrop-filter: blur(32px) saturate(200%);
   border: 1.5px solid rgba(255, 255, 255, 0.22);
-  border-radius: 26px;
+  border-radius: var(--radius-lg);
   padding: 26px;
   position: relative;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.45), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.3);
@@ -1541,7 +1547,7 @@ body {
   height: 30px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   color: var(--text-muted);
   font-size: 0.85rem;
   cursor: pointer;
@@ -1579,7 +1585,7 @@ body {
   padding: 12px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   margin-bottom: 16px;
 }
 
@@ -1588,7 +1594,7 @@ body {
   height: 40px;
   background: var(--hover-bg);
   border: 1px solid var(--primary-accent);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1619,7 +1625,7 @@ body {
   justify-content: center;
   gap: 10px;
   padding: 11px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.88rem;
   font-weight: 700;
   text-decoration: none;
@@ -1656,7 +1662,7 @@ body {
   justify-content: space-between;
   background: var(--input-bg);
   border-left: 3px solid var(--primary-accent);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 8px 12px;
   margin-bottom: 8px;
 }
@@ -1704,7 +1710,7 @@ body {
 .msg-reply-box {
   background: rgba(0, 0, 0, 0.2);
   border-left: 3px solid var(--primary-accent);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 5px 8px;
   margin-bottom: 6px;
   font-size: 0.78rem;
@@ -1785,7 +1791,7 @@ body {
 .reaction-badge {
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 2px 6px;
   font-size: 0.75rem;
   cursor: pointer;
@@ -1821,7 +1827,7 @@ body {
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
 }
 
 /* Responsive Layout */
@@ -1892,7 +1898,7 @@ body {
   -webkit-backdrop-filter: blur(36px) saturate(220%);
   backdrop-filter: blur(36px) saturate(220%);
   border: 1.5px solid rgba(255, 255, 255, 0.24);
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   padding: 10px;
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.5), inset 0 -1.5px 1.5px rgba(0, 0, 0, 0.3);
   display: flex;
@@ -1924,7 +1930,7 @@ body {
   padding: 6px 8px;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
 }
 
 [data-theme="light"] .quick-reactions-bar {
@@ -1938,7 +1944,7 @@ body {
   font-size: 1.25rem;
   cursor: pointer;
   padding: 4px;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   transition: transform 0.15s var(--spring-easing), background 0.15s ease;
 }
 
@@ -1959,7 +1965,7 @@ body {
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   color: var(--text-main);
   font-size: 0.88rem;
   font-weight: 700;
@@ -2124,7 +2130,7 @@ body {
 /* Message Cards in Light Mode */
 [data-theme="light"] .message-card.incoming .msg-bubble {
   padding: 14px 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -2132,7 +2138,7 @@ body {
 
 [data-theme="light"] .message-card.outgoing .msg-bubble {
   padding: 14px 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -2259,7 +2265,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 /* Message Bubble Refinements & Bespoke Outgoing Gradient */
 .message-card.outgoing .msg-bubble {
   padding: 14px 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -2267,7 +2273,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 
 .message-card.incoming .msg-bubble {
   padding: 14px 20px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.95rem;
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -2319,7 +2325,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .msg-translation-box {
   margin-top: 8px;
   padding: 8px 12px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   background: rgba(14, 165, 233, 0.12);
   border: 1px solid rgba(14, 165, 233, 0.25);
   border-left: 3.5px solid #0ea5e9;
@@ -2371,7 +2377,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   cursor: pointer;
   font-size: 0.75rem;
   padding: 2px 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
 }
 
@@ -2404,7 +2410,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   border: 1px solid var(--panel-border);
   color: var(--text-main);
   padding: 10px 14px;
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
@@ -2664,7 +2670,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   .channel-item:hover, .online-user-item:hover {
     background: var(--hover-bg);
     transform: translateX(4px);
-    border-radius: 12px;
+    border-radius: var(--radius-md);
   }
   
   .message-card .msg-bubble {
@@ -2882,7 +2888,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   padding: 8px 16px;
   background: var(--input-bg);
   border: 1px solid var(--panel-border);
-  border-radius: 20px;
+  border-radius: var(--radius-lg);
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
   animation: liquidContextPopIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -2918,7 +2924,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   margin-left: 12px;
   height: 30px;
   width: 120px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .recording-actions {
@@ -2951,7 +2957,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   gap: 12px;
   background: rgba(0, 0, 0, 0.2);
   padding: 8px 16px;
-  border-radius: 30px;
+  border-radius: var(--radius-lg);
   min-width: 220px;
 }
 
@@ -2992,7 +2998,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   flex: 1;
   height: 6px;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -3038,19 +3044,19 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   width: 100px;
   height: 100px;
   object-fit: cover;
-  border-radius: 24px;
+  border-radius: var(--radius-lg);
   margin-bottom: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255,255,255,0.1);
 }
 
 /* Admin God Mode Styles */
 .admin-user-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 300px; overflow-y: auto; }
-.admin-user-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0.75rem; background: rgba(255, 255, 255, 0.03); border-radius: 12px; border: 1px solid var(--panel-border); }
+.admin-user-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0.75rem; background: rgba(255, 255, 255, 0.03); border-radius: var(--radius-md); border: 1px solid var(--panel-border); }
 .admin-user-info { display: flex; align-items: center; gap: 1rem; min-width: 0; flex: 1; }
 .admin-user-info > div:not(.avatar) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-user-info img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.ban-btn { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.25rem 0.75rem; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease; }
+.ban-btn { background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.25rem 0.75rem; border-radius: var(--radius-sm); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.2s ease; }
 .ban-btn:hover { background: #ef4444; color: white; }
 
 .u-avatar-wrapper { position: relative; display: inline-block; }
@@ -3096,4 +3102,9 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
     view-timeline-inset: 115px 130px;
     animation-range: cover 0% cover 100%;
   }
+}
+
+.btn-primary:active, .btn-secondary:active, .btn-icon:active, .chat-submit-btn:active {
+  transform: scale(0.97) translateY(1px);
+  transition: transform 0.1s var(--spring-easing);
 }
