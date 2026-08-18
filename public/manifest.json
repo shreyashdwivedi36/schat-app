@@ -9,11 +9,6 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "SChat.ico",
-      "sizes": "256x256",
-      "type": "image/x-icon"
-    },
-    {
       "src": "logo.png",
       "sizes": "1024x1024",
       "type": "image/png",
