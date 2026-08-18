@@ -16,7 +16,7 @@
   <title>SChat — Real-Time Messaging Platform</title>
   
   <!-- PWA Meta Tags & Manifest -->
-  <link rel="manifest" href="manifest.json?v=2">
+  <link rel="manifest" href="manifest.json?v=3">
   <meta name="theme-color" content="#090a12">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -639,9 +639,7 @@
   <script src="app.js?v=47" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js');
-      });
+      navigator.serviceWorker.register('sw.js');
     }
   </script>
 </body>
