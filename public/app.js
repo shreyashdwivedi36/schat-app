@@ -897,7 +897,7 @@ const startSChat = () => {
     
     // Determine the target ID based on the clicked element
     let targetId = 'global';
-    let currentEl = e.currentTarget;
+    let currentEl = e.currentTarget || (e.target && e.target.closest('[data-user-id]'));
     if (currentEl && currentEl.dataset && currentEl.dataset.userId) {
       targetId = currentEl.dataset.userId;
     }
