@@ -362,11 +362,8 @@ const startSChat = () => {
 
   const openAboutModal = () => {
     if (!aboutModal) return;
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('mobileOverlay');
-    if (window.innerWidth <= 768 && sidebar) {
-      sidebar.classList.remove('open');
-      if (overlay) overlay.classList.remove('active');
+    if (window.innerWidth <= 768 && typeof closeSidebar === 'function') {
+      closeSidebar();
     }
     aboutModal.style.display = '';
     aboutModal.classList.remove('hidden');
@@ -377,11 +374,8 @@ const startSChat = () => {
 
   const openProfileModal = () => {
     if (profileModal) {
-      const sidebar = document.getElementById('sidebar');
-      const overlay = document.getElementById('mobileOverlay');
-      if (window.innerWidth <= 768 && sidebar) {
-        sidebar.classList.remove('open');
-        if (overlay) overlay.classList.remove('active');
+      if (window.innerWidth <= 768 && typeof closeSidebar === 'function') {
+        closeSidebar();
       }
       if (profileBioInput && currentUser) profileBioInput.value = currentUser.bio || '';
       const pwdAlertEl = document.getElementById('pwdAlert');
