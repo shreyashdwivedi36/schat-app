@@ -877,6 +877,24 @@ const startSChat = () => {
       channelContextMenuCard.style.top = `${posY}px`;
 
       MotionFX.popIn(channelContextMenuCard);
+
+      const ctxTogglePushBtn = document.getElementById('ctxTogglePushBtn');
+      const ctxTogglePushLabel = document.getElementById('ctxTogglePushLabel');
+      const ctxTogglePushIcon = document.getElementById('ctxTogglePushIcon');
+      
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        if (ctxTogglePushBtn) ctxTogglePushBtn.style.display = 'flex';
+        const targetId = activeRecipient ? (activeRecipient.id ? activeRecipient.id.toString() : 'global') : 'global';
+        if (myMutedChats && myMutedChats.includes(targetId)) {
+          if (ctxTogglePushIcon) ctxTogglePushIcon.textContent = '🔕';
+          if (ctxTogglePushLabel) ctxTogglePushLabel.textContent = 'Allow Notifications';
+        } else {
+          if (ctxTogglePushIcon) ctxTogglePushIcon.textContent = '🔔';
+          if (ctxTogglePushLabel) ctxTogglePushLabel.textContent = 'Mute Notifications';
+        }
+      } else {
+        if (ctxTogglePushBtn) ctxTogglePushBtn.style.display = 'none';
+      }
     }
   };
 
