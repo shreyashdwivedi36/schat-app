@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.onrender.schat_live.twa",
+      "sha256_cert_fingerprints": [
+        "6E:36:8F:CD:AC:B4:15:87:B7:74:54:73:F3:F1:C1:40:66:4A:34:06:A1:56:C1:5E:14:2C:68:36:B7:F2:A2:8F"
+      ]
+    }
+  }
+]
