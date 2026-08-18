@@ -91,35 +91,14 @@ const startSChat = () => {
   const pwaInstallBtn = document.getElementById('pwaInstallBtn');
   const dropdownPwaBtn = document.getElementById('dropdownPwaBtn');
 
-  // Handle PWA installation and Android APK detection
-  let deferredPrompt;
-  
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-
-  if (isAndroid && !isStandalone) {
-    if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
-    if (dropdownPwaBtn) {
-      dropdownPwaBtn.classList.remove('hidden');
-      const label = dropdownPwaBtn.querySelector('.dropdown-label');
-      if (label) label.textContent = 'Download Android App';
-    }
-  }
-
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    if (!isAndroid && !isStandalone) {
-      if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
-      if (dropdownPwaBtn) dropdownPwaBtn.classList.remove('hidden');
-    }
+    if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
+    if (dropdownPwaBtn) dropdownPwaBtn.classList.remove('hidden');
   });
 
   const triggerPwaInstall = async () => {
-    if (isAndroid && !isStandalone) {
-      window.open('https://github.com/shreyashdwivedi36/schat-app/releases/latest/download/app.apk', '_blank');
-      return;
-    }
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
