@@ -362,6 +362,12 @@ const startSChat = () => {
 
   const openAboutModal = () => {
     if (!aboutModal) return;
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('mobileOverlay');
+    if (window.innerWidth <= 768 && sidebar) {
+      sidebar.classList.remove('open');
+      if (overlay) overlay.classList.remove('active');
+    }
     aboutModal.style.display = '';
     aboutModal.classList.remove('hidden');
     const card = aboutModal.querySelector('.modal-card');
@@ -371,6 +377,12 @@ const startSChat = () => {
 
   const openProfileModal = () => {
     if (profileModal) {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobileOverlay');
+      if (window.innerWidth <= 768 && sidebar) {
+        sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+      }
       if (profileBioInput && currentUser) profileBioInput.value = currentUser.bio || '';
       const pwdAlertEl = document.getElementById('pwdAlert');
       const changeCurrPwdEl = document.getElementById('changeCurrentPwd');
