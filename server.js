@@ -284,6 +284,11 @@ app.post('/api/user/change-password', authMiddleware, async (req, res) => {
   }
 });
 
+// Debug push logs
+app.get('/api/push-logs', (req, res) => {
+  res.json({ logs: global.pushLogs || [] });
+});
+
 // Update Profile Settings
 app.put('/api/me', authMiddleware, async (req, res) => {
   try {
