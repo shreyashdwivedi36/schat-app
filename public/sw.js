@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v47-live-update';
+const CACHE_NAME = 'schat-v49-live-update';
 
 const PRECACHE_URLS = [
   '/',
@@ -74,6 +74,7 @@ self.addEventListener('push', (event) => {
       return data.message_id ? fetch('/api/messages/mark-delivered', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ message_id: data.message_id })
       }).catch(e => console.error(e)) : Promise.resolve();
     }
@@ -84,6 +85,7 @@ self.addEventListener('push', (event) => {
       data.message_id ? fetch('/api/messages/mark-delivered', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ message_id: data.message_id })
       }).catch(e => console.error(e)) : Promise.resolve()
     ]);
