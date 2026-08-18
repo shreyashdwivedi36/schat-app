@@ -1,5 +1,5 @@
 {
-  "name": "SChat — Real-Time Messaging Platform",
+  "name": "SChat \u2014 Real-Time Messaging Platform",
   "short_name": "SChat",
   "description": "Production-grade real-time messaging application.",
   "start_url": "/",
@@ -18,6 +18,39 @@
       "sizes": "192x192 512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "id": "/?source=pwa",
+  "screenshots": [
+    {
+      "src": "screenshot1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "screenshot2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": [
+    "social",
+    "communication"
+  ],
+  "shortcuts": [
+    {
+      "name": "New Chat",
+      "short_name": "New",
+      "description": "Start a new chat",
+      "url": "/?action=new_chat",
+      "icons": [
+        {
+          "src": "badge.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ]
 }

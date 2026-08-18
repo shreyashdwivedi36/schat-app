@@ -8,10 +8,23 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v40-live-update';
+const CACHE_NAME = 'schat-v47-live-update';
+
+const PRECACHE_URLS = [
+  '/',
+  '/index.html',
+  '/app.js',
+  '/style.css',
+  '/logo.png',
+  '/badge.png'
+];
 
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
