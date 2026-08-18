@@ -531,6 +531,8 @@ body {
 }
 .chat-wrapper.empty-state .welcome-banner,
 .chat-wrapper.empty-state .message-card,
+.chat-wrapper.empty-state .date-divider,
+.chat-wrapper.empty-state .pinned-banner,
 .chat-wrapper.empty-state .chat-footer {
   display: none !important;
 }
@@ -3091,4 +3093,41 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .btn-primary:active, .btn-secondary:active, .btn-icon:active, .chat-submit-btn:active {
   transform: scale(0.97) translateY(1px);
   transition: transform 0.1s var(--spring-easing);
+}
+
+/* Context Menu Toggle Switch */
+.toggle-switch-ui {
+  width: 34px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  position: relative;
+  transition: background 0.3s var(--spring-easing);
+  flex-shrink: 0;
+  cursor: pointer;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.3);
+}
+.toggle-switch-ui.active {
+  background: var(--primary-accent);
+}
+.toggle-switch-knob {
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: transform 0.3s var(--spring-easing);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.toggle-switch-ui.active .toggle-switch-knob {
+  transform: translateX(14px);
+}
+[data-theme= light] .toggle-switch-ui {
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+[data-theme=light] .toggle-switch-ui.active {
+  background: var(--primary-accent);
 }

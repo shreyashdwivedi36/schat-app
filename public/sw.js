@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v29-live-update';
+const CACHE_NAME = 'schat-v40-live-update';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -39,11 +39,44 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'SChat';
   const options = {
     body: data.body || 'New message received',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/badge.png',
+    badge: '/badge.png',
+    vibrate: [200, 100, 200, 100, 200],
+    requireInteraction: true,
+    tag: data.message_id ? `message-${data.message_id}` : `msg-${Date.now()}`,
     data: data.url || '/'
   };
-  event.waitUntil(self.registration.showNotification(title, options));
+
+  const promiseChain = clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+    let isVisible = false;
+    for (let i = 0; i < windowClients.length; i++) {
+      if (windowClients[i].visibilityState === 'visible') {
+        isVisible = true;
+        break;
+      }
+    }
+
+    if (isVisible) {
+      // App is open! Do not show notification, just mark delivered.
+      return data.message_id ? fetch('/api/messages/mark-delivered', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: data.message_id })
+      }).catch(e => console.error(e)) : Promise.resolve();
+    }
+
+    // App is in background! Show notification and mark delivered.
+    return Promise.all([
+      self.registration.showNotification(title, options),
+      data.message_id ? fetch('/api/messages/mark-delivered', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message_id: data.message_id })
+      }).catch(e => console.error(e)) : Promise.resolve()
+    ]);
+  });
+
+  event.waitUntil(promiseChain);
 });
 
 self.addEventListener('notificationclick', (event) => {

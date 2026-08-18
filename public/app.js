@@ -17,6 +17,7 @@ const startSChat = () => {
   let authToken = localStorage.getItem('schat_token') || null;
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
+  let myMutedChats = [];
   let activeRecipient = 'empty'; // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
   let activeReply = null; // null or { id, username, text }
   let unreadCounts = {};
@@ -547,12 +548,23 @@ const startSChat = () => {
     }
   };
 
-  const showDesktopNotification = (senderName, messageText) => {
+  const showDesktopNotification = async (senderName, messageText) => {
     if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
-      new Notification(`New DM from @${senderName}`, {
-        body: messageText,
-        icon: '/icon-192.png'
-      });
+      const title = senderName.startsWith('Global:') ? senderName : `New DM from @${senderName}`;
+      if ('serviceWorker' in navigator) {
+        try {
+          const reg = await navigator.serviceWorker.ready;
+          await reg.showNotification(title, {
+            body: messageText,
+            icon: '/logo.png',
+            vibrate: [200, 100, 200]
+          });
+        } catch(e) {
+          new Notification(title, { body: messageText, icon: '/logo.png' });
+        }
+      } else {
+        new Notification(title, { body: messageText, icon: '/logo.png' });
+      }
     }
   };
 
@@ -810,19 +822,56 @@ const startSChat = () => {
     channelContextMenuOverlay.addEventListener('click', closeChannelContextMenu);
   }
 
+  let channelContextMenuTarget = null;
+
   if (ctxCloseChatBtn) {
     ctxCloseChatBtn.addEventListener('click', () => {
       closeChannelContextMenu();
-      switchChatTab('empty');
+      
+      let isActive = false;
+      if (channelContextMenuTarget === 'global' && !activeRecipient && activeRecipient !== 'empty') isActive = true;
+      else if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id && activeRecipient.id.toString() === channelContextMenuTarget) isActive = true;
+      
+      if (isActive) {
+        switchChatTab('empty');
+      } else {
+        if (channelContextMenuTarget === 'global') {
+          switchChatTab(null);
+        } else {
+          // Fetch the user from the sidebar list (actually allRegisteredUsers is empty initially, so just create an object from DOM or fetch it)
+          // Wait, switchChatTab takes a user object: {id, username, avatar}
+          // The best way to get it is finding it in allRegisteredUsers, but wait, allRegisteredUsers might not have them?
+          // The DOM has the info! Or we can use the existing `switchChatTab` click logic!
+          const targetEl = document.querySelector(`.online-user-item[data-user-id="${channelContextMenuTarget}"]`);
+          if (targetEl) targetEl.click();
+        }
+      }
     });
   }
 
   const ctxTogglePushBtn = document.getElementById('ctxTogglePushBtn');
   if (ctxTogglePushBtn) {
-    ctxTogglePushBtn.addEventListener('click', async () => {
-      closeChannelContextMenu();
-      const targetId = activeRecipient ? (activeRecipient.id ? activeRecipient.id.toString() : 'global') : 'global';
+    ctxTogglePushBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!channelContextMenuTarget) return;
+      const targetId = channelContextMenuTarget;
       const isMuted = !myMutedChats.includes(targetId);
+      
+      const ctxTogglePushSwitch = document.getElementById('ctxTogglePushSwitch');
+      const ctxTogglePushIcon = document.getElementById('ctxTogglePushIcon');
+      
+      // Optimistic update
+      if (isMuted) {
+        if (ctxTogglePushSwitch) ctxTogglePushSwitch.classList.remove('active');
+        if (ctxTogglePushIcon) ctxTogglePushIcon.textContent = '🔕';
+      } else {
+        if (ctxTogglePushSwitch) ctxTogglePushSwitch.classList.add('active');
+        if (ctxTogglePushIcon) ctxTogglePushIcon.textContent = '🔔';
+      }
+      
+      setTimeout(() => {
+        closeChannelContextMenu();
+      }, 250);
       
       try {
         const res = await fetch('/api/users/mute', {
@@ -836,7 +885,6 @@ const startSChat = () => {
         if (res.ok) {
           const data = await res.json();
           myMutedChats = data.muted_chats;
-          showAlert(isMuted ? 'Chat muted' : 'Notifications allowed', 'success');
         }
       } catch (err) {
         showAlert('Failed to update mute settings', 'error');
@@ -844,10 +892,16 @@ const startSChat = () => {
     });
   }
 
-
   const handleChannelContextMenu = (e) => {
     e.preventDefault();
-    if (activeRecipient === 'empty') return; // Do not show menu if already empty
+    
+    // Determine the target ID based on the clicked element
+    let targetId = 'global';
+    let currentEl = e.currentTarget;
+    if (currentEl && currentEl.dataset && currentEl.dataset.userId) {
+      targetId = currentEl.dataset.userId;
+    }
+    channelContextMenuTarget = targetId;
     
     if (channelContextMenu && channelContextMenuCard) {
       // Show menu
@@ -877,20 +931,31 @@ const startSChat = () => {
       channelContextMenuCard.style.top = `${posY}px`;
 
       MotionFX.popIn(channelContextMenuCard);
+      
+      // Update label for Close/Open Chat
+      const ctxCloseChatLabel = ctxCloseChatBtn.querySelector('.context-label');
+      let isActive = false;
+      if (channelContextMenuTarget === 'global' && !activeRecipient && activeRecipient !== 'empty') isActive = true;
+      else if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id && activeRecipient.id.toString() === channelContextMenuTarget) isActive = true;
+      
+      if (isActive) {
+        ctxCloseChatLabel.textContent = 'Close Chat';
+      } else {
+        ctxCloseChatLabel.textContent = 'Open Chat';
+      }
 
       const ctxTogglePushBtn = document.getElementById('ctxTogglePushBtn');
-      const ctxTogglePushLabel = document.getElementById('ctxTogglePushLabel');
+      const ctxTogglePushSwitch = document.getElementById('ctxTogglePushSwitch');
       const ctxTogglePushIcon = document.getElementById('ctxTogglePushIcon');
       
       if (window.matchMedia('(display-mode: standalone)').matches) {
         if (ctxTogglePushBtn) ctxTogglePushBtn.style.display = 'flex';
-        const targetId = activeRecipient ? (activeRecipient.id ? activeRecipient.id.toString() : 'global') : 'global';
         if (myMutedChats && myMutedChats.includes(targetId)) {
           if (ctxTogglePushIcon) ctxTogglePushIcon.textContent = '🔕';
-          if (ctxTogglePushLabel) ctxTogglePushLabel.textContent = 'Allow Notifications';
+          if (ctxTogglePushSwitch) ctxTogglePushSwitch.classList.remove('active');
         } else {
           if (ctxTogglePushIcon) ctxTogglePushIcon.textContent = '🔔';
-          if (ctxTogglePushLabel) ctxTogglePushLabel.textContent = 'Mute Notifications';
+          if (ctxTogglePushSwitch) ctxTogglePushSwitch.classList.add('active');
         }
       } else {
         if (ctxTogglePushBtn) ctxTogglePushBtn.style.display = 'none';
@@ -1126,6 +1191,13 @@ hideElement(typingBanner);
     }
   };
 
+
+  document.addEventListener('visibilitychange', () => {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'visibility', status: document.hidden ? 'background' : 'foreground' }));
+    }
+  });
+
   const connectWebSocket = () => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}?token=${encodeURIComponent(authToken)}`;
@@ -1259,13 +1331,24 @@ hideElement(typingBanner);
             }
           } else if (data.recipient_id && Number(data.recipient_id) === Number(currentUser.id)) {
             const senderId = Number(data.user_id);
-            unreadCounts[senderId] = (unreadCounts[senderId] || 0) + 1;
-            updateUnreadBadgesUI();
-            showDesktopNotification(data.username, data.content);
+            if (myMutedChats && !myMutedChats.includes(senderId.toString())) {
+              unreadCounts[senderId] = (unreadCounts[senderId] || 0) + 1;
+              updateUnreadBadgesUI();
+              showDesktopNotification(data.username, data.content);
+            }
+          } else if (!data.recipient_id && !isCurrentTab) {
+            if (myMutedChats && !myMutedChats.includes('global') && !myMutedChats.includes(data.user_id.toString())) {
+              unreadCounts['global'] = (unreadCounts['global'] || 0) + 1;
+              updateUnreadBadgesUI();
+              showDesktopNotification(`Global: ${data.username}`, data.content);
+            }
           }
 
           if (Number(data.user_id) !== Number(currentUser.id)) {
-            playSound('receive');
+            let targetCheck = data.recipient_id ? data.user_id.toString() : 'global';
+            if (myMutedChats && !myMutedChats.includes(targetCheck) && !myMutedChats.includes(data.user_id.toString())) {
+              playSound('receive');
+            }
           }
         } else if (data.type === 'msg_status_update') {
           if (data.status === 'read' || data.status === 'delivered') {
@@ -2693,22 +2776,45 @@ function init3DMotionBackground() {
 
 
 async function subscribeToPushNotifications() {
-  if (!window.matchMedia('(display-mode: standalone)').matches) {
-    console.log('Not running as standalone PWA. Skipping push subscription.');
-    return;
-  }
-
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    console.error('DEBUG: Browser does not support Service Workers or PushManager');
     return;
   }
 
   try {
+    console.error('DEBUG: Checking notification permission...');
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
+    console.error('DEBUG: Permission is: ' + permission);
+    if (permission !== 'granted') {
+      console.error('DEBUG: Notification permission is not granted! It is: ' + permission);
+      return;
+    }
 
-    const registration = await navigator.serviceWorker.ready;
-    const existingSub = await registration.pushManager.getSubscription();
-    if (existingSub) return; // Already subscribed
+    console.error('DEBUG: Registering Service Worker...');
+    const registration = await navigator.serviceWorker.register('/sw.js');
+    console.error('DEBUG: SW Registered. Getting existing sub...');
+    let existingSub = await registration.pushManager.getSubscription();
+    console.error('DEBUG: Existing sub is: ' + (existingSub ? 'true' : 'false'));
+    
+    // Force refresh subscription once to ensure it matches the new VAPID keys
+    if (existingSub && !localStorage.getItem('push_key_v3')) {
+      await existingSub.unsubscribe();
+      existingSub = null;
+      localStorage.setItem('push_key_v3', 'true');
+    }
+
+    if (existingSub) {
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('schat_token')}`
+        },
+        body: JSON.stringify(existingSub)
+      });
+      console.error('DEBUG: Updated existing sub on server. Server responded: ' + res.status);
+      return; // Already subscribed
+    }
 
     const PUBLIC_VAPID_KEY = 'BFM7IVc9SVb-cpG8ZrsOc8CaMCNSee-uAsdaEoaJrdjK-_VzOglSKANVq82DZVpwg2PrqNdmvVxiXIW9MWmVZFk';
     
@@ -2726,17 +2832,17 @@ async function subscribeToPushNotifications() {
       applicationServerKey: applicationServerKey
     });
 
-    await fetch('/api/push/subscribe', {
+    const res = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${authToken}`
+        'Authorization': `Bearer ${localStorage.getItem('schat_token')}`
       },
       body: JSON.stringify(subscription)
     });
 
-    console.log('Push notification subscription successful');
+    console.error('DEBUG: Created NEW sub on server. Server responded: ' + res.status);
   } catch (err) {
-    console.error('Failed to subscribe for push notifications:', err);
+    console.error('DEBUG: Failed to subscribe: ' + err.message);
   }
 }

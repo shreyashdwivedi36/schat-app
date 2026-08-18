@@ -5,6 +5,17 @@ const cors = require('cors');
 require('dotenv').config();
 
 const db = require('./db');
+const webpush = require('web-push');
+
+if (true) {
+  webpush.setVapidDetails(
+    'mailto:shreyashdwivedi1626@gmail.com',
+    process.env.PUBLIC_VAPID_KEY || 'BFM7IVc9SVb-cpG8ZrsOc8CaMCNSee-uAsdaEoaJrdjK-_VzOglSKANVq82DZVpwg2PrqNdmvVxiXIW9MWmVZFk',
+    process.env.PRIVATE_VAPID_KEY || 'UdMu8RhJSTY6MdNckm591DXQwWio4m5VkoaRwcEJQRY'
+  );
+} else {
+  console.warn('VAPID keys not configured. Web Push API will not work.');
+}
 const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware, superAdminMiddleware } = require('./auth');
 
 const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME || 'admin';
@@ -374,6 +385,30 @@ app.post('/api/users/mute', authMiddleware, async (req, res) => {
   }
 });
 
+  app.post('/api/messages/mark-delivered', async (req, res) => {
+    try {
+      const { message_id } = req.body;
+      const msg = await db.get('SELECT * FROM messages WHERE id = ?', [message_id]);
+      if (msg && msg.status === 'sent') {
+        await db.run('UPDATE messages SET status = ? WHERE id = ?', ['delivered', message_id]);
+        broadcast({ type: 'msg_status_update', recipient_id: msg.user_id, status: 'delivered' });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: 'Database error.' });
+    }
+  });
+
+  app.get('/api/debug/push-status/:username', async (req, res) => {
+    try {
+      const user = await db.get('SELECT push_subscription FROM users WHERE username = ?', [req.params.username]);
+      if (!user) return res.json({ error: 'User not found' });
+      res.json({ subscribed: !!user.push_subscription });
+    } catch (err) {
+      res.status(500).json({ error: 'Database error.' });
+    }
+  });
+
 app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
   const subscription = req.body;
   if (!subscription || !subscription.endpoint) {
@@ -593,7 +628,16 @@ function sendToUser(userId, data) {
 
 function isUserOnline(userId) {
   for (const user of clients.values()) {
-    if (user && user.id === userId) return true;
+    if (user && Number(user.id) === Number(userId)) return true;
+  }
+  return false;
+}
+
+function isUserActive(userId) {
+  for (const [client, user] of clients.entries()) {
+    if (user && user.id === userId) {
+      if (client.clientVisibility !== 'background') return true;
+    }
   }
   return false;
 }
@@ -671,6 +715,10 @@ wss.on('connection', (ws, req) => {
         return ws.send(JSON.stringify({ type: 'pong' }));
       }
 
+      if (data.type === 'visibility') {
+        ws.clientVisibility = data.status;
+        return;
+      }
       if (data.type === 'auth') {
         const decoded = verifyToken(data.token);
         if (!decoded) {
@@ -762,22 +810,24 @@ wss.on('connection', (ws, req) => {
             sendToUser(currentUser.id, msgPayload);
           }
           
-          // Send push notification if recipient is offline
-          if (initialStatus === 'sent') {
-            try {
-              const recipient = await db.get('SELECT push_subscription, muted_chats FROM users WHERE id = ?', [recipientId]);
+          // Always attempt Web Push. The client's Service Worker will drop it if they are actively focused on the app.
+          try {
+            const recipient = await db.get('SELECT push_subscription, muted_chats FROM users WHERE id = ?', [Number(recipientId)]);
               if (recipient && recipient.push_subscription) {
                 const mutedChats = JSON.parse(recipient.muted_chats || '[]');
                 const senderStr = currentUser.id.toString();
                 if (!mutedChats.includes(senderStr)) {
                 const subscription = JSON.parse(recipient.push_subscription);
                 const payload = JSON.stringify({
+                  message_id: insertedId,
                   title: `New message from ${currentUser.username}`,
-                  body: content.startsWith('data:audio') ? '?? Voice Message' : (isBlurred ? '[Hidden Message]' : content),
-                  icon: currentUser.avatar || 's',
+                  body: content.startsWith('data:audio') ? '🎤 Voice Message' : (isBlurred ? '[Hidden Message]' : content),
+                  icon: currentUser.avatar || '/logo.png',
                   url: '/'
                 });
-                webpush.sendNotification(subscription, payload).catch(err => {
+                webpush.sendNotification(subscription, payload, { urgency: 'high', TTL: 86400 }).catch(err => {
+                  global.pushLogs = global.pushLogs || [];
+                  global.pushLogs.push({ status: 'error', user: recipientId, err: err.message, code: err.statusCode, body: err.body, time: new Date() });
                   if (err.statusCode === 410 || err.statusCode === 404) {
                     // Subscription expired or invalid, remove it
                     db.run('UPDATE users SET push_subscription = NULL WHERE id = ?', [recipientId]);
@@ -789,10 +839,39 @@ wss.on('connection', (ws, req) => {
               }
             } catch (err) {
               console.error('Error checking push subscription:', err);
-            }
           }
         } else {
           broadcast(msgPayload);
+          
+          if (initialStatus === 'sent' || !isUserActive(recipientId)) {
+            try {
+              const allUsers = await db.all('SELECT id, push_subscription, muted_chats FROM users WHERE push_subscription IS NOT NULL');
+              const payload = JSON.stringify({
+                message_id: insertedId,
+                title: `Global Chat: ${currentUser.username}`,
+                body: content.startsWith('data:audio') ? '🎤 Voice Message' : (isBlurred ? '[Hidden Message]' : content),
+                icon: currentUser.avatar || '/logo.png',
+                url: '/'
+              });
+              
+              allUsers.forEach(user => {
+                if (user.id === currentUser.id) return;
+
+                
+                const mutedChats = JSON.parse(user.muted_chats || '[]');
+                if (!mutedChats.includes('global') && !mutedChats.includes(currentUser.id.toString())) {
+                  const subscription = JSON.parse(user.push_subscription);
+                  webpush.sendNotification(subscription, payload, { urgency: 'high', TTL: 86400 }).catch(err => {
+                    if (err.statusCode === 410 || err.statusCode === 404) {
+                      db.run('UPDATE users SET push_subscription = NULL WHERE id = ?', [user.id]);
+                    }
+                  });
+                }
+              });
+            } catch (err) {
+              console.error('Error sending global push:', err);
+            }
+          }
         }
       } else if (data.type === 'toggle_reaction') {
         const messageId = parseInt(data.messageId, 10);
@@ -923,3 +1002,5 @@ server.listen(PORT, () => {
   console.log(`⚡ WebSockets active on ws://localhost:${PORT}`);
   console.log(`================================================`);
 });
+
+app.get('/api/debug/push-logs', (req, res) => { res.json({ logs: global.pushLogs || [] }); });
