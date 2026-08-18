@@ -20,6 +20,9 @@ if (process.env.DATABASE_URL) {
           password VARCHAR(255) NOT NULL,
           avatar VARCHAR(50) DEFAULT '⚡',
           bio VARCHAR(255) DEFAULT 'Hey there! I am using SChat.',
+          push_subscription TEXT DEFAULT NULL,
+          muted_chats TEXT DEFAULT '[]',
+          muted_chats TEXT DEFAULT '[]',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS channels (
@@ -69,6 +72,8 @@ if (process.env.DATABASE_URL) {
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id INTEGER DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_user VARCHAR(255) DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_text TEXT DEFAULT NULL;`); } catch(e){}
+      try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS push_subscription TEXT DEFAULT NULL;`); } catch(e){}
+      try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS muted_chats TEXT DEFAULT '[]';`); } catch(e){}
       console.log('Connected to PostgreSQL Database cleanly with all 9 features.');
     } catch (err) {
       console.error('PostgreSQL Init Error:', err);

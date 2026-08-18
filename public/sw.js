@@ -32,3 +32,33 @@ self.addEventListener('fetch', (event) => {
     fetch(event.request, { cache: 'no-cache' }).catch(() => caches.match(event.request))
   );
 });
+
+
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.json() : {};
+  const title = data.title || 'SChat';
+  const options = {
+    body: data.body || 'New message received',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: data.url || '/'
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url === '/' && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow('/');
+      }
+    })
+  );
+});

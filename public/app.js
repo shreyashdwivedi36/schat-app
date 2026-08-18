@@ -817,6 +817,34 @@ const startSChat = () => {
     });
   }
 
+  const ctxTogglePushBtn = document.getElementById('ctxTogglePushBtn');
+  if (ctxTogglePushBtn) {
+    ctxTogglePushBtn.addEventListener('click', async () => {
+      closeChannelContextMenu();
+      const targetId = activeRecipient ? (activeRecipient.id ? activeRecipient.id.toString() : 'global') : 'global';
+      const isMuted = !myMutedChats.includes(targetId);
+      
+      try {
+        const res = await fetch('/api/users/mute', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ targetId: targetId, isMuted })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          myMutedChats = data.muted_chats;
+          showAlert(isMuted ? 'Chat muted' : 'Notifications allowed', 'success');
+        }
+      } catch (err) {
+        showAlert('Failed to update mute settings', 'error');
+      }
+    });
+  }
+
+
   const handleChannelContextMenu = (e) => {
     e.preventDefault();
     if (activeRecipient === 'empty') return; // Do not show menu if already empty
@@ -946,6 +974,16 @@ hideElement(typingBanner);
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
+    try {
+      const muteRes = await fetch('/api/users/muted_chats', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (muteRes.ok) {
+        const data = await muteRes.json();
+        myMutedChats = data.muted_chats || [];
+      }
+    } catch(err) {}
+
     myAvatarEl.textContent = currentUser.avatar || '👤';
     myUsernameEl.textContent = currentUser.username;
     if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
@@ -980,6 +1018,7 @@ hideElement(typingBanner);
     await loadAllUsers();
     await loadMessageHistory();
     connectWebSocket();
+    subscribeToPushNotifications();
   };
 
   const loadAllUsers = async () => {
@@ -1281,7 +1320,8 @@ hideElement(typingBanner);
 
     ws.onclose = () => {
       if (pingInterval) clearInterval(pingInterval);
-      setTimeout(() => { if (authToken) connectWebSocket(); }, 3000);
+      setTimeout(() => { if (authToken) connectWebSocket();
+    subscribeToPushNotifications(); }, 3000);
     };
   };
 
@@ -2307,6 +2347,7 @@ hideElement(typingBanner);
     if (!ws || ws.readyState !== WebSocket.OPEN) {
       showAlert('Connecting to server... Please try sending again in a moment.', 'error');
       connectWebSocket();
+    subscribeToPushNotifications();
       return;
     }
 
@@ -2630,4 +2671,54 @@ function init3DMotionBackground() {
   };
 
   animate();
+}
+
+
+async function subscribeToPushNotifications() {
+  if (!window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('Not running as standalone PWA. Skipping push subscription.');
+    return;
+  }
+
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+
+    const registration = await navigator.serviceWorker.ready;
+    const existingSub = await registration.pushManager.getSubscription();
+    if (existingSub) return; // Already subscribed
+
+    const PUBLIC_VAPID_KEY = 'BFM7IVc9SVb-cpG8ZrsOc8CaMCNSee-uAsdaEoaJrdjK-_VzOglSKANVq82DZVpwg2PrqNdmvVxiXIW9MWmVZFk';
+    
+    // Convert base64 url safe string to Uint8Array
+    const padding = '='.repeat((4 - PUBLIC_VAPID_KEY.length % 4) % 4);
+    const base64 = (PUBLIC_VAPID_KEY + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const applicationServerKey = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      applicationServerKey[i] = rawData.charCodeAt(i);
+    }
+
+    const subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey
+    });
+
+    await fetch('/api/push/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`
+      },
+      body: JSON.stringify(subscription)
+    });
+
+    console.log('Push notification subscription successful');
+  } catch (err) {
+    console.error('Failed to subscribe for push notifications:', err);
+  }
 }

@@ -336,6 +336,59 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
 });
 
 // Real-Time Multi-Language Translation REST API
+
+// --- WEB PUSH API ---
+
+// --- SMART NOTIFICATIONS (MUTING) ---
+app.get('/api/users/muted_chats', authMiddleware, async (req, res) => {
+  try {
+    const user = await db.get('SELECT muted_chats FROM users WHERE id = ?', [req.user.id]);
+    res.json({ muted_chats: JSON.parse(user?.muted_chats || '[]') });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/users/mute', authMiddleware, async (req, res) => {
+  const { targetId, isMuted } = req.body;
+  if (!targetId) return res.status(400).json({ error: 'Target ID required' });
+
+  try {
+    const user = await db.get('SELECT muted_chats FROM users WHERE id = ?', [req.user.id]);
+    let muted = JSON.parse(user?.muted_chats || '[]');
+    
+    // Ensure targetId is stored consistently (as string for 'global', or int/string for user ID)
+    const targetStr = targetId.toString();
+
+    if (isMuted) {
+      if (!muted.includes(targetStr)) muted.push(targetStr);
+    } else {
+      muted = muted.filter(id => id.toString() !== targetStr);
+    }
+
+    await db.run('UPDATE users SET muted_chats = ? WHERE id = ?', [JSON.stringify(muted), req.user.id]);
+    res.json({ message: 'Mute settings updated', muted_chats: muted });
+  } catch (err) {
+    console.error('Mute API error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
+  const subscription = req.body;
+  if (!subscription || !subscription.endpoint) {
+    return res.status(400).json({ error: 'Invalid subscription object.' });
+  }
+  
+  try {
+    await db.run('UPDATE users SET push_subscription = ? WHERE id = ?', [JSON.stringify(subscription), req.user.id]);
+    res.status(201).json({ message: 'Push subscription saved.' });
+  } catch (err) {
+    console.error('Error saving push subscription:', err);
+    res.status(500).json({ error: 'Database error.' });
+  }
+});
+
 app.post('/api/translate', authMiddleware, async (req, res) => {
   try {
     const text = req.body.text;
@@ -707,6 +760,36 @@ wss.on('connection', (ws, req) => {
           sendToUser(recipientId, msgPayload);
           if (recipientId !== currentUser.id) {
             sendToUser(currentUser.id, msgPayload);
+          }
+          
+          // Send push notification if recipient is offline
+          if (initialStatus === 'sent') {
+            try {
+              const recipient = await db.get('SELECT push_subscription, muted_chats FROM users WHERE id = ?', [recipientId]);
+              if (recipient && recipient.push_subscription) {
+                const mutedChats = JSON.parse(recipient.muted_chats || '[]');
+                const senderStr = currentUser.id.toString();
+                if (!mutedChats.includes(senderStr)) {
+                const subscription = JSON.parse(recipient.push_subscription);
+                const payload = JSON.stringify({
+                  title: `New message from ${currentUser.username}`,
+                  body: content.startsWith('data:audio') ? '?? Voice Message' : (isBlurred ? '[Hidden Message]' : content),
+                  icon: currentUser.avatar || 's',
+                  url: '/'
+                });
+                webpush.sendNotification(subscription, payload).catch(err => {
+                  if (err.statusCode === 410 || err.statusCode === 404) {
+                    // Subscription expired or invalid, remove it
+                    db.run('UPDATE users SET push_subscription = NULL WHERE id = ?', [recipientId]);
+                  } else {
+                    console.error('Push notification error:', err);
+                  }
+                });
+                }
+              }
+            } catch (err) {
+              console.error('Error checking push subscription:', err);
+            }
           }
         } else {
           broadcast(msgPayload);
