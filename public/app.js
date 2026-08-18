@@ -91,14 +91,37 @@ const startSChat = () => {
   const pwaInstallBtn = document.getElementById('pwaInstallBtn');
   const dropdownPwaBtn = document.getElementById('dropdownPwaBtn');
 
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  
+  if (isAndroid && !isStandalone) {
+    if (pwaInstallBtn) {
+      pwaInstallBtn.classList.remove('hidden');
+      const label = pwaInstallBtn.querySelector('.context-label');
+      if (label) label.textContent = 'Download Android App';
+    }
+    if (dropdownPwaBtn) {
+      dropdownPwaBtn.classList.remove('hidden');
+      dropdownPwaBtn.innerHTML = '🤖 <span style="margin-left:8px">Download Android App</span>';
+    }
+  }
+
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
-    if (dropdownPwaBtn) dropdownPwaBtn.classList.remove('hidden');
+    if (!isAndroid && !isStandalone) {
+      if (pwaInstallBtn) pwaInstallBtn.classList.remove('hidden');
+      if (dropdownPwaBtn) dropdownPwaBtn.classList.remove('hidden');
+    }
   });
 
   const triggerPwaInstall = async () => {
+    if (isAndroid) {
+      if (confirm('For the absolute best experience on Android, please install our native Android App. Would you like to download the official APK now?')) {
+        window.location.href = 'https://github.com/shreyashdwivedi36/schat-app/releases/download/v1.0.0/SChat.apk';
+      }
+      return;
+    }
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
