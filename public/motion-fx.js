@@ -95,7 +95,7 @@ export const MotionFX = {
     el.style.opacity = '0';
     await animate(
       el,
-      { opacity: [0, 1], y: [y, 0], filter: ['blur(10px)', 'blur(0px)'] },
+      { opacity: [0, 1], y: [y, 0] },
       { type: 'spring', duration: 0.7, bounce, delay }
     ).finished.catch(() => {});
     clearMotionStyles(el);
