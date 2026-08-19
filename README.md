@@ -12,11 +12,11 @@ A full-stack, real-time messaging application engineered with **Node.js**, **Exp
 ## ✨ Key Features
 
 - **Real-Time Messaging**: Built on persistent WebSocket connections (`ws`) for instant two-way message delivery.
-- **Enterprise Media Architecture**: 
-  - **Deduplication**: Cryptographic SHA-256 client-side hashing prevents duplicate uploads.
-  - **Dynamic Previews**: Cloudinary JIT transformations generate instant 20px blurred UI placeholders.
-  - **Storage Auto-Purge**: Automated background Node.js cron jobs enforce 30-day tiered persistence policies.
-  - **Client-Side Compression**: Native HTML5 Canvas WebP compression squashes massive images into 200KB payloads.
+- **Optimized Media Handling**: 
+  - **Deduplication**: Client-side file hashing (SHA-256) prevents duplicate uploads, saving storage space and bandwidth.
+  - **Progressive Image Loading**: Uses Cloudinary URL transformations to deliver instant 20px blurred placeholders that smoothly transition to high-res images.
+  - **Automated Storage Management**: A background Node.js loop automatically purges media older than 30 days to efficiently manage free-tier limits.
+  - **Client-Side Compression**: Reduces large images to lightweight WebP files via HTML5 Canvas before they hit the network.
 - **Voice Messages 🎙️**: Native `MediaRecorder` integration with **Cloudinary** for offloaded storage. Features a real-time **Audio Waveform Visualizer**, 16kbps Opus compression, and a custom UI audio player.
 - **Live Inline Translation 🌐**: One-click Google Translate API integration to instantly translate incoming messages to the user's preferred language.
 - **Private & Global Chat**: Support for 1-on-1 Direct Messages and a Global Channel.
