@@ -372,6 +372,15 @@ const startSChat = () => {
     }
   };
 
+  const closeChatBtn = document.getElementById('closeChatBtn');
+  if (closeChatBtn) {
+    closeChatBtn.addEventListener('click', () => {
+      if (typeof switchChatTab === 'function') {
+        switchChatTab('empty');
+      }
+    });
+  }
+
   if (optionsMenuBtn) optionsMenuBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleOptionsDropdown();

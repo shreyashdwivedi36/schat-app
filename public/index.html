@@ -446,6 +446,7 @@
 
           <!-- Single Options Setting Button & Liquid Glass Popover -->
           <div class="chat-header-actions">
+            <button id="closeChatBtn" class="icon-btn close-chat-btn" title="Close Chat" aria-label="Close active chat">✖</button>
             <button id="optionsMenuBtn" class="icon-btn options-btn" title="App Settings & Options" aria-label="Open options menu">⚙️</button>
 
             <!-- Liquid Glass Popover Dropdown -->
@@ -670,7 +671,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=56" type="module"></script>
+  <script src="/app.js?v=57" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
