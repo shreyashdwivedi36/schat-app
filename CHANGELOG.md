@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 ## [v1.2.0] - 2026-08-19
 
 ### ✨ Added
+- **Optimistic Media Rendering**: Implemented a seamless optimistic UI system that instantly displays local image and document previews with a sweeping glow animation while Cloudinary uploads process in the background.
+- **Dynamic Welcome Greeting**: The home screen now features a personalized, time-sensitive greeting (Good morning/afternoon/evening, [User]) based on the user's local timezone.
+- **Quick Close Chat Navigation**: Added a convenient '✖' button to the active chat header for one-click navigation back to the welcome screen.
+- **Lightbox Image Viewer**: Added a native, responsive full-screen lightbox for viewing high-resolution image attachments.
+
+### 🐛 Fixed
+- Patched a fatal ReferenceError ('White Screen of Death') caused by global scope leakage in the app.js closure.
+- Fixed an issue where the context menu 'Download' and 'Copy' event listeners were improperly nested, rendering them inactive.
+- Fixed a bug where Read Receipts (Blue Ticks) wouldn't map to the correct message cards in the DOM due to missing recipient ID bindings.
+- Fixed Cloudinary direct downloads opening in a new blank browser tab.
+- Adjusted the mobile font size and line-height of the welcome greeting to prevent awkward multiline wrapping.
+- Disabled the sidebar from automatically opening on mobile devices when closing an active chat.
+
+### ✨ Added (continued)
 - **Media Deduplication**: Implemented a SHA-256 file hashing system to create a registry of uploaded files. Duplicate uploads are caught locally and bypass the network, resulting in instant broadcasts and significant storage savings.
 - **Client-Side Media Compression**: Built an HTML5 Canvas engine that intercepts large images and compresses them into lightweight WebP payloads before uploading.
 - **Progressive Image Loading**: The UI dynamically constructs Cloudinary URLs to deliver instant 20px blurred placeholders that smoothly transition into high-resolution images as they load.

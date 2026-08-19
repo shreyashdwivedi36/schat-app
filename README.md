@@ -17,6 +17,10 @@ A full-stack, real-time messaging application engineered with **Node.js**, **Exp
   - **Progressive Image Loading**: Uses Cloudinary URL transformations to deliver instant 20px blurred placeholders that smoothly transition to high-res images.
   - **Automated Storage Management**: A background Node.js loop automatically purges media older than 30 days to efficiently manage free-tier limits.
   - **Client-Side Compression**: Reduces large images to lightweight WebP files via HTML5 Canvas before they hit the network.
+- **Optimistic Media Rendering**: Implemented a seamless optimistic UI system that instantly displays local image and document previews with a sweeping glow animation while Cloudinary uploads process in the background.
+- **Dynamic Welcome Greeting**: The home screen now features a personalized, time-sensitive greeting (Good morning/afternoon/evening, [User]) based on the user's local timezone.
+- **Quick Close Chat Navigation**: Added a convenient '✖' button to the active chat header for one-click navigation back to the welcome screen.
+- **Lightbox Image Viewer**: Added a native, responsive full-screen lightbox for viewing high-resolution image attachments.
 - **Voice Messages 🎙️**: Native `MediaRecorder` integration with **Cloudinary** for offloaded storage. Features a real-time **Audio Waveform Visualizer**, 16kbps Opus compression, and a custom UI audio player.
 - **Live Inline Translation 🌐**: One-click Google Translate API integration to instantly translate incoming messages to the user's preferred language.
 - **Private & Global Chat**: Support for 1-on-1 Direct Messages and a Global Channel.
