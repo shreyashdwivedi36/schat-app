@@ -556,7 +556,11 @@
           </div>
 
           <form id="messageForm" class="message-input-form">
+            <input type="file" id="imageUploadInput" accept="image/*" style="display:none;" />
             <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji" aria-label="Add emoji">😊</button>
+            <button type="button" id="attachBtn" class="input-action-btn attach-btn" title="Attach Image" aria-label="Attach Image">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+            </button>
             <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required aria-label="Type a message">
             <button type="button" id="micBtn" class="input-action-btn mic-btn" title="Tap to Record" aria-label="Record voice note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

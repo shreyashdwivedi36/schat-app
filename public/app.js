@@ -1734,12 +1734,12 @@ hideElement(typingBanner);
     if (e && e.preventDefault) e.preventDefault();
     activeContextMsg = { msg, msgCard, isOutgoing };
 
-    const isAudio = msg.content && (msg.content.startsWith('[AUDIO]') || msg.content.startsWith('data:audio/'));
+    const isMedia = msg.content && (msg.content.startsWith('[AUDIO]') || msg.content.startsWith('data:audio/') || msg.content.startsWith('[IMAGE]'));
 
     const ownerElements = msgContextMenuCard ? msgContextMenuCard.querySelectorAll('.owner-only') : [];
     ownerElements.forEach(el => {
       if (el.id === 'ctxEditBtn') {
-        el.style.display = (!isAudio && (isOutgoing || currentUser.role === 'super_admin')) ? 'flex' : 'none';
+        el.style.display = (!isMedia && (isOutgoing || currentUser.role === 'super_admin')) ? 'flex' : 'none';
       } else {
         el.style.display = (isOutgoing || currentUser.role === 'super_admin') ? 'flex' : 'none';
       }
@@ -1747,8 +1747,8 @@ hideElement(typingBanner);
 
     const ctxTranslateBtn = document.getElementById('ctxTranslateBtn');
     const ctxCopyBtn = document.getElementById('ctxCopyBtn');
-    if (ctxTranslateBtn) ctxTranslateBtn.style.display = isAudio ? 'none' : 'flex';
-    if (ctxCopyBtn) ctxCopyBtn.style.display = isAudio ? 'none' : 'flex';
+    if (ctxTranslateBtn) ctxTranslateBtn.style.display = isMedia ? 'none' : 'flex';
+    if (ctxCopyBtn) ctxCopyBtn.style.display = isMedia ? 'none' : 'flex';
 
     const isPinned = Number(msgCard ? (msgCard.dataset.isPinned || msg.is_pinned) : msg.is_pinned) === 1;
     const ctxPinLabel = document.getElementById('ctxPinLabel');
@@ -1964,6 +1964,8 @@ hideElement(typingBanner);
     let contentHtml = '';
     let isAudio = false;
     let audioSrc = '';
+    let isImage = false;
+    let imageSrc = '';
     
     if (msg.content) {
       if (msg.content.startsWith('data:audio/')) {
@@ -1972,10 +1974,15 @@ hideElement(typingBanner);
       } else if (msg.content.startsWith('[AUDIO]')) {
         isAudio = true;
         audioSrc = msg.content.substring(7); // Remove [AUDIO]
+      } else if (msg.content.startsWith('[IMAGE]')) {
+        isImage = true;
+        imageSrc = msg.content.substring(7);
       }
     }
 
-    if (isAudio) {
+    if (isImage) {
+      contentHtml = `<img src="${imageSrc}" class="msg-image" alt="Image attachment" loading="lazy">`;
+    } else if (isAudio) {
       contentHtml = `
         <div class="audio-player-ui">
           <button class="play-pause-btn" aria-label="Play">▶</button>
@@ -2315,13 +2322,13 @@ hideElement(typingBanner);
     animationFrameId = requestAnimationFrame(drawWaveform);
   };
 
-  const uploadToCloudinary = async (blob) => {
+  const uploadToCloudinary = async (blob, resourceType = 'video') => {
     const formData = new FormData();
     formData.append('file', blob);
     formData.append('upload_preset', 'schat_uploads');
     
     try {
-      const response = await fetch('https://api.cloudinary.com/v1_1/tigv7xfy/video/upload', {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/tigv7xfy/${resourceType}/upload`, {
         method: 'POST',
         body: formData
       });
@@ -2480,6 +2487,95 @@ hideElement(typingBanner);
       stopRecording(false);
     });
   }
+
+
+  // --- IMAGE UPLOAD & COMPRESSION ---
+  const attachBtn = document.getElementById('attachBtn');
+  const imageUploadInput = document.getElementById('imageUploadInput');
+  
+  if (attachBtn && imageUploadInput) {
+    attachBtn.addEventListener('click', () => {
+      imageUploadInput.click();
+    });
+
+    imageUploadInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+        showAlert('Please select a valid image file.', 'error');
+        return;
+      }
+      
+      attachBtn.classList.add('uploading-indicator');
+      
+      try {
+        const compressedBlob = await compressImage(file);
+        const fileUrl = await uploadToCloudinary(compressedBlob, 'image');
+        if (fileUrl) {
+          const imagePayload = '[IMAGE]' + fileUrl;
+          ws.send(JSON.stringify({
+            type: 'chat_message',
+            content: imagePayload,
+            recipient_id: activeRecipient && activeRecipient !== 'empty' ? activeRecipient.id : null,
+            reply_to_id: activeReply ? activeReply.id : null,
+            reply_to_user: activeReply ? activeReply.username : null,
+            reply_to_text: activeReply ? activeReply.text : null
+          }));
+          setReplyState(null);
+          scrollToBottom();
+        } else {
+          showAlert('Failed to upload image', 'error');
+        }
+      } catch (err) {
+        console.error('Image compression error:', err);
+        showAlert('Error processing image', 'error');
+      } finally {
+        attachBtn.classList.remove('uploading-indicator');
+        imageUploadInput.value = '';
+      }
+    });
+  }
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1280;
+          const MAX_HEIGHT = 1280;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            resolve(blob);
+          }, 'image/webp', 0.8);
+        };
+        img.onerror = (error) => reject(error);
+        img.src = event.target.result;
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
 
   messageForm.addEventListener('submit', (e) => {
     e.preventDefault();

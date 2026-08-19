@@ -3131,3 +3131,22 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 [data-theme=light] .toggle-switch-ui.active {
   background: var(--primary-accent);
 }
+
+/* Image Attachment Styles */
+.msg-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 6px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+.msg-image:hover {
+  transform: scale(1.02);
+}
+.uploading-indicator {
+  opacity: 0.5;
+  pointer-events: none;
+  animation: pulse 1.5s infinite;
+}
