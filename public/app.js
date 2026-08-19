@@ -1871,6 +1871,11 @@ hideElement(typingBanner);
       const { msg } = activeContextMsg;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(msg.content);
+        showAlert('Message text copied to clipboard!', 'success');
+      }
+      closeMessageContextMenu();
+    });
+  }
 
   const ctxDownloadBtnGlobal = document.getElementById('ctxDownloadBtn');
   if (ctxDownloadBtnGlobal) {
@@ -1914,7 +1919,6 @@ hideElement(typingBanner);
         const a = document.createElement('a');
         a.href = url;
         a.download = "SChat_Media_" + Date.now() + "." + extension;
-        a.target = '_blank';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1924,7 +1928,58 @@ hideElement(typingBanner);
       }
     });
   }
-        showAlert('Message text copied to clipboard!', 'success');
+
+  if (ctxDownloadBtnGlobal) {
+    ctxDownloadBtnGlobal.addEventListener('click', async () => {
+      if (!activeContextMsg) return;
+      const { msg } = activeContextMsg;
+      closeMessageContextMenu();
+      
+      let url = '';
+      let extension = '';
+      if (msg.content.startsWith('[AUDIO]')) {
+        url = msg.content.substring(7);
+        extension = 'webm';
+      } else if (msg.content.startsWith('data:audio/')) {
+        url = msg.content;
+        extension = 'webm';
+      } else if (msg.content.startsWith('[IMAGE]')) {
+        url = msg.content.substring(7);
+        extension = 'webp';
+      } else if (msg.content.startsWith('[FILE]')) {
+        const fileData = msg.content.substring(6);
+        const splitIdx = fileData.indexOf('|');
+        if (splitIdx !== -1) {
+          url = fileData.substring(splitIdx + 1);
+          extension = fileData.substring(0, splitIdx).split('.').pop() || 'file';
+        } else {
+          url = fileData;
+          extension = 'file';
+        }
+      }
+      
+      if (!url) return;
+      
+      try {
+        if (url.includes('cloudinary.com')) {
+          const parts = url.split('/upload/');
+          if (parts.length === 2) {
+            url = parts[0] + '/upload/fl_attachment/' + parts[1];
+          }
+        }
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "SChat_Media_" + Date.now() + "." + extension;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } catch (err) {
+        console.error('Failed to download media', err);
+        showAlert('Failed to download media file', 'error');
+      }
+    });
+  }
       }
       closeMessageContextMenu();
     });
@@ -3226,28 +3281,27 @@ window.openLightbox = (url) => {
     const a = document.createElement('a');
     a.href = dlUrl;
     a.download = "SChat_Image_" + Date.now() + ".webp";
-    a.target = '_blank';
+    
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
   };
 };
 
-document.addEventListener('DOMContentLoaded', () => {
-  const lightbox = document.getElementById('imageLightbox');
-  const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+// Bind Lightbox globally
+const lightbox = document.getElementById('imageLightbox');
+const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+
+if (lightbox && lightboxCloseBtn) {
+  lightboxCloseBtn.addEventListener('click', () => {
+    lightbox.classList.add('hidden');
+    setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
+  });
   
-  if (lightbox && lightboxCloseBtn) {
-    lightboxCloseBtn.addEventListener('click', () => {
+  lightbox.addEventListener('click', (e) => {
+    if (e.target === lightbox) {
       lightbox.classList.add('hidden');
       setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
-    });
-    
-    lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) {
-        lightbox.classList.add('hidden');
-        setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
-      }
-    });
-  }
-});
+    }
+  });
+}
