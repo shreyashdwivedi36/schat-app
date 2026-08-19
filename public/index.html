@@ -428,8 +428,8 @@
           <div class="logo-icon-lg">
             <img src="logo.png" alt="SChat Logo" class="brand-logo-img-lg" />
           </div>
-          <h1>SChat</h1>
-          <p>Select a chat to begin messaging.</p>
+          <h1 id="welcomeGreeting">SChat</h1>
+          <p id="welcomeSubtext">Select a chat to begin messaging.</p>
         </div>
         <!-- Chat Header -->
         <header class="chat-header" role="banner">
@@ -671,7 +671,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=58" type="module"></script>
+  <script src="/app.js?v=59" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
