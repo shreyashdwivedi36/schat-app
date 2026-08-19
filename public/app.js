@@ -1147,6 +1147,14 @@ hideElement(typingBanner);
 
       if (activeRecipient === 'empty') {
         document.querySelector('.chat-wrapper').classList.add('empty-state');
+        const welcomeGreeting = document.getElementById('welcomeGreeting');
+        if (welcomeGreeting && typeof currentUser !== 'undefined' && currentUser) {
+          const hour = new Date().getHours();
+          let greeting = 'Good evening';
+          if (hour < 12) greeting = 'Good morning';
+          else if (hour < 18) greeting = 'Good afternoon';
+          welcomeGreeting.innerHTML = `${greeting}, <span style="color: var(--primary-accent);">${currentUser.username}</span>!`;
+        }
       }
 
       await MotionFX.enter(chatView, { y: 22, bounce: 0.08 });
