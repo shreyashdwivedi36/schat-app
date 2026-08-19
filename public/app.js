@@ -1734,7 +1734,7 @@ hideElement(typingBanner);
     if (e && e.preventDefault) e.preventDefault();
     activeContextMsg = { msg, msgCard, isOutgoing };
 
-    const isMedia = msg.content && (msg.content.startsWith('[AUDIO]') || msg.content.startsWith('data:audio/') || msg.content.startsWith('[IMAGE]'));
+    const isMedia = msg.content && (msg.content.startsWith('[AUDIO]') || msg.content.startsWith('data:audio/') || msg.content.startsWith('[IMAGE]') || msg.content.startsWith('[FILE]'));
 
     const ownerElements = msgContextMenuCard ? msgContextMenuCard.querySelectorAll('.owner-only') : [];
     ownerElements.forEach(el => {
@@ -1864,6 +1864,16 @@ hideElement(typingBanner);
       } else if (msg.content.startsWith('[IMAGE]')) {
         url = msg.content.substring(7);
         extension = 'webp';
+      } else if (msg.content.startsWith('[FILE]')) {
+        const fileData = msg.content.substring(6);
+        const splitIdx = fileData.indexOf('|');
+        if (splitIdx !== -1) {
+          url = fileData.substring(splitIdx + 1);
+          extension = fileData.substring(0, splitIdx).split('.').pop() || 'file';
+        } else {
+          url = fileData;
+          extension = 'file';
+        }
       }
       
       if (!url) return;
@@ -2008,6 +2018,9 @@ hideElement(typingBanner);
     let audioSrc = '';
     let isImage = false;
     let imageSrc = '';
+    let isFile = false;
+    let fileSrc = '';
+    let fileName = '';
     
     if (msg.content) {
       if (msg.content.startsWith('data:audio/')) {
@@ -2019,11 +2032,32 @@ hideElement(typingBanner);
       } else if (msg.content.startsWith('[IMAGE]')) {
         isImage = true;
         imageSrc = msg.content.substring(7);
+      } else if (msg.content.startsWith('[FILE]')) {
+        isFile = true;
+        const fileData = msg.content.substring(6);
+        const splitIdx = fileData.indexOf('|');
+        if (splitIdx !== -1) {
+          fileName = fileData.substring(0, splitIdx);
+          fileSrc = fileData.substring(splitIdx + 1);
+        } else {
+          fileSrc = fileData;
+          fileName = 'Document';
+        }
       }
     }
 
     if (isImage) {
       contentHtml = `<img src="${imageSrc}" class="msg-image" alt="Image attachment" loading="lazy">`;
+    } else if (isFile) {
+      contentHtml = `
+        <div class="msg-file-card" onclick="window.open('${fileSrc}', '_blank')">
+          <span class="msg-file-icon">📄</span>
+          <div class="msg-file-details">
+            <span class="msg-file-name">${escapeHtml(fileName)}</span>
+            <span class="msg-file-size">Click to view/download</span>
+          </div>
+        </div>
+      `;
     } else if (isAudio) {
       contentHtml = `
         <div class="audio-player-ui">
@@ -2533,11 +2567,75 @@ hideElement(typingBanner);
 
   // --- IMAGE UPLOAD & COMPRESSION ---
   const attachBtn = document.getElementById('attachBtn');
+  const attachDropdown = document.getElementById('attachDropdown');
+  const optImageUpload = document.getElementById('optImageUpload');
+  const optDocUpload = document.getElementById('optDocUpload');
   const imageUploadInput = document.getElementById('imageUploadInput');
+  const docUploadInput = document.getElementById('docUploadInput');
   
-  if (attachBtn && imageUploadInput) {
-    attachBtn.addEventListener('click', () => {
-      imageUploadInput.click();
+  if (attachBtn) {
+    attachBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (attachDropdown) attachDropdown.classList.toggle('hidden');
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (attachDropdown && !attachBtn.contains(e.target) && !attachDropdown.classList.contains('hidden')) {
+        attachDropdown.classList.add('hidden');
+      }
+    });
+    
+    if (optImageUpload && imageUploadInput) {
+      optImageUpload.addEventListener('click', () => {
+        attachDropdown.classList.add('hidden');
+        imageUploadInput.click();
+      });
+    }
+    
+    if (optDocUpload && docUploadInput) {
+      optDocUpload.addEventListener('click', () => {
+        attachDropdown.classList.add('hidden');
+        docUploadInput.click();
+      });
+    }
+
+
+    docUploadInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (file.size > 10 * 1024 * 1024) {
+        showAlert('Document exceeds 10MB limit. Please upload a smaller file.', 'error');
+        docUploadInput.value = '';
+        return;
+      }
+      
+      attachBtn.classList.add('uploading-indicator');
+      
+      try {
+        const fileUrl = await uploadToCloudinary(file, 'raw');
+        if (fileUrl) {
+          const filePayload = [FILE]|;
+          ws.send(JSON.stringify({
+            type: 'chat_message',
+            content: filePayload,
+            recipient_id: activeRecipient && activeRecipient !== 'empty' ? activeRecipient.id : null,
+            reply_to_id: activeReply ? activeReply.id : null,
+            reply_to_user: activeReply ? activeReply.username : null,
+            reply_to_text: activeReply ? activeReply.text : null
+          }));
+          setReplyState(null);
+          scrollToBottom();
+        } else {
+          showAlert('Failed to upload document', 'error');
+        }
+      } catch (err) {
+        console.error('Document upload error:', err);
+        showAlert('Error processing document', 'error');
+      } finally {
+        attachBtn.classList.remove('uploading-indicator');
+        docUploadInput.value = '';
+      }
     });
 
     imageUploadInput.addEventListener('change', async (e) => {
