@@ -3317,3 +3317,26 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .lightbox-actions {
   margin-top: 20px;
 }
+
+
+/* Media Uploading Optimistic Animation */
+.media-uploading {
+  opacity: 0.6;
+  filter: grayscale(40%);
+  position: relative;
+  overflow: hidden;
+  transition: opacity 0.3s ease;
+}
+.media-uploading::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: upload-glow 1.2s infinite ease-in-out;
+  z-index: 10;
+}
+@keyframes upload-glow {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}

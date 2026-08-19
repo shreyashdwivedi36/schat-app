@@ -2516,15 +2516,38 @@ hideElement(typingBanner);
         const audioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
         
         showAlert('Uploading voice note...', 'info');
+        const localAudioUrl = URL.createObjectURL(audioBlob);
+        const tempId = `temp_upload_${Date.now()}`;
+        const tempMsg = {
+          id: tempId,
+          user_id: currentUser.id,
+          recipient_id: activeRecipient && activeRecipient !== 'empty' ? activeRecipient.id : null,
+          username: currentUser.username,
+          avatar: currentUser.avatar,
+          content: `[AUDIO]${localAudioUrl}`,
+          created_at: new Date().toISOString(),
+          status: 'sending'
+        };
+        renderMessage(tempMsg);
+        const optimisticCard = document.querySelector(`.message-card[data-msg-id="${tempId}"]`);
+        if (optimisticCard) optimisticCard.classList.add('media-uploading');
+        scrollToBottom();
+
         
         const fileUrl = await uploadToCloudinary(audioBlob);
         
         if (!fileUrl) {
           showAlert('Failed to upload voice note. Please try again.', 'error');
+          if (typeof optimisticCard !== 'undefined' && optimisticCard) optimisticCard.remove();
           return;
         }
 
-        const audioPayload = '[AUDIO]' + fileUrl;
+        
+        if (optimisticCard) {
+          optimisticCard.style.opacity = '0';
+          setTimeout(() => optimisticCard.remove(), 250);
+        }
+const audioPayload = '[AUDIO]' + fileUrl;
         
         if (!ws || ws.readyState !== WebSocket.OPEN) {
           showAlert('Connecting to server... Please try sending again in a moment.', 'error');
@@ -2650,6 +2673,22 @@ hideElement(typingBanner);
       }
       
       attachBtn.classList.add('uploading-indicator');
+      const tempId = `temp_upload_${Date.now()}`;
+      const tempMsg = {
+        id: tempId,
+        user_id: currentUser.id,
+        recipient_id: activeRecipient && activeRecipient !== 'empty' ? activeRecipient.id : null,
+        username: currentUser.username,
+        avatar: currentUser.avatar,
+        content: `[FILE]${file.name}|#`,
+        created_at: new Date().toISOString(),
+        status: 'sending'
+      };
+      renderMessage(tempMsg);
+      const optimisticCard = document.querySelector(`.message-card[data-msg-id="${tempId}"]`);
+      if (optimisticCard) optimisticCard.classList.add('media-uploading');
+      scrollToBottom();
+
       
       try {
         const fileHash = await generateFileHash(file);
@@ -2688,6 +2727,7 @@ hideElement(typingBanner);
       } finally {
         attachBtn.classList.remove('uploading-indicator');
         docUploadInput.value = '';
+        if (typeof optimisticCard !== 'undefined' && optimisticCard) optimisticCard.remove();
       }
     });
 
@@ -2700,6 +2740,23 @@ hideElement(typingBanner);
       }
       
       attachBtn.classList.add('uploading-indicator');
+      const fileUrlLocal = URL.createObjectURL(file);
+      const tempId = `temp_upload_${Date.now()}`;
+      const tempMsg = {
+        id: tempId,
+        user_id: currentUser.id,
+        recipient_id: activeRecipient && activeRecipient !== 'empty' ? activeRecipient.id : null,
+        username: currentUser.username,
+        avatar: currentUser.avatar,
+        content: `[IMAGE]${fileUrlLocal}`,
+        created_at: new Date().toISOString(),
+        status: 'sending'
+      };
+      renderMessage(tempMsg);
+      const optimisticCard = document.querySelector(`.message-card[data-msg-id="${tempId}"]`);
+      if (optimisticCard) optimisticCard.classList.add('media-uploading');
+      scrollToBottom();
+
       
       try {
         const fileHash = await generateFileHash(file);
@@ -2717,7 +2774,12 @@ hideElement(typingBanner);
           fileUrl = await uploadToCloudinary(compressedBlob, 'image');
         }
 
-        if (fileUrl) {
+        
+          if (optimisticCard) {
+            optimisticCard.style.opacity = '0';
+            setTimeout(() => optimisticCard.remove(), 250);
+          }
+if (fileUrl) {
           const imagePayload = '[IMAGE]' + fileUrl;
           ws.send(JSON.stringify({
             type: 'chat_message',
@@ -2739,6 +2801,7 @@ hideElement(typingBanner);
       } finally {
         attachBtn.classList.remove('uploading-indicator');
         imageUploadInput.value = '';
+        if (typeof optimisticCard !== 'undefined' && optimisticCard) optimisticCard.remove();
       }
     });
   }
