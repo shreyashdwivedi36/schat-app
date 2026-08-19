@@ -1747,8 +1747,10 @@ hideElement(typingBanner);
 
     const ctxTranslateBtn = document.getElementById('ctxTranslateBtn');
     const ctxCopyBtn = document.getElementById('ctxCopyBtn');
+    const ctxDownloadBtn = document.getElementById('ctxDownloadBtn');
     if (ctxTranslateBtn) ctxTranslateBtn.style.display = isMedia ? 'none' : 'flex';
     if (ctxCopyBtn) ctxCopyBtn.style.display = isMedia ? 'none' : 'flex';
+    if (ctxDownloadBtn) ctxDownloadBtn.style.display = isMedia ? 'flex' : 'none';
 
     const isPinned = Number(msgCard ? (msgCard.dataset.isPinned || msg.is_pinned) : msg.is_pinned) === 1;
     const ctxPinLabel = document.getElementById('ctxPinLabel');
@@ -1843,6 +1845,46 @@ hideElement(typingBanner);
       const { msg } = activeContextMsg;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(msg.content);
+
+  const ctxDownloadBtnGlobal = document.getElementById('ctxDownloadBtn');
+  if (ctxDownloadBtnGlobal) {
+    ctxDownloadBtnGlobal.addEventListener('click', async () => {
+      if (!activeContextMsg) return;
+      const { msg } = activeContextMsg;
+      closeMessageContextMenu();
+      
+      let url = '';
+      let extension = '';
+      if (msg.content.startsWith('[AUDIO]')) {
+        url = msg.content.substring(7);
+        extension = 'webm';
+      } else if (msg.content.startsWith('data:audio/')) {
+        url = msg.content;
+        extension = 'webm';
+      } else if (msg.content.startsWith('[IMAGE]')) {
+        url = msg.content.substring(7);
+        extension = 'webp';
+      }
+      
+      if (!url) return;
+      
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = SChat_Media_.;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } catch (err) {
+        console.error('Failed to download media', err);
+        showAlert('Failed to download media file', 'error');
+      }
+    });
+  }
         showAlert('Message text copied to clipboard!', 'success');
       }
       closeMessageContextMenu();
