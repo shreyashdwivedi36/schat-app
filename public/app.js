@@ -2055,7 +2055,7 @@ hideElement(typingBanner);
         highResUrl = imageSrc.substring(0, uploadIdx + 8) + 'w_1280,f_auto,q_auto/' + imageSrc.substring(uploadIdx + 8);
       }
       contentHtml = `<div class="image-wrapper blur-placeholder-container" style="background-image: url('${blurUrl}'); background-size: cover; border-radius: 12px; overflow: hidden; min-height: 150px; min-width: 150px;">
-                       <img src="${highResUrl}" class="msg-image fade-in-image" style="opacity: 0; transition: opacity 0.3s ease; width: 100%; height: auto; display: block;" alt="Image attachment" loading="lazy" onload="this.style.opacity='1'">
+                       <img src="${highResUrl}" class="msg-image fade-in-image" style="opacity: 0; transition: opacity 0.3s ease; width: 100%; height: auto; display: block;" alt="Image attachment" loading="lazy" onload="this.style.opacity='1'" onerror="this.parentElement.style.backgroundImage='none'; this.parentElement.innerHTML='<div style=\\'padding: 30px 20px; text-align: center; color: var(--text-muted); background: var(--bg-hover);\\'>🗄️ Media Archived<br><small style=\\'font-size: 0.8em; opacity: 0.7;\\'>Cache Expired</small></div>'">
                      </div>`;
     } else if (isFile) {
       contentHtml = `
