@@ -1905,16 +1905,19 @@ hideElement(typingBanner);
       if (!url) return;
       
       try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        const blobUrl = URL.createObjectURL(blob);
+        if (url.includes('cloudinary.com')) {
+          const parts = url.split('/upload/');
+          if (parts.length === 2) {
+            url = parts[0] + '/upload/fl_attachment/' + parts[1];
+          }
+        }
         const a = document.createElement('a');
-        a.href = blobUrl;
-        a.download = "SChat_Media_" + Date.now();
+        a.href = url;
+        a.download = "SChat_Media_" + Date.now() + "." + extension;
+        a.target = '_blank';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(blobUrl);
       } catch (err) {
         console.error('Failed to download media', err);
         showAlert('Failed to download media file', 'error');
@@ -2081,7 +2084,7 @@ hideElement(typingBanner);
         highResUrl = imageSrc.substring(0, uploadIdx + 8) + 'w_1280,f_auto,q_auto/' + imageSrc.substring(uploadIdx + 8);
       }
       contentHtml = `<div class="image-wrapper blur-placeholder-container" style="background-image: url('${blurUrl}'); background-size: cover; border-radius: 12px; overflow: hidden; min-height: 150px; min-width: 150px;">
-                       <img src="${highResUrl}" class="msg-image fade-in-image" style="opacity: 0; transition: opacity 0.3s ease; width: 100%; height: auto; display: block;" alt="Image attachment" loading="lazy" onload="this.style.opacity='1'" onerror="this.parentElement.style.backgroundImage='none'; this.parentElement.innerHTML='<div style=\\'padding: 30px 20px; text-align: center; color: var(--text-muted); background: var(--bg-hover);\\'>🗄️ Media Archived<br><small style=\\'font-size: 0.8em; opacity: 0.7;\\'>Cache Expired</small></div>'">
+                       <img src="${highResUrl}" class="msg-image fade-in-image" style="cursor: zoom-in; opacity: 0; transition: opacity 0.3s ease; width: 100%; height: auto; display: block;" alt="Image attachment" loading="lazy" onclick="openLightbox('${highResUrl}')" onload="this.style.opacity='1'" onerror="this.parentElement.style.backgroundImage='none'; this.parentElement.innerHTML='<div style=\\'padding: 30px 20px; text-align: center; color: var(--text-muted); background: var(--bg-hover);\\'>📸 Media Archived<br><small style=\\'font-size: 0.8em; opacity: 0.7;\\'>Cache Expired</small></div>'">
                      </div>`;
     } else if (isFile) {
       contentHtml = `
@@ -3198,3 +3201,52 @@ async function subscribeToPushNotifications() {
     console.error('DEBUG: Failed to subscribe: ' + err.message);
   }
 }
+
+
+// --- Lightbox Logic ---
+window.openLightbox = (url) => {
+  const lightbox = document.getElementById('imageLightbox');
+  const lightboxImg = document.getElementById('lightboxImg');
+  const lightboxDownloadBtn = document.getElementById('lightboxDownloadBtn');
+  
+  if (!lightbox || !lightboxImg) return;
+  
+  lightboxImg.src = url;
+  lightbox.classList.remove('hidden');
+  
+  lightboxDownloadBtn.onclick = () => {
+    let dlUrl = url;
+    if (dlUrl.includes('cloudinary.com')) {
+      const parts = dlUrl.split('/upload/');
+      if (parts.length === 2) {
+        dlUrl = parts[0] + '/upload/fl_attachment/' + parts[1];
+      }
+    }
+    const a = document.createElement('a');
+    a.href = dlUrl;
+    a.download = "SChat_Image_" + Date.now() + ".webp";
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+  const lightbox = document.getElementById('imageLightbox');
+  const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
+  
+  if (lightbox && lightboxCloseBtn) {
+    lightboxCloseBtn.addEventListener('click', () => {
+      lightbox.classList.add('hidden');
+      setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
+    });
+    
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        lightbox.classList.add('hidden');
+        setTimeout(() => { document.getElementById('lightboxImg').src = ''; }, 300);
+      }
+    });
+  }
+});
