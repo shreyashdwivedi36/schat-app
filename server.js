@@ -226,6 +226,20 @@ app.get('/api/me', authMiddleware, async (req, res) => {
 });
 
 // Get all users (for persistent sidebar)
+app.get('/api/media/check/:hash', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB not connected' });
+  try {
+    const hash = req.params.hash;
+    const result = await db.query('SELECT url FROM media_hashes WHERE hash = $1', [hash]);
+    if (result.rows.length > 0) {
+      return res.json({ url: result.rows[0].url });
+    }
+    return res.status(404).json({ error: 'Not found' });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 app.get('/api/users', authMiddleware, async (req, res) => {
   try {
     const users = await db.all('SELECT id, username, avatar, bio, created_at FROM users WHERE id != ? ORDER BY username ASC', [req.user.id]);
@@ -761,6 +775,16 @@ wss.on('connection', (ws, req) => {
       if (data.type === 'chat_message') {
         const content = sanitizeString(data.content, 2000);
         if (!content) return;
+
+        if (data.file_hash && db) {
+          let rawUrl = '';
+          if (content.startsWith('[IMAGE]')) rawUrl = content.substring(7);
+          else if (content.startsWith('[AUDIO]')) rawUrl = content.substring(7);
+          else if (content.startsWith('[FILE]')) rawUrl = content.substring(6).split('|').pop();
+          if (rawUrl) {
+            db.query('INSERT INTO media_hashes (hash, url) VALUES ($1, $2) ON CONFLICT DO NOTHING', [data.file_hash, rawUrl]).catch(err => console.error('Hash save error:', err));
+          }
+        }
 
         const recipientId = (data.recipient_id && !isNaN(data.recipient_id)) ? parseInt(data.recipient_id, 10) : null;
         const channel = sanitizeString(data.channel, 50) || 'global';

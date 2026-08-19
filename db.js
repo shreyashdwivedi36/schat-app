@@ -25,6 +25,10 @@ if (process.env.DATABASE_URL) {
           muted_chats TEXT DEFAULT '[]',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS media_hashes (
+          hash VARCHAR(64) PRIMARY KEY,
+          url TEXT NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS channels (
           id SERIAL PRIMARY KEY,
           name VARCHAR(50) UNIQUE NOT NULL,

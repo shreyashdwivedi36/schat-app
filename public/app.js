@@ -2047,7 +2047,16 @@ hideElement(typingBanner);
     }
 
     if (isImage) {
-      contentHtml = `<img src="${imageSrc}" class="msg-image" alt="Image attachment" loading="lazy">`;
+      let blurUrl = imageSrc;
+      let highResUrl = imageSrc;
+      const uploadIdx = imageSrc.indexOf('/upload/');
+      if (uploadIdx !== -1) {
+        blurUrl = imageSrc.substring(0, uploadIdx + 8) + 'w_20,e_blur:200,f_auto,q_10/' + imageSrc.substring(uploadIdx + 8);
+        highResUrl = imageSrc.substring(0, uploadIdx + 8) + 'w_1280,f_auto,q_auto/' + imageSrc.substring(uploadIdx + 8);
+      }
+      contentHtml = `<div class="image-wrapper blur-placeholder-container" style="background-image: url('${blurUrl}'); background-size: cover; border-radius: 12px; overflow: hidden; min-height: 150px; min-width: 150px;">
+                       <img src="${highResUrl}" class="msg-image fade-in-image" style="opacity: 0; transition: opacity 0.3s ease; width: 100%; height: auto; display: block;" alt="Image attachment" loading="lazy" onload="this.style.opacity='1'">
+                     </div>`;
     } else if (isFile) {
       contentHtml = `
         <div class="msg-file-card" onclick="window.open('${fileSrc}', '_blank')">
@@ -2613,12 +2622,26 @@ hideElement(typingBanner);
       attachBtn.classList.add('uploading-indicator');
       
       try {
-        const fileUrl = await uploadToCloudinary(file, 'raw');
+        const fileHash = await generateFileHash(file);
+        let fileUrl = null;
+        if (fileHash) {
+          const res = await fetch(`/api/media/check/${fileHash}`);
+          if (res.ok) {
+            const data = await res.json();
+            fileUrl = data.url;
+          }
+        }
+        
+        if (!fileUrl) {
+          fileUrl = await uploadToCloudinary(file, 'raw');
+        }
+        
         if (fileUrl) {
-          const filePayload = [FILE]|;
+          const filePayload = `[FILE]${file.name}|${fileUrl}`;
           ws.send(JSON.stringify({
             type: 'chat_message',
             content: filePayload,
+            file_hash: fileHash,
             recipient_id: activeRecipient && activeRecipient !== 'empty' ? activeRecipient.id : null,
             reply_to_id: activeReply ? activeReply.id : null,
             reply_to_user: activeReply ? activeReply.username : null,
@@ -2649,13 +2672,27 @@ hideElement(typingBanner);
       attachBtn.classList.add('uploading-indicator');
       
       try {
-        const compressedBlob = await compressImage(file);
-        const fileUrl = await uploadToCloudinary(compressedBlob, 'image');
+        const fileHash = await generateFileHash(file);
+        let fileUrl = null;
+        if (fileHash) {
+          const res = await fetch(`/api/media/check/${fileHash}`);
+          if (res.ok) {
+            const data = await res.json();
+            fileUrl = data.url;
+          }
+        }
+
+        if (!fileUrl) {
+          const compressedBlob = await compressImage(file);
+          fileUrl = await uploadToCloudinary(compressedBlob, 'image');
+        }
+
         if (fileUrl) {
           const imagePayload = '[IMAGE]' + fileUrl;
           ws.send(JSON.stringify({
             type: 'chat_message',
             content: imagePayload,
+            file_hash: fileHash,
             recipient_id: activeRecipient && activeRecipient !== 'empty' ? activeRecipient.id : null,
             reply_to_id: activeReply ? activeReply.id : null,
             reply_to_user: activeReply ? activeReply.username : null,
@@ -2675,6 +2712,19 @@ hideElement(typingBanner);
       }
     });
   }
+
+  const generateFileHash = async (file) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      return hashHex;
+    } catch (err) {
+      console.error('Hashing error:', err);
+      return null;
+    }
+  };
 
   const compressImage = (file) => {
     return new Promise((resolve, reject) => {
