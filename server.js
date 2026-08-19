@@ -230,7 +230,7 @@ app.get('/api/media/check/:hash', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'DB not connected' });
   try {
     const hash = req.params.hash;
-    const result = await db.query('SELECT url FROM media_hashes WHERE hash = $1', [hash]);
+    const result = await db.get('SELECT url FROM media_hashes WHERE hash = ?', [hash]);
     if (result.rows.length > 0) {
       return res.json({ url: result.rows[0].url });
     }
@@ -782,7 +782,7 @@ wss.on('connection', (ws, req) => {
           else if (content.startsWith('[AUDIO]')) rawUrl = content.substring(7);
           else if (content.startsWith('[FILE]')) rawUrl = content.substring(6).split('|').pop();
           if (rawUrl) {
-            db.query('INSERT INTO media_hashes (hash, url) VALUES ($1, $2) ON CONFLICT DO NOTHING', [data.file_hash, rawUrl]).catch(err => console.error('Hash save error:', err));
+            db.run('INSERT INTO media_hashes (hash, url) VALUES (?, ?) ON CONFLICT DO NOTHING', [data.file_hash, rawUrl]).catch(err => console.error('Hash save error:', err));
           }
         }
 
@@ -1045,7 +1045,7 @@ setInterval(async () => {
 
   try {
     console.log('[Auto-Purge] Starting automated 30-day media cleanup...');
-    const result = await db.query(`SELECT hash, url FROM media_hashes WHERE created_at < NOW() - INTERVAL '30 days'`);
+    const result = await db.all(`SELECT hash, url FROM media_hashes WHERE created_at < NOW() - INTERVAL '30 days'`);
     
     if (result.rows.length === 0) {
       console.log('[Auto-Purge] No expired media found.');
@@ -1066,7 +1066,7 @@ setInterval(async () => {
         });
 
         if (response.ok) {
-          await db.query('DELETE FROM media_hashes WHERE hash = $1', [row.hash]);
+          await db.run('DELETE FROM media_hashes WHERE hash = ?', [row.hash]);
           console.log(`[Auto-Purge] Successfully deleted and unregistered: ${publicId}`);
         } else {
           console.error(`[Auto-Purge] Failed to delete ${publicId} from Cloudinary: ${response.statusText}`);
