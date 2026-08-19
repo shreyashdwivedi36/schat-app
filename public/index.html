@@ -655,7 +655,22 @@
   </div>
 
   <script src="motion-fx.js?v=30" type="module"></script>
-  <script src="/app.js?v=51" type="module"></script>
+
+  <!-- Image Lightbox Modal -->
+  <div id="imageLightbox" class="lightbox-overlay hidden">
+    <div class="lightbox-content">
+      <button id="lightboxCloseBtn" class="lightbox-close" title="Close" aria-label="Close">&times;</button>
+      <img id="lightboxImg" src="" alt="Expanded Image" />
+      <div class="lightbox-actions">
+        <button id="lightboxDownloadBtn" class="btn btn-primary" style="display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download HD
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js?v=52" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
