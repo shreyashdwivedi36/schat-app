@@ -1019,6 +1019,9 @@ hideElement(typingBanner);
 
     const chatWrapper = document.querySelector('.chat-wrapper');
 
+    const closeChatBtn = document.getElementById('closeChatBtn');
+    if (closeChatBtn) closeChatBtn.style.display = activeRecipient === 'empty' ? 'none' : '';
+
     if (activeRecipient === 'empty') {
       chatWrapper.classList.add('empty-state');
       document.querySelector('.chat-footer').style.display = '';
