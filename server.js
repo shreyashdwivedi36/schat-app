@@ -1033,3 +1033,50 @@ server.listen(PORT, () => {
 });
 
 app.get('/api/debug/push-logs', (req, res) => { res.json({ logs: global.pushLogs || [] }); });
+
+
+// --- AUTO-PURGE CRON JOB ---
+const AUTO_PURGE_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
+setInterval(async () => {
+  if (!db || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET || !process.env.CLOUDINARY_CLOUD_NAME) {
+    console.log('[Auto-Purge] Skipping: Missing Cloudinary credentials or DB.');
+    return;
+  }
+
+  try {
+    console.log('[Auto-Purge] Starting automated 30-day media cleanup...');
+    const result = await db.query(`SELECT hash, url FROM media_hashes WHERE created_at < NOW() - INTERVAL '30 days'`);
+    
+    if (result.rows.length === 0) {
+      console.log('[Auto-Purge] No expired media found.');
+      return;
+    }
+
+    const auth = Buffer.from(process.env.CLOUDINARY_API_KEY + ':' + process.env.CLOUDINARY_API_SECRET).toString('base64');
+    
+    for (const row of result.rows) {
+      try {
+        const parts = row.url.split('/');
+        const filename = parts[parts.length - 1];
+        const publicId = filename.split('.')[0];
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${process.env.CLOUDINARY_CLOUD_NAME}/resources/image/upload?public_ids[]=${publicId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Basic ${auth}` }
+        });
+
+        if (response.ok) {
+          await db.query('DELETE FROM media_hashes WHERE hash = $1', [row.hash]);
+          console.log(`[Auto-Purge] Successfully deleted and unregistered: ${publicId}`);
+        } else {
+          console.error(`[Auto-Purge] Failed to delete ${publicId} from Cloudinary: ${response.statusText}`);
+        }
+      } catch (err) {
+        console.error(`[Auto-Purge] Error processing hash ${row.hash}:`, err);
+      }
+    }
+    console.log('[Auto-Purge] Cleanup cycle complete.');
+  } catch (err) {
+    console.error('[Auto-Purge] Critical failure in cleanup loop:', err);
+  }
+}, AUTO_PURGE_INTERVAL);
