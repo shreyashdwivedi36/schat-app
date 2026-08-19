@@ -1991,6 +1991,7 @@ hideElement(typingBanner);
     const msgCard = document.createElement('div');
     msgCard.className = `message-card ${isOutgoing ? 'outgoing' : 'incoming'}`;
     msgCard.dataset.msgId = msgUniqueId;
+    msgCard.dataset.recipientId = msg.recipient_id || '';
     msgCard.dataset.isPinned = msg.is_pinned ? '1' : '0';
     msgCard._msgData = msg;
 
