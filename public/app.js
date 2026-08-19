@@ -1022,7 +1022,12 @@ hideElement(typingBanner);
     chatWrapper.classList.remove('empty-state');
     document.querySelector('.chat-footer').style.display = '';
 
+    const attachBtnGlobal = document.getElementById('attachBtn');
+    const recordVoiceBtnGlobal = document.getElementById('recordVoiceBtn');
+
     if (!activeRecipient) {
+      if (attachBtnGlobal) attachBtnGlobal.style.display = 'none';
+      if (recordVoiceBtnGlobal) recordVoiceBtnGlobal.style.display = 'none';
       globalChannelBtn.classList.add('active');
       roomAvatar.textContent = '💬';
       roomTitle.textContent = 'Global Channel';
@@ -1030,6 +1035,8 @@ hideElement(typingBanner);
       welcomeTitle.textContent = 'Welcome to SChat!';
       welcomeSubtitle.textContent = 'Real-time messaging active across mobile & desktop.';
     } else {
+      if (attachBtnGlobal) attachBtnGlobal.style.display = 'flex';
+      if (recordVoiceBtnGlobal) recordVoiceBtnGlobal.style.display = 'flex';
       if (unreadCounts[activeRecipient.id]) {
         unreadCounts[activeRecipient.id] = 0;
       }
