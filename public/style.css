@@ -3343,3 +3343,11 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 
 .close-chat-btn { margin-right: 8px; font-size: 1.2rem; color: var(--text-muted); opacity: 0.8; transition: transform 0.2s, color 0.2s, opacity 0.2s; }
 .close-chat-btn:hover { color: #f87171; opacity: 1; transform: scale(1.1); }
+
+@media (max-width: 768px) {
+  .empty-state-branding h1 {
+    font-size: 1.8rem;
+    line-height: 1.3;
+    padding: 0 16px;
+  }
+}

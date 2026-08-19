@@ -1034,9 +1034,6 @@ hideElement(typingBanner);
         welcomeGreeting.innerHTML = `${greeting}, <span style="color: var(--primary-accent);">${currentUser.username}</span>!`;
       }
       document.querySelector('.chat-footer').style.display = '';
-      if (window.innerWidth <= 768) {
-        openSidebar();
-      }
       return;
     }
 
