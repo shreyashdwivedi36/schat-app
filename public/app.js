@@ -1023,11 +1023,11 @@ hideElement(typingBanner);
     document.querySelector('.chat-footer').style.display = '';
 
     const attachBtnGlobal = document.getElementById('attachBtn');
-    const recordVoiceBtnGlobal = document.getElementById('recordVoiceBtn');
+    const micBtnGlobal = document.getElementById('micBtn');
 
     if (!activeRecipient) {
       if (attachBtnGlobal) attachBtnGlobal.style.display = 'none';
-      if (recordVoiceBtnGlobal) recordVoiceBtnGlobal.style.display = 'none';
+      if (micBtnGlobal) micBtnGlobal.style.display = 'none';
       globalChannelBtn.classList.add('active');
       roomAvatar.textContent = '💬';
       roomTitle.textContent = 'Global Channel';
@@ -1036,7 +1036,7 @@ hideElement(typingBanner);
       welcomeSubtitle.textContent = 'Real-time messaging active across mobile & desktop.';
     } else {
       if (attachBtnGlobal) attachBtnGlobal.style.display = 'flex';
-      if (recordVoiceBtnGlobal) recordVoiceBtnGlobal.style.display = 'flex';
+      if (micBtnGlobal) micBtnGlobal.style.display = 'flex';
       if (unreadCounts[activeRecipient.id]) {
         unreadCounts[activeRecipient.id] = 0;
       }
