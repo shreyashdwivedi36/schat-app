@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.2.0] - 2026-08-19
+
+### ✨ Added
+- **Enterprise Media Deduplication**: Engineered a cryptographic SHA-256 Web Crypto hashing engine that creates a globally unique registry of files. Duplicate uploads bypass the network entirely, resulting in 0ms instant broadcasts for viral content and massive storage savings.
+- **Client-Side Media Compression**: Implemented an optimized HTML5 Canvas engine that intercepts heavy images and compresses them into lightweight 200KB WebP payloads before they even touch the network.
+- **Just-in-Time Blurred Previews**: Upgraded the UI rendering engine to dynamically construct Cloudinary URLs, delivering instant 20px blurred placeholders (`e_blur:200`) that elegantly crossfade into high-resolution images as they load in the background.
+- **Uncompressed Document Uploads**: Upgraded the attachment button to a WhatsApp-style floating dropdown menu, allowing users to choose between compressed Photos or full-resolution Documents.
+- **Automated Cloudinary Auto-Purge**: Built a lightweight Node.js cron job that securely interfaces with Cloudinary's Admin API to permanently delete expired media older than 30 days to protect free-tier storage.
+- **Native Context Menu Media Downloads**: Upgraded the right-click context menu to support direct Blob fetching, allowing users to save original-quality Voice Notes and Images directly to their physical device storage.
+- **Global Channel Media Moderation**: Disabled media uploading in the Global Chat to prevent uncontrolled storage bloat, restricting heavy Cloudinary uploads strictly to 1-on-1 private messaging.
+
 ## [v1.1.0] - 2026-08-18
 
 ### ✨ Added
