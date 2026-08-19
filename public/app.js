@@ -1734,10 +1734,21 @@ hideElement(typingBanner);
     if (e && e.preventDefault) e.preventDefault();
     activeContextMsg = { msg, msgCard, isOutgoing };
 
+    const isAudio = msg.content && (msg.content.startsWith('[AUDIO]') || msg.content.startsWith('data:audio/'));
+
     const ownerElements = msgContextMenuCard ? msgContextMenuCard.querySelectorAll('.owner-only') : [];
     ownerElements.forEach(el => {
-      el.style.display = (isOutgoing || currentUser.role === 'super_admin') ? 'flex' : 'none';
+      if (el.id === 'ctxEditBtn') {
+        el.style.display = (!isAudio && (isOutgoing || currentUser.role === 'super_admin')) ? 'flex' : 'none';
+      } else {
+        el.style.display = (isOutgoing || currentUser.role === 'super_admin') ? 'flex' : 'none';
+      }
     });
+
+    const ctxTranslateBtn = document.getElementById('ctxTranslateBtn');
+    const ctxCopyBtn = document.getElementById('ctxCopyBtn');
+    if (ctxTranslateBtn) ctxTranslateBtn.style.display = isAudio ? 'none' : 'flex';
+    if (ctxCopyBtn) ctxCopyBtn.style.display = isAudio ? 'none' : 'flex';
 
     const isPinned = Number(msgCard ? (msgCard.dataset.isPinned || msg.is_pinned) : msg.is_pinned) === 1;
     const ctxPinLabel = document.getElementById('ctxPinLabel');
