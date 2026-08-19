@@ -231,8 +231,8 @@ app.get('/api/media/check/:hash', async (req, res) => {
   try {
     const hash = req.params.hash;
     const result = await db.get('SELECT url FROM media_hashes WHERE hash = ?', [hash]);
-    if (result.rows.length > 0) {
-      return res.json({ url: result.rows[0].url });
+    if (result && result.url) {
+      return res.json({ url: result.url });
     }
     return res.status(404).json({ error: 'Not found' });
   } catch (err) {
@@ -1047,14 +1047,15 @@ setInterval(async () => {
     console.log('[Auto-Purge] Starting automated 30-day media cleanup...');
     const result = await db.all(`SELECT hash, url FROM media_hashes WHERE created_at < NOW() - INTERVAL '30 days'`);
     
-    if (result.rows.length === 0) {
+    const rows = result || [];
+    if (rows.length === 0) {
       console.log('[Auto-Purge] No expired media found.');
       return;
     }
 
     const auth = Buffer.from(process.env.CLOUDINARY_API_KEY + ':' + process.env.CLOUDINARY_API_SECRET).toString('base64');
     
-    for (const row of result.rows) {
+    for (const row of rows) {
       try {
         const parts = row.url.split('/');
         const filename = parts[parts.length - 1];
