@@ -1292,6 +1292,12 @@ body {
   cursor: pointer;
   padding: 6px;
   border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  transition: color 0.2s, transform 0.2s;
+}
+.input-action-btn:hover {
+  color: var(--text-main);
+  transform: scale(1.1);
 }
 
 .message-input-form input {
@@ -3155,31 +3161,64 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .attach-dropdown {
   position: absolute;
   bottom: 50px;
-  left: -20px;
-  background: var(--bg-tertiary);
+  left: 0;
+  background: var(--bg-glass);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
-  padding: 8px;
-  display: flex;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2), 0 0 0 1px rgba(255,255,255,0.05);
+  padding: 10px;
+  display: flex !important;
   flex-direction: column;
-  gap: 4px;
-  min-width: 220px;
+  gap: 6px;
+  min-width: 240px;
   z-index: 1000;
+  
+  /* Smooth buttery animation */
+  transform-origin: bottom left;
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  visibility: visible;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.attach-dropdown.hidden {
+  transform: scale(0.8) translateY(20px);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 .attach-dropdown-item {
-  padding: 10px 14px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  border-radius: 8px;
+  gap: 14px;
+  border-radius: 10px;
   cursor: pointer;
-  color: var(--text-primary);
-  font-size: 0.9rem;
-  transition: background 0.2s;
+  color: var(--text-main);
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.attach-dropdown-item .attach-icon {
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  transition: transform 0.2s, background 0.2s;
 }
 .attach-dropdown-item:hover {
   background: var(--bg-hover);
+  transform: translateX(4px);
+}
+.attach-dropdown-item:hover .attach-icon {
+  transform: scale(1.1);
+  background: var(--primary-accent);
+  color: white;
 }
 .msg-file-card {
   display: flex;
