@@ -1388,7 +1388,26 @@ hideElement(typingBanner);
           }
         } else if (data.type === 'msg_status_update') {
           if (data.status === 'read' || data.status === 'delivered') {
-            document.querySelectorAll('.msg-status-icon').forEach(icon => {
+            let icons = [];
+            if (data.messageId) {
+              const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
+              if (card) {
+                const icon = card.querySelector('.msg-status-icon');
+                if (icon) icons.push(icon);
+              }
+            } else if (data.recipient_id) {
+              const cards = document.querySelectorAll(`.message-card`);
+              cards.forEach(card => {
+                // If it's a bulk status update for a user reconnecting, 
+                // mark messages SENT TO that user as delivered
+                if (card.dataset.recipientId == data.recipient_id) {
+                  const icon = card.querySelector('.msg-status-icon');
+                  if (icon) icons.push(icon);
+                }
+              });
+            }
+
+            icons.forEach(icon => {
               if (data.status === 'read') {
                 icon.textContent = '✓✓';
                 icon.classList.remove('sent', 'delivered');
