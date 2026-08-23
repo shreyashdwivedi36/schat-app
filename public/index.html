@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=97">
+  <link rel="stylesheet" href="style.css?v=98">
 </head>
 <body>
 
@@ -512,6 +512,17 @@
                 <span class="dropdown-label">Auto-Translate</span>
                 <span id="dropdownAutoTranslateValue" class="dropdown-badge">Off</span>
               </div>
+              <div class="dropdown-item" id="dropdownSessionsBtn" role="menuitem">
+                <span class="dropdown-icon">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                </span>
+                <span class="dropdown-label">Active Sessions</span>
+                <span class="dropdown-badge" style="background: rgba(99, 102, 241, 0.2); color: #a5b4fc;">Devices</span>
+              </div>
               <div class="dropdown-item" id="dropdownExportBtn" role="menuitem">
                 <span class="dropdown-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
                 <span class="dropdown-label">Export Chat History</span>
@@ -703,7 +714,7 @@
     </div>
   </div>
 
-  <script src="motion-fx.js?v=97" type="module"></script>
+  <script src="motion-fx.js?v=98" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -778,7 +789,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=97" type="module"></script>
+  <script src="/app.js?v=98" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

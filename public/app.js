@@ -451,6 +451,7 @@ const startSChat = () => {
   const dropdownThemeValue = document.getElementById('dropdownThemeValue');
   const dropdownExportBtn = document.getElementById('dropdownExportBtn');
   const dropdownAboutBtn = document.getElementById('dropdownAboutBtn');
+  const dropdownSessionsBtn = document.getElementById('dropdownSessionsBtn');
 
   const profileModal = document.getElementById('profileModal');
   const myProfileCard = document.getElementById('myProfileCard');
@@ -618,6 +619,16 @@ const startSChat = () => {
   if (authAboutBtn) authAboutBtn.addEventListener('click', openAboutModal);
   if (sidebarAboutBtn) sidebarAboutBtn.addEventListener('click', openAboutModal);
   if (headerAboutBtn) headerAboutBtn.addEventListener('click', openAboutModal);
+  if (dropdownSessionsBtn) {
+    dropdownSessionsBtn.addEventListener('click', () => {
+      closeOptionsDropdown();
+      if (sessionsModal) {
+        showElement(sessionsModal);
+        fetchUserSessions();
+      }
+    });
+  }
+
   if (dropdownAboutBtn) dropdownAboutBtn.addEventListener('click', () => {
     openAboutModal();
     closeOptionsDropdown();
