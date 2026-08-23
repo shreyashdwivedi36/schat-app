@@ -247,47 +247,87 @@ const startSChat = () => {
 
   async function fetchAdminUsers() {
     if (!adminUserList) return;
-    adminUserList.innerHTML = '<div style="text-align:center; padding: 1rem;">Loading users...</div>';
+    adminUserList.innerHTML = '<div style="text-align:center; padding: 1rem; color: var(--text-muted);">Loading users...</div>';
     try {
       const res = await fetch('/api/admin/users', {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (res.ok) {
         const users = await res.json();
-        adminUserList.innerHTML = users.map(u => `
-          <div class="admin-user-item">
-            <div class="admin-user-info">
-              <div class="avatar">${u.avatar || '👤'}</div>
-              <div>
-                <div style="font-weight: 600;">${u.username}</div>
-                <div style="font-size: 0.75rem; color: var(--text-secondary);">${u.email} | ID: ${u.id}</div>
+        if (!users || users.length === 0) {
+          adminUserList.innerHTML = '<div style="text-align:center; padding: 1rem; color: var(--text-muted);">No registered users found.</div>';
+          return;
+        }
+        adminUserList.innerHTML = users.map(u => {
+          const isBanned = u.is_banned === 1;
+          const statusBadge = isBanned 
+            ? '<span class="admin-status-badge banned">Suspended</span>' 
+            : '<span class="admin-status-badge active">Active</span>';
+          
+          const actionBtn = isBanned
+            ? `<button class="unban-btn" onclick="unbanUser(${u.id}, '${escapeHtml(u.username)}')">Unban User</button>`
+            : `<button class="ban-btn" onclick="banUser(${u.id}, '${escapeHtml(u.username)}')">Ban User</button>`;
+
+          return `
+            <div class="admin-user-item ${isBanned ? 'is-banned-card' : ''}">
+              <div class="admin-user-info">
+                <div class="avatar">${u.avatar || '👤'}</div>
+                <div>
+                  <div style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                    ${escapeHtml(u.username)}
+                    ${statusBadge}
+                  </div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.email)} | ID: ${u.id}</div>
+                </div>
+              </div>
+              <div class="admin-user-actions">
+                ${actionBtn}
               </div>
             </div>
-            <button class="ban-btn" onclick="banUser(${u.id}, '${u.username}')">Ban User</button>
-          </div>
-        `).join('');
+          `;
+        }).join('');
       } else {
-        adminUserList.innerHTML = '<div style="color: #ef4444;">Failed to load users</div>';
+        adminUserList.innerHTML = '<div style="color: #ef4444; text-align:center; padding: 1rem;">Failed to load users</div>';
       }
     } catch (e) {
-      adminUserList.innerHTML = '<div style="color: #ef4444;">Network error</div>';
+      adminUserList.innerHTML = '<div style="color: #ef4444; text-align:center; padding: 1rem;">Network error</div>';
     }
   }
 
   window.banUser = async (userId, username) => {
-    if (!confirm(`Are you absolutely sure you want to permanently BAN and DELETE ${username} (ID: ${userId})?`)) return;
+    if (!confirm(`Are you sure you want to SUSPEND and BAN @${username} (ID: ${userId})? They will be immediately disconnected and prevented from logging in.`)) return;
     
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
-        method: 'DELETE',
+      const res = await fetch(`/api/admin/users/${userId}/ban`, {
+        method: 'POST',
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (res.ok) {
-        showAlert(`${username} has been permanently banned.`, 'success');
+        showAlert(`@${username} has been suspended.`, 'success');
         fetchAdminUsers();
       } else {
         const err = await res.json();
         showAlert(err.error || 'Failed to ban user', 'error');
+      }
+    } catch (e) {
+      showAlert('Network error', 'error');
+    }
+  };
+
+  window.unbanUser = async (userId, username) => {
+    if (!confirm(`Do you want to UNBAN and restore access for @${username} (ID: ${userId})?`)) return;
+    
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/unban`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        showAlert(`@${username} access has been restored.`, 'success');
+        fetchAdminUsers();
+      } else {
+        const err = await res.json();
+        showAlert(err.error || 'Failed to unban user', 'error');
       }
     } catch (e) {
       showAlert('Network error', 'error');
@@ -850,6 +890,7 @@ const startSChat = () => {
 
   // Channel & DM Tab Switching
   globalChannelBtn.addEventListener('click', () => {
+    closeSidebar();
     switchChatTab(null);
   });
 
@@ -1031,7 +1072,8 @@ const startSChat = () => {
   const switchChatTab = (recipient) => {
     activeRecipient = recipient;
     setReplyState(null);
-hideElement(typingBanner);
+    hideElement(typingBanner);
+    closeSidebar();
 
     document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
     globalChannelBtn.classList.remove('active');
@@ -1065,8 +1107,7 @@ hideElement(typingBanner);
       roomAvatar.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>';
       roomTitle.textContent = 'Global Channel';
       roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Realtime Active';
-      welcomeTitle.textContent = 'Welcome to SChat!';
-      welcomeSubtitle.textContent = 'Real-time messaging active across mobile & desktop.';
+// Global welcome header rendered by loadMessageHistory
     } else {
       if (attachBtnGlobal) attachBtnGlobal.style.display = 'flex';
       if (micBtnGlobal) micBtnGlobal.style.display = 'flex';
@@ -1081,8 +1122,7 @@ hideElement(typingBanner);
       roomAvatar.textContent = activeRecipient.avatar || '🔒';
       roomTitle.textContent = `DM with @${activeRecipient.username}`;
       roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Private Direct Message';
-      welcomeTitle.textContent = `Direct Message with ${activeRecipient.username}`;
-      welcomeSubtitle.textContent = `Private communication channel.`;
+// DM welcome header rendered by loadMessageHistory
 
       if (ws && ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({
@@ -2444,6 +2484,7 @@ const enterChat = async () => {
       `;
 
       li.addEventListener('click', () => {
+        closeSidebar();
         switchChatTab(u);
       });
 

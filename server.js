@@ -584,26 +584,50 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
 
 app.get('/api/admin/users', superAdminMiddleware, async (req, res) => {
   try {
-    const users = await db.all('SELECT id, username, email, avatar, created_at FROM users ORDER BY created_at DESC');
+    const users = await db.all('SELECT id, username, email, avatar, bio, is_banned, created_at FROM users ORDER BY created_at DESC');
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch users' });
   }
 });
 
+app.post('/api/admin/users/:id/ban', superAdminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    await db.run('UPDATE users SET is_banned = 1 WHERE id = ?', [userId]);
+    
+    // Broadcast to force immediate client logout if online
+    broadcast({ type: 'user_banned', userId });
+    
+    res.json({ message: 'User suspended successfully.' });
+  } catch (err) {
+    console.error('Ban user error:', err);
+    res.status(500).json({ error: 'Failed to ban user' });
+  }
+});
+
+app.post('/api/admin/users/:id/unban', superAdminMiddleware, async (req, res) => {
+  try {
+    const userId = parseInt(req.params.id, 10);
+    await db.run('UPDATE users SET is_banned = 0 WHERE id = ?', [userId]);
+    
+    res.json({ message: 'User unbanned successfully.' });
+  } catch (err) {
+    console.error('Unban user error:', err);
+    res.status(500).json({ error: 'Failed to unban user' });
+  }
+});
+
 app.delete('/api/admin/users/:id', superAdminMiddleware, async (req, res) => {
   try {
     const userId = parseInt(req.params.id, 10);
-    // Delete user's messages first to maintain integrity
-    await db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId]);
-    // Delete user
+    await db.run('DELETE FROM messages WHERE user_id = ? OR recipient_id = ?', [userId, userId]);
     await db.run('DELETE FROM users WHERE id = ?', [userId]);
     
-    // Broadcast to force client logout if online
     broadcast({ type: 'user_banned', userId });
-    
-    res.json({ message: 'User permanently deleted' });
+    res.json({ message: 'User permanently deleted.' });
   } catch (err) {
+    console.error('Delete user error:', err);
     res.status(500).json({ error: 'Failed to delete user' });
   }
 });

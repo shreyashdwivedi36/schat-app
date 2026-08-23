@@ -5,17 +5,17 @@
   "author_github": "https://github.com/shreyashdwivedi36",
   "author_linkedin": "https://www.linkedin.com/in/shreyash-dwivedi-0b11a2255/",
   "live_deployment": "https://schat-live.onrender.com",
-  "certificate_timestamp_utc": "2026-08-23T12:38:12.662456+00:00",
+  "certificate_timestamp_utc": "2026-08-23T13:10:00.827002+00:00",
   "legal_notice": "SChat\u2122 and all associated source code, design assets, and intellectual property are exclusively owned by Shreyash Dwivedi. Unauthorized copying, distribution, or trademark infringement is strictly prohibited.",
-  "root_fingerprint_sha256": "fce3f7fa240e72bd65641e78cc36c1d8417024765e485246dd2d9a21a46fb5ab",
+  "root_fingerprint_sha256": "83306c492f3d6042d4c0017ead9791d7bc1b012bf979813dfe02e2cf8ad4f8fc",
   "manifest_file_hashes": {
-    "server.js": "8acc2f4c0c1548f17b632b409ae8866ea951e5deb369aa3bdd01f4f1b2c755f4",
+    "server.js": "5056d0a10b8d8ed3c858dc3ac5a236e6cfc367c04c71bf999280338fd30f5851",
     "auth.js": "05602dade30198c0f3babed47122330facec1f86d87a890cefc3c327e87b48c1",
     "package.json": "a5f3873dbc9850804d7bd631b2ac2c85068c400c71d8e6481178f9231ff14f75",
-    "public/index.html": "d46ccb3500235c97815b1683bf2b118e9fc659ae06ca20460e71f1480d2da715",
-    "public/style.css": "051808bb0f8da3145efd2df85d87aab5e4a1c08ef52aae85041be1601670e8ea",
-    "public/app.js": "efcc3a17ccb8a828e52bfefd8da7c47c40e3812366adce108435511bd4d95e4e",
-    "public/sw.js": "eefebb00836dbb24ff06f4a09ffd2705c4c8de35944e755daa01713bd4ee720b",
+    "public/index.html": "c443dc4026fd8214361d5f67955e230eadb8eb06ef48addd30d1fa70b63d858a",
+    "public/style.css": "d7401b4e869b8f5917cf94f810e8494147b698e8cee9f9ed92f1229afe52bf80",
+    "public/app.js": "c4b5cd01771625b437ad2b790d728cfa986f6d798ddb7cb9d395908db53f0e81",
+    "public/sw.js": "bb65170be77441369e34521a3be68c3f417e6a06a79a2356b026de44ea357158",
     "public/manifest.json": "1adf47aed8eee4ca8db7ba06cfc5e218d95b486a276f4a4ec2694c12b1695df4"
   }
 }

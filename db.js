@@ -14,6 +14,7 @@ if (process.env.DATABASE_URL) {
     try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS users (
+          is_banned INTEGER DEFAULT 0,
           id SERIAL PRIMARY KEY,
           username VARCHAR(255) UNIQUE NOT NULL,
           email VARCHAR(255) UNIQUE NOT NULL,
@@ -67,6 +68,7 @@ if (process.env.DATABASE_URL) {
         );
       `);
       try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(255) DEFAULT 'Hey there! I am using SChat.';`); } catch(e){}
+      try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned INTEGER DEFAULT 0;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS recipient_id INTEGER DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel VARCHAR(50) DEFAULT 'global';`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_blurred INTEGER DEFAULT 0;`); } catch(e){}
@@ -142,6 +144,7 @@ if (process.env.DATABASE_URL) {
           password,
           avatar: avatar || '⚡',
           bio: bio || 'Hey there! I am using SChat.',
+          is_banned: 0,
           created_at: new Date().toISOString()
         };
         data.users.push(newUser);
@@ -216,6 +219,16 @@ if (process.env.DATABASE_URL) {
         data.blocked_users = data.blocked_users.filter(b => !(b.blocker_id === blocker_id && b.blocked_id === blocked_id));
         saveData();
         return { changes: 1 };
+      }
+      if (sql.includes('UPDATE users SET is_banned = ?')) {
+        const [is_banned, id] = params;
+        const user = data.users.find(u => Number(u.id) === Number(id));
+        if (user) {
+          user.is_banned = Number(is_banned);
+          saveData();
+          return { changes: 1 };
+        }
+        return { changes: 0 };
       }
       if (sql.includes('UPDATE users SET')) {
         const [avatar, bio, id] = params;

@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v89-trademark-branding';
+const CACHE_NAME = 'schat-v91-mobile-drawer-autoclose';
 
 const PRECACHE_URLS = [
   '/',
