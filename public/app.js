@@ -1687,6 +1687,7 @@ const enterChat = async () => {
             playSound('incoming');
             showAlert(`New chat request from @${data.requester.username}!`, 'info');
             fetchUserContacts();
+            if (typeof window.triggerRenderSearchResults === 'function') window.triggerRenderSearchResults();
           }
         } else if (data.type === 'contact_request_accepted') {
           if (currentUser && (Number(data.user1) === Number(currentUser.id) || Number(data.user2) === Number(currentUser.id))) {
@@ -2920,8 +2921,8 @@ const enterChat = async () => {
         updateOnlineUsers();
 
         // If search modal is open, re-render results live
-        if (addContactModal && addContactModal.style.display !== 'none' && contactSearchInput && contactSearchInput.value.trim()) {
-          renderContactSearchResults();
+        if (typeof window.triggerRenderSearchResults === 'function') {
+          window.triggerRenderSearchResults();
         }
       }
     } catch (e) {
@@ -3053,6 +3054,7 @@ const enterChat = async () => {
     };
 
     function renderContactSearchResults() {
+      if (!contactSearchInput || !contactSearchResults) return;
       const q = (contactSearchInput.value || '').trim().toLowerCase();
       if (!q) {
         contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">Type a username above to search.</div>';
@@ -3106,6 +3108,7 @@ const enterChat = async () => {
         `;
       }).join('');
     }
+    window.triggerRenderSearchResults = renderContactSearchResults;
 
     contactSearchInput.addEventListener('input', renderContactSearchResults);
     contactSearchBtn.addEventListener('click', renderContactSearchResults);

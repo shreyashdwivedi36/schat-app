@@ -412,13 +412,25 @@ if (process.env.DATABASE_URL) {
         return data.user_sessions.filter(s => Number(s.user_id) === Number(uId));
       }
       if (sql.includes('FROM contacts WHERE')) {
+        if (sql.includes('requester_id = ? OR recipient_id = ?')) {
+          const uId = Number(params[0]);
+          return data.contacts.filter(c => Number(c.requester_id) === uId || Number(c.recipient_id) === uId);
+        }
+        if (params.length === 4) {
+          const [u1, u2, u3, u4] = params;
+          return data.contacts.filter(c => (
+            (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
+            (Number(c.requester_id) === Number(u3) && Number(c.recipient_id) === Number(u4))
+          ));
+        }
         if (params.length === 2) {
           const [u1, u2] = params;
           return data.contacts.filter(c => (
             (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
             (Number(c.requester_id) === Number(u2) && Number(c.recipient_id) === Number(u1))
           ));
-        } else if (params.length === 1) {
+        }
+        if (params.length === 1) {
           const [uId] = params;
           return data.contacts.filter(c => Number(c.requester_id) === Number(uId) || Number(c.recipient_id) === Number(uId));
         }

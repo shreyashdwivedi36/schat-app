@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v100-universal-sessions';
+const CACHE_NAME = 'schat-v101-realtime-contacts-fix';
 
 const PRECACHE_URLS = [
   '/',
