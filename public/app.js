@@ -2647,6 +2647,31 @@ const enterChat = async () => {
     });
   }
 
+  
+  let cameFromProfileSettings = false;
+  const openSessionsFromProfileBtn = document.getElementById('openSessionsFromProfileBtn');
+  const backToProfileSettingsBtn = document.getElementById('backToProfileSettingsBtn');
+
+  if (openSessionsFromProfileBtn && sessionsModal) {
+    openSessionsFromProfileBtn.addEventListener('click', () => {
+      cameFromProfileSettings = true;
+      if (profileModal) hideElement(profileModal);
+      if (backToProfileSettingsBtn) {
+        backToProfileSettingsBtn.style.display = 'inline-block';
+        backToProfileSettingsBtn.classList.remove('hidden');
+      }
+      showElement(sessionsModal);
+      fetchUserSessions();
+    });
+  }
+
+  if (backToProfileSettingsBtn && sessionsModal && profileModal) {
+    backToProfileSettingsBtn.addEventListener('click', () => {
+      hideElement(sessionsModal);
+      showElement(profileModal);
+    });
+  }
+
   if (closeSessionsModal && sessionsModal) {
     closeSessionsModal.addEventListener('click', () => hideElement(sessionsModal));
   }

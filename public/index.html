@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=96">
+  <link rel="stylesheet" href="style.css?v=97">
 </head>
 <body>
 
@@ -317,6 +317,26 @@
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Save Profile Bio</button>
           </form>
+
+          <!-- Active Sessions Navigation Card -->
+          <div class="settings-sessions-card" id="openSessionsFromProfileBtn" role="button" tabindex="0">
+            <div class="settings-sessions-left">
+              <div class="settings-sessions-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                  <line x1="8" y1="21" x2="16" y2="21"></line>
+                  <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+              </div>
+              <div>
+                <div class="settings-sessions-title">Active Devices & Sessions</div>
+                <div class="settings-sessions-subtitle">View logged-in devices and revoke sessions</div>
+              </div>
+            </div>
+            <div class="settings-sessions-arrow">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </div>
+          </div>
 
           <hr style="margin: 18px 0; border: none; border-top: 1px solid var(--panel-border);">
 
@@ -683,7 +703,7 @@
     </div>
   </div>
 
-  <script src="motion-fx.js?v=96" type="module"></script>
+  <script src="motion-fx.js?v=97" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -758,7 +778,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=96" type="module"></script>
+  <script src="/app.js?v=97" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
