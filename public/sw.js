@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v49-live-update';
+const CACHE_NAME = 'schat-v89-trademark-branding';
 
 const PRECACHE_URLS = [
   '/',

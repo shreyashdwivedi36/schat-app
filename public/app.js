@@ -18,7 +18,7 @@ const startSChat = () => {
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let myMutedChats = [];
-  let activeRecipient = 'empty'; // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
+  let activeRecipient = 'empty'; // 'empty' = Privacy Standby Screen, null = Global Channel, { id, username, avatar } = Direct Message // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
   let activeReply = null; // null or { id, username, text }
   let unreadCounts = {};
   let totalUnreadDM = 0;
@@ -40,11 +40,12 @@ const startSChat = () => {
   init3DMotionBackground();
   MotionFX.boot();
 
-  // Register PWA Service Worker
+  // Register PWA Service Worker (Safe non-looping registration)
   if ('serviceWorker' in navigator) {
     let refreshing = false;
+    const hadController = Boolean(navigator.serviceWorker.controller);
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
+      if (hadController && !refreshing) {
         refreshing = true;
         window.location.reload();
       }
@@ -166,6 +167,11 @@ const startSChat = () => {
   if (adminBtn && adminModal) {
     adminBtn.addEventListener('click', async (e) => {
       e.stopPropagation();
+      if (!currentUser || currentUser.role !== 'super_admin') {
+        adminModal.style.display = 'none';
+        adminModal.classList.add('hidden');
+        return;
+      }
       adminModal.style.display = '';
       adminModal.classList.remove('hidden');
       const card = adminModal.querySelector('.modal-card');
@@ -624,11 +630,13 @@ const startSChat = () => {
   const updateThemeUI = () => {
     document.documentElement.setAttribute('data-theme', currentTheme);
     localStorage.setItem('schat_theme', currentTheme);
-    const icon = currentTheme === 'dark' ? '🌙' : '☀️';
+    const iconSvg = currentTheme === 'dark' 
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
     const label = currentTheme === 'dark' ? 'Dark' : 'Light';
-    if (themeModeBtn) themeModeBtn.textContent = icon;
-    if (headerThemeBtn) headerThemeBtn.textContent = icon;
-    if (dropdownThemeIcon) dropdownThemeIcon.textContent = icon;
+    if (themeModeBtn) themeModeBtn.innerHTML = iconSvg;
+    if (headerThemeBtn) headerThemeBtn.innerHTML = iconSvg;
+    if (dropdownThemeIcon) dropdownThemeIcon.innerHTML = iconSvg;
     if (dropdownThemeValue) dropdownThemeValue.textContent = label;
   };
 
@@ -747,7 +755,9 @@ const startSChat = () => {
   if (soundToggleBtn) {
     soundToggleBtn.addEventListener('click', () => {
       soundEnabled = !soundEnabled;
-      soundToggleBtn.textContent = soundEnabled ? '🔊' : '🔇';
+      soundToggleBtn.innerHTML = soundEnabled 
+        ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>'
+        : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>';
     });
   }
 
@@ -1009,6 +1019,15 @@ const startSChat = () => {
   globalChannelBtn.addEventListener('touchend', () => clearTimeout(channelLongPressTimer));
   globalChannelBtn.addEventListener('touchmove', () => clearTimeout(channelLongPressTimer));
 
+  
+  const getTimeGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) return 'Good morning';
+    if (hour >= 12 && hour < 17) return 'Good afternoon';
+    if (hour >= 17 && hour < 22) return 'Good evening';
+    return 'Welcome back';
+  };
+
   const switchChatTab = (recipient) => {
     activeRecipient = recipient;
     setReplyState(null);
@@ -1024,21 +1043,17 @@ hideElement(typingBanner);
 
     if (activeRecipient === 'empty') {
       chatWrapper.classList.add('empty-state');
-      
       const welcomeGreeting = document.getElementById('welcomeGreeting');
       if (welcomeGreeting && typeof currentUser !== 'undefined' && currentUser) {
-        const hour = new Date().getHours();
-        let greeting = 'Good evening';
-        if (hour < 12) greeting = 'Good morning';
-        else if (hour < 18) greeting = 'Good afternoon';
-        welcomeGreeting.innerHTML = `${greeting}, <span style="color: var(--primary-accent);">${currentUser.username}</span>!`;
+        const greeting = getTimeGreeting();
+        welcomeGreeting.innerHTML = `${greeting}, <span style="opacity: 0.9; font-weight: 600;">${currentUser.username}</span>.`;
       }
-      document.querySelector('.chat-footer').style.display = '';
       return;
     }
 
     chatWrapper.classList.remove('empty-state');
-    document.querySelector('.chat-footer').style.display = '';
+    const chatFooter = document.querySelector('.chat-footer');
+    if (chatFooter) chatFooter.style.display = '';
 
     const attachBtnGlobal = document.getElementById('attachBtn');
     const micBtnGlobal = document.getElementById('micBtn');
@@ -1047,7 +1062,7 @@ hideElement(typingBanner);
       if (attachBtnGlobal) attachBtnGlobal.style.display = 'none';
       if (micBtnGlobal) micBtnGlobal.style.display = 'none';
       globalChannelBtn.classList.add('active');
-      roomAvatar.textContent = '💬';
+      roomAvatar.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>';
       roomTitle.textContent = 'Global Channel';
       roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Realtime Active';
       welcomeTitle.textContent = 'Welcome to SChat!';
@@ -1085,9 +1100,9 @@ hideElement(typingBanner);
     totalUnreadDM = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
     if (totalUnreadDM > 0) {
-      document.title = `(${totalUnreadDM}) New DM — SChat`;
+      document.title = `(${totalUnreadDM}) New DM — SChat™`;
     } else {
-      document.title = 'SChat — Real-Time Messaging Platform';
+      document.title = 'SChat™ — Real-Time Messaging Platform';
     }
 
     for (const [userId, count] of Object.entries(unreadCounts)) {
@@ -1127,14 +1142,55 @@ hideElement(typingBanner);
 
     const adminBtn = document.getElementById('adminBtn');
     if (adminBtn) {
-      if (currentUser.role === 'super_admin') {
+      if (currentUser && currentUser.role === 'super_admin') {
         adminBtn.classList.remove('hidden');
+        adminBtn.style.display = 'inline-flex';
       } else {
         adminBtn.classList.add('hidden');
+        adminBtn.style.display = 'none';
       }
     }
 
-    const enterChat = async () => {
+    
+
+  
+  // ================= INTERACTIVE POINTER SPOTLIGHT (STANDBY) =================
+  const pointerHalo = document.getElementById('pointerHalo');
+  const chatMain = document.querySelector('.chat-main');
+
+  if (pointerHalo && chatMain) {
+    let haloTimeout = null;
+    const updateHalo = (clientX, clientY) => {
+      const rect = chatMain.getBoundingClientRect();
+      const x = clientX - rect.left - 300;
+      const y = clientY - rect.top - 300;
+      pointerHalo.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      pointerHalo.classList.add('active');
+
+      clearTimeout(haloTimeout);
+      haloTimeout = setTimeout(() => {
+        pointerHalo.classList.remove('active');
+      }, 1000);
+    };
+
+    chatMain.addEventListener('mousemove', (e) => {
+      if (activeRecipient === 'empty') {
+        updateHalo(e.clientX, e.clientY);
+      }
+    }, { passive: true });
+
+    chatMain.addEventListener('touchmove', (e) => {
+      if (activeRecipient === 'empty' && e.touches && e.touches[0]) {
+        updateHalo(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    chatMain.addEventListener('mouseleave', () => {
+      pointerHalo.classList.remove('active');
+    });
+  }
+
+const enterChat = async () => {
       await MotionFX.exit(authView, { y: -14 });
       authView.classList.add('hidden');
       authView.style.opacity = '';
@@ -1144,13 +1200,12 @@ hideElement(typingBanner);
 
       if (activeRecipient === 'empty') {
         document.querySelector('.chat-wrapper').classList.add('empty-state');
+        if (globalChannelBtn) globalChannelBtn.classList.remove('active');
+        document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
         const welcomeGreeting = document.getElementById('welcomeGreeting');
         if (welcomeGreeting && typeof currentUser !== 'undefined' && currentUser) {
-          const hour = new Date().getHours();
-          let greeting = 'Good evening';
-          if (hour < 12) greeting = 'Good morning';
-          else if (hour < 18) greeting = 'Good afternoon';
-          welcomeGreeting.innerHTML = `${greeting}, <span style="color: var(--primary-accent);">${currentUser.username}</span>!`;
+          const greeting = getTimeGreeting();
+          welcomeGreeting.innerHTML = `${greeting}, <span style="opacity: 0.9; font-weight: 600;">${currentUser.username}</span>.`;
         }
       }
 
@@ -1215,11 +1270,15 @@ hideElement(typingBanner);
       }
 
       const data = await res.json();
+      const introIcon = activeRecipient
+        ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>'
+        : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>';
+
       messagesFeed.innerHTML = `
-        <div class="welcome-banner">
-          <div class="spark-icon">✨</div>
-          <h3 id="welcomeTitle">${activeRecipient ? 'Direct Message with ' + activeRecipient.username : 'Welcome to SChat!'}</h3>
-          <p id="welcomeSubtitle">${activeRecipient ? 'Private communication channel.' : 'Real-time messaging active across mobile & desktop.'}</p>
+        <div class="chat-intro-watermark">
+          <div class="intro-icon-ring">${introIcon}</div>
+          <h3 id="welcomeTitle" class="intro-title">${activeRecipient ? activeRecipient.username : 'Global Channel'}</h3>
+          <p id="welcomeSubtitle" class="intro-subtitle">${activeRecipient ? 'Direct end-to-end conversation channel.' : 'Public broadcast channel. Real-time across all devices.'}</p>
         </div>
       `;
       lastRenderedDate = null;
@@ -3017,35 +3076,52 @@ function init3DMotionBackground() {
   let width, height;
   let particles = [];
   let shockwaves = [];
-  const maxParticles = window.innerWidth > 768 ? 75 : 40;
+  const maxParticles = window.innerWidth > 768 ? 60 : 35;
   let motionPaused = document.hidden;
-
-  const resizeCanvas = () => {
-    width = canvas.width = window.innerWidth;
-    height = canvas.height = window.innerHeight;
-  };
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
+  let activeFramesRemaining = 120;
+  let isLoopRunning = false;
 
   const pointer = {
-    x: width / 2,
-    y: height / 2,
-    targetX: width / 2,
-    targetY: height / 2,
+    x: 0,
+    y: 0,
+    targetX: 0,
+    targetY: 0,
     isActive: false,
-    radius: window.innerWidth > 768 ? 280 : 170
+    radius: window.innerWidth > 768 ? 260 : 160
   };
 
-  const updatePointer = (clientX, clientY) => {
+  function wakeAnimation(frames = 90) {
+    activeFramesRemaining = Math.max(activeFramesRemaining, frames);
+    if (!isLoopRunning && !motionPaused) {
+      isLoopRunning = true;
+      requestAnimationFrame(animate);
+    }
+  }
+
+  function resizeCanvas() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+    if (pointer.x === 0 && pointer.y === 0) {
+      pointer.x = pointer.targetX = width / 2;
+      pointer.y = pointer.targetY = height / 2;
+    }
+    wakeAnimation(60);
+  }
+
+  function updatePointer(clientX, clientY) {
     pointer.targetX = clientX;
     pointer.targetY = clientY;
     pointer.isActive = true;
+    wakeAnimation(75);
 
     if (aurora) {
       aurora.style.left = `${clientX}px`;
       aurora.style.top = `${clientY}px`;
     }
-  };
+  }
+
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
 
   window.addEventListener('mousemove', (e) => updatePointer(e.clientX, e.clientY), { passive: true });
   window.addEventListener('touchmove', (e) => {
@@ -3062,18 +3138,18 @@ function init3DMotionBackground() {
     init() {
       this.x = Math.random() * width;
       this.y = Math.random() * height;
-      this.vx = (Math.random() - 0.5) * 0.7;
-      this.vy = (Math.random() - 0.5) * 0.7;
-      this.radius = Math.random() * 2.2 + 1.2;
+      this.vx = (Math.random() - 0.5) * 0.6;
+      this.vy = (Math.random() - 0.5) * 0.6;
+      this.radius = Math.random() * 2 + 1;
       this.angle = Math.random() * Math.PI * 2;
-      this.angularSpeed = Math.random() * 0.015 + 0.005;
+      this.angularSpeed = Math.random() * 0.012 + 0.004;
       this.colorRatio = Math.random();
     }
 
     update() {
       this.angle += this.angularSpeed;
-      this.x += this.vx + Math.sin(this.angle) * 0.35;
-      this.y += this.vy + Math.cos(this.angle) * 0.35;
+      this.x += this.vx + Math.sin(this.angle) * 0.3;
+      this.y += this.vy + Math.cos(this.angle) * 0.3;
 
       if (this.x < -30) this.x = width + 30;
       if (this.x > width + 30) this.x = -30;
@@ -3086,7 +3162,7 @@ function init3DMotionBackground() {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < pointer.radius) {
-          const baseForce = window.innerWidth > 768 ? 8.5 : 4.5;
+          const baseForce = window.innerWidth > 768 ? 7.5 : 4.0;
           const force = (1 - dist / pointer.radius) * baseForce;
           const angle = Math.atan2(dy, dx);
           this.x -= Math.cos(angle) * force;
@@ -3113,9 +3189,9 @@ function init3DMotionBackground() {
       ctx.beginPath();
       ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
       if (theme === 'light') {
-        ctx.fillStyle = this.colorRatio > 0.5 ? 'rgba(124, 58, 237, 0.5)' : 'rgba(2, 132, 199, 0.5)';
+        ctx.fillStyle = this.colorRatio > 0.5 ? 'rgba(79, 70, 229, 0.45)' : 'rgba(2, 132, 199, 0.45)';
       } else {
-        ctx.fillStyle = this.colorRatio > 0.5 ? 'rgba(99, 102, 241, 0.8)' : 'rgba(14, 165, 233, 0.8)';
+        ctx.fillStyle = this.colorRatio > 0.5 ? 'rgba(99, 102, 241, 0.7)' : 'rgba(14, 165, 233, 0.7)';
       }
       ctx.fill();
     }
@@ -3136,15 +3212,20 @@ function init3DMotionBackground() {
       color: color,
       strength: 8
     });
+    wakeAnimation(120);
   };
 
   document.addEventListener('visibilitychange', () => {
     motionPaused = document.hidden;
-    if (!motionPaused) animate();
+    if (!motionPaused) wakeAnimation(60);
   });
 
-  const animate = () => {
-    if (motionPaused) return;
+  function animate() {
+    if (motionPaused) {
+      isLoopRunning = false;
+      return;
+    }
+
     ctx.clearRect(0, 0, width, height);
 
     pointer.x += (pointer.targetX - pointer.x) * 0.1;
@@ -3171,7 +3252,7 @@ function init3DMotionBackground() {
       }
     }
 
-    const maxConnectionDistance = window.innerWidth > 768 ? 150 : 95;
+    const maxConnectionDistance = window.innerWidth > 768 ? 140 : 90;
     for (let i = 0; i < particles.length; i++) {
       particles[i].update();
       particles[i].draw(currentTheme);
@@ -3182,12 +3263,12 @@ function init3DMotionBackground() {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist < maxConnectionDistance) {
-          const alpha = (1 - dist / maxConnectionDistance) * (currentTheme === 'light' ? 0.25 : 0.45);
+          const alpha = (1 - dist / maxConnectionDistance) * (currentTheme === 'light' ? 0.15 : 0.3);
           ctx.beginPath();
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(particles[j].x, particles[j].y);
           ctx.strokeStyle = currentTheme === 'light' 
-            ? `rgba(124, 58, 237, ${alpha})` 
+            ? `rgba(79, 70, 229, ${alpha})` 
             : `rgba(99, 102, 241, ${alpha})`;
           ctx.lineWidth = 1;
           ctx.stroke();
@@ -3200,25 +3281,29 @@ function init3DMotionBackground() {
         const pdist = Math.sqrt(pdx * pdx + pdy * pdy);
 
         if (pdist < pointer.radius) {
-          const palpha = (1 - pdist / pointer.radius) * 0.48;
+          const palpha = (1 - pdist / pointer.radius) * 0.35;
           ctx.beginPath();
           ctx.moveTo(particles[i].x, particles[i].y);
           ctx.lineTo(pointer.x, pointer.y);
           ctx.strokeStyle = currentTheme === 'light' 
-            ? `rgba(2, 132, 199, ${palpha})` 
-            : `rgba(14, 165, 233, ${palpha})`;
+            ? `rgba(79, 70, 229, ${palpha})` 
+            : `rgba(99, 102, 241, ${palpha})`;
           ctx.lineWidth = 1.2;
           ctx.stroke();
         }
       }
     }
 
-    requestAnimationFrame(animate);
-  };
+    activeFramesRemaining--;
+    if (activeFramesRemaining > 0 || shockwaves.length > 0) {
+      requestAnimationFrame(animate);
+    } else {
+      isLoopRunning = false;
+    }
+  }
 
-  animate();
+  wakeAnimation(120);
 }
-
 
 async function subscribeToPushNotifications() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -3339,3 +3424,64 @@ if (lightbox && lightboxCloseBtn) {
     }
   });
 }
+
+
+// ==========================================
+// SPATIAL UI & PHYSICS INTERACTION ENGINE
+// ==========================================
+
+const initSpatialPhysics = () => {
+  // 1. Magnetic Hover Effects
+  const magneticElements = document.querySelectorAll('[data-magnetic]');
+  magneticElements.forEach(el => {
+    el.addEventListener('mousemove', (e) => {
+      const rect = el.getBoundingClientRect();
+      const h = rect.width / 2;
+      const v = rect.height / 2;
+      const x = e.clientX - rect.left - h;
+      const y = e.clientY - rect.top - v;
+      
+      // Pull strength factor = 0.25
+      el.style.transform = `translate(${x * 0.25}px, ${y * 0.25}px) scale(1.02)`;
+    });
+    
+    el.addEventListener('mouseleave', () => {
+      // Spring bounce back to origin
+      el.style.transform = `translate(0px, 0px) scale(1)`;
+    });
+    
+    // Tactile press state
+    el.addEventListener('mousedown', () => {
+      el.style.transform = `translate(0px, 0px) scale(0.92)`;
+    });
+    el.addEventListener('mouseup', () => {
+      el.style.transform = `translate(0px, 0px) scale(1.02)`;
+    });
+  });
+
+  // 2. 3D Parallax Tilt Effects
+  const tiltElements = document.querySelectorAll('[data-tilt]');
+  tiltElements.forEach(el => {
+    el.addEventListener('mousemove', (e) => {
+      // Don't tilt if interacting with inner magnetic buttons
+      if (e.target.closest('[data-magnetic]')) return; 
+      
+      const rect = el.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      
+      // Max tilt of 6 degrees for elegance
+      const tiltX = y * -6; 
+      const tiltY = x * 6;
+      
+      el.style.transform = `perspective(1200px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) scale3d(1.01, 1.01, 1.01)`;
+    });
+
+    el.addEventListener('mouseleave', () => {
+      el.style.transform = `perspective(1200px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+    });
+  });
+};
+
+// Initialize physics engine on load
+window.addEventListener('DOMContentLoaded', initSpatialPhysics);

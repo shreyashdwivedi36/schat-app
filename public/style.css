@@ -9,25 +9,26 @@
  * ============================================================================
  */
 :root {
-  /* Shape Consistency Lock */
-  --radius-lg: 20px;
-  --radius-md: 14px;
-  --radius-sm: 8px;
+  /* Precision Radius Hierarchy (Linear Standard) */
+  --radius-lg: 16px;
+  --radius-md: 10px;
+  --radius-sm: 6px;
   --radius-full: 9999px;
 
-  /* Bespoke Obsidian & Tinted Slate Palette (Anti-Slop) */
-  --bg-dark: #080a11;
-  --panel-bg: rgba(13, 17, 28, 0.88);
-  --sidebar-bg: rgba(10, 13, 22, 0.92);
-  --header-bg: rgba(13, 17, 28, 0.94);
-  --input-bg: rgba(255, 255, 255, 0.045);
-  --panel-border: rgba(255, 255, 255, 0.08);
+  /* Refined Obsidian Slate Palette */
+  --bg-dark: #090a0f;
+  --panel-bg: rgba(13, 16, 24, 0.95);
+  --sidebar-bg: rgba(11, 14, 21, 0.96);
+  --header-bg: rgba(13, 16, 24, 0.94);
+  --input-bg: rgba(255, 255, 255, 0.035);
+  --panel-border: rgba(255, 255, 255, 0.06);
   
-  /* Restrained, Refined Accents (Electric Indigo & Slate Cyan) */
-  --primary-accent: #ffffff;
-  --primary-glow: rgba(255, 255, 255, 0.15);
-  --secondary-accent: #e2e8f0;
-  --secondary-glow: rgba(255, 255, 255, 0.05);
+  /* Refined Indigo Accent (Linear Pro) */
+  --primary-accent: #6366f1;
+  --primary-accent-hover: #4f46e5;
+  --primary-glow: rgba(99, 102, 241, 0.18);
+  --secondary-accent: #475569;
+  --secondary-glow: rgba(71, 85, 105, 0.08);
   
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -36,58 +37,63 @@
   --success-color: #10b981;
   --danger-color: #f43f5e;
   
-  --msg-incoming-bg: rgba(255, 255, 255, 0.04);
-  --welcome-bg: rgba(255, 255, 255, 0.025);
+  --msg-incoming-bg: #151923;
+  --msg-outgoing-bg: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  --welcome-bg: rgba(255, 255, 255, 0.02);
   
   --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   
-  /* Emil Kowalski Organic Physics-Based Motion Easing Curves */
+  /* Snappy 60fps Micro-Interaction Curves */
   --spring-easing: cubic-bezier(0.16, 1, 0.3, 1);
-  --spring-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --transition-fast: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  --hover-bg: rgba(255, 255, 255, 0.08);
-  --hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  --spring-bounce: cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  --hover-bg: rgba(255, 255, 255, 0.05);
+  --hover-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 /* 3D WebGL Motion Canvas Background */
 #bg3dCanvas {
+  display: none !important;
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100vh;
   pointer-events: none;
   z-index: 1;
-  opacity: 0.55;
+  opacity: 0.18;
   transition: opacity 0.5s ease;
 }
 
 [data-theme="light"] #bg3dCanvas {
-  opacity: 0.85;
+  display: none !important;
+  opacity: 0.12;
 }
 
-/* Light Mode Variables - Frosted Crystal Theme */
+/* Light Mode Variables - Clean Crisp Slate Theme */
 [data-theme="light"] {
-  --bg-dark: #f1f5f9;
-  --panel-bg: rgba(255, 255, 255, 0.45);
-  --sidebar-bg: rgba(255, 255, 255, 0.55);
-  --header-bg: rgba(255, 255, 255, 0.65);
-  --input-bg: rgba(255, 255, 255, 0.5);
-  --panel-border: rgba(255, 255, 255, 0.6);
+  --bg-dark: #f8fafc;
+  --panel-bg: #ffffff;
+  --sidebar-bg: #f8fafc;
+  --header-bg: #ffffff;
+  --input-bg: #f1f5f9;
+  --panel-border: rgba(0, 0, 0, 0.08);
   
-  --primary-accent: #0f172a;
-  --primary-glow: rgba(0, 0, 0, 0.1);
-  --secondary-accent: #334155;
-  --secondary-glow: rgba(0, 0, 0, 0.05);
+  --primary-accent: #4f46e5;
+  --primary-accent-hover: #4338ca;
+  --primary-glow: rgba(79, 70, 229, 0.15);
+  --secondary-accent: #64748b;
+  --secondary-glow: rgba(100, 116, 139, 0.08);
   
   --text-main: #0f172a;
-  --text-muted: #475569;
-  --text-dim: #64748b;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
   
-  --msg-incoming-bg: rgba(255, 255, 255, 0.95);
-  --welcome-bg: rgba(255, 255, 255, 0.8);
+  --msg-incoming-bg: #f1f5f9;
+  --msg-outgoing-bg: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  --welcome-bg: #ffffff;
   --hover-bg: rgba(0, 0, 0, 0.04);
-  --hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  --hover-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -99,14 +105,18 @@
 
 body {
   font-family: var(--font-family);
-  background: radial-gradient(circle at 15% 50%, rgba(255, 255, 255, 0.03), transparent 25%), radial-gradient(circle at 85% 30%, rgba(255, 255, 255, 0.04), transparent 25%), var(--bg-dark);
-    color: var(--text-main);
+  background-color: var(--bg-dark);
+  color: var(--text-main);
   width: 100vw;
   height: 100vh;
   height: 100dvh;
   overflow: hidden;
   position: relative;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="light"] body {
+  background-color: var(--bg-dark);
 }
 
 /* App Workspace Container */
@@ -467,74 +477,6 @@ body {
   background: rgba(255, 255, 255, 0.5) !important;
   backdrop-filter: blur(24px) saturate(180%) !important;
   -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-}
-
-/* --- EMPTY STATE (Welcome Screen) --- */
-.chat-wrapper.empty-state {
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  box-shadow: none !important;
-}
-.chat-wrapper.empty-state .chat-main {
-  background: transparent !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-.empty-state-branding {
-  display: none;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  color: var(--text-main);
-  z-index: 10;
-  pointer-events: none;
-  animation: floatEmptyState 6s ease-in-out infinite;
-}
-@keyframes floatEmptyState {
-  0%, 100% { transform: translate(-50%, -50%); }
-  50% { transform: translate(-50%, -55%); }
-}
-.empty-state-branding h1 {
-  font-size: 3rem;
-  font-weight: 800;
-  margin-bottom: 8px;
-  background: linear-gradient(135deg, var(--text-main) 0%, var(--text-muted) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.03em;
-}
-.empty-state-branding p {
-  font-size: 1.1rem;
-  color: var(--text-muted);
-}
-.empty-state-branding .logo-icon-lg {
-  font-size: 4rem;
-  margin-bottom: 16px;
-  filter: drop-shadow(0 10px 20px rgba(99, 102, 241, 0.4));
-}
-.chat-wrapper.empty-state .empty-state-branding {
-  display: block;
-}
-.chat-wrapper.empty-state .chat-header {
-  background: transparent !important;
-  border-bottom: none !important;
-  box-shadow: none !important;
-}
-.chat-wrapper.empty-state .room-avatar,
-.chat-wrapper.empty-state .room-text-details {
-  display: none !important;
-}
-.chat-wrapper.empty-state .welcome-banner,
-.chat-wrapper.empty-state .message-card,
-.chat-wrapper.empty-state .date-divider,
-.chat-wrapper.empty-state .pinned-banner,
-.chat-wrapper.empty-state .chat-footer {
-  display: none !important;
 }
 
 .sidebar-overlay {
@@ -2103,10 +2045,10 @@ body {
 
 [data-theme="light"] .channel-item.active,
 [data-theme="light"] .online-user-item.active {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.15) 0%, rgba(2, 132, 199, 0.1) 100%) !important;
-  border: 1px solid rgba(124, 58, 237, 0.3) !important;
-  color: #7c3aed !important;
-  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.12) !important;
+  background: rgba(79, 70, 229, 0.08) !important;
+  border: 1px solid rgba(79, 70, 229, 0.25) !important;
+  color: #4f46e5 !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.06) !important;
 }
 
 [data-theme="light"] .search-box input {
@@ -2462,6 +2404,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 
 /* ================= INTERACTIVE FLUID AURORA & CANVAS MOTION ================= */
 #bg3dCanvas {
+  display: none !important;
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -2473,10 +2416,12 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 }
 
 [data-theme="light"] #bg3dCanvas {
+  display: none !important;
   opacity: 0.45;
 }
 
 .interactive-aurora-glow {
+  display: none !important;
   position: fixed;
   width: 150vw;
   height: 150vw;
@@ -2525,6 +2470,7 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 
 /* ================= MOTION.DEV / 21ST.DEV LAYER ================= */
 .bg-beams {
+  display: none !important;
   position: fixed;
   inset: 0;
   pointer-events: none;
@@ -2713,27 +2659,38 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .message-card.incoming .msg-bubble {
   background: var(--msg-incoming-bg) !important;
   color: var(--text-main) !important;
-  border-radius: 20px 20px 20px 4px !important;
+  border-radius: 16px 16px 16px 4px !important;
   border: 1px solid var(--panel-border) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
 }
 
 .message-card.outgoing .msg-bubble {
-  background: var(--primary-accent) !important;
-  color: #000000 !important;
-  border-radius: 20px 20px 4px 20px !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: var(--msg-outgoing-bg) !important;
+  color: #ffffff !important;
+  border-radius: 16px 16px 4px 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.22) !important;
+}
+
+[data-theme="light"] .message-card.incoming .msg-bubble {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
 [data-theme="light"] .message-card.outgoing .msg-bubble {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
   color: #ffffff !important;
 }
 
-
 .auth-card-container {
-  background: rgba(13, 17, 28, 0.45) !important;
-  backdrop-filter: blur(24px) saturate(180%) !important;
-  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
-  box-shadow: 0 25px 50px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.15) !important;
+  background: #0d111a !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 16px !important;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.03) !important;
 }
 [data-theme="light"] .auth-card-container {
   background: rgba(255, 255, 255, 0.5) !important;
@@ -3341,13 +3298,910 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   100% { left: 200%; }
 }
 
-.close-chat-btn { margin-right: 8px; font-size: 1.2rem; color: var(--text-muted); opacity: 0.8; transition: transform 0.2s, color 0.2s, opacity 0.2s; }
-.close-chat-btn:hover { color: #f87171; opacity: 1; transform: scale(1.1); }
+.close-chat-btn { 
+  margin-right: 6px; 
+  font-size: 0.95rem; 
+  color: var(--text-muted); 
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.close-chat-btn:hover { 
+  color: #f87171; 
+  background: rgba(248, 113, 113, 0.1); 
+  border-color: rgba(248, 113, 113, 0.2); 
+  transform: scale(1.05); 
+}
+
+
+.logo-icon,
+.send-btn,
+.btn-primary {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.25) !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.send-btn:hover,
+.btn-primary:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35);
+}
+
+
+/* ================= TACTILE MICRO-INTERACTION PHYSICS ================= */
+button, .btn, .icon-btn, .quick-rx-btn, .switch-btn, .toggle-pwd-btn, .owner-badge-btn {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+button:active, 
+.btn:active, 
+.icon-btn:active, 
+.quick-rx-btn:active, 
+.switch-btn:active,
+.owner-badge-btn:active {
+  transform: scale(0.95) !important;
+  transition: transform 0.08s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.channel-item, 
+.online-user-item {
+  transition: transform 0.18s var(--spring-easing), background 0.15s ease, border-color 0.15s ease !important;
+}
+
+.channel-item:hover, 
+.online-user-item:hover {
+  transform: translateX(4px) !important;
+}
+
+.channel-item:active, 
+.online-user-item:active {
+  transform: scale(0.98) translateX(2px) !important;
+  transition: transform 0.08s ease !important;
+}
+
+.quick-rx-btn {
+  transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+.quick-rx-btn:hover {
+  transform: scale(1.22) translateY(-2px) !important;
+}
+
+.logo-icon, 
+.empty-state-branding .logo-icon-lg {
+  transition: transform 0.25s var(--spring-easing) !important;
+}
+
+.logo-icon:hover, 
+.empty-state-branding .logo-icon-lg:hover {
+  transform: scale(1.05) !important;
+}
+
+
+
+/* ================= PREMIUM HOVER & TOUCH INTERACTIVE PHYSICS ================= */
+
+/* 1. Global Touch & Press Feedback */
+button, .btn, .icon-btn, .quick-rx-btn, .switch-btn, .toggle-pwd-btn, 
+.owner-badge-btn, .channel-item, .online-user-item, .avatar-opt, 
+.msg-action-btn, .msg-options-trigger-btn, .dropdown-item, .context-item {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+button:active, 
+.btn:active, 
+.icon-btn:active, 
+.switch-btn:active,
+.owner-badge-btn:active {
+  transform: scale(0.94) translateY(0) !important;
+  transition: transform 0.08s ease !important;
+}
+
+/* 2. Primary Buttons (Send, Login, Register) */
+.btn-primary, .send-btn {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, filter 0.2s ease, background 0.2s ease !important;
+}
+.btn-primary:hover, .send-btn:hover {
+  transform: translateY(-2.5px) scale(1.02) !important;
+  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.45) !important;
+  filter: brightness(1.1) !important;
+}
+
+/* 3. Sidebar Navigation & User Cards */
+.channel-item, .online-user-item {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease !important;
+}
+.channel-item:hover, .online-user-item:hover {
+  transform: translateX(6px) scale(1.01) !important;
+  background: rgba(99, 102, 241, 0.1) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+[data-theme="light"] .channel-item:hover, 
+[data-theme="light"] .online-user-item:hover {
+  background: rgba(79, 70, 229, 0.08) !important;
+  border-color: rgba(79, 70, 229, 0.25) !important;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.08) !important;
+}
+.channel-item:active, .online-user-item:active {
+  transform: scale(0.97) translateX(3px) !important;
+  transition: transform 0.08s ease !important;
+}
+
+/* 4. Action Icon Buttons (Settings, Close Chat, Audio, Theme Toggle) */
+.icon-btn, .close-chat-btn, .options-btn, .mobile-toggle-btn {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+}
+.icon-btn:hover, .options-btn:hover {
+  transform: scale(1.14) rotate(4deg) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="light"] .icon-btn:hover, 
+[data-theme="light"] .options-btn:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+.close-chat-btn:hover {
+  transform: scale(1.15) rotate(90deg) !important;
+  background: rgba(248, 113, 113, 0.15) !important;
+  color: #f87171 !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+/* 5. Message Bubbles Hover Elevation */
+.message-card .msg-bubble {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+.message-card:hover .msg-bubble {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+}
+[data-theme="light"] .message-card:hover .msg-bubble {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 6. Quick Emoji Reactions Bouncy Pop */
+.quick-rx-btn {
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease !important;
+}
+.quick-rx-btn:hover {
+  transform: scale(1.38) translateY(-4px) !important;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.4)) !important;
+}
+.quick-rx-btn:active {
+  transform: scale(0.9) !important;
+}
+
+/* 7. Avatars & Logos Playful Hover Physics */
+.avatar-opt, .msg-avatar, .user-avatar, .room-avatar {
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+.avatar-opt:hover, .msg-avatar:hover {
+  transform: scale(1.14) rotate(-3deg) !important;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35) !important;
+  border-color: var(--primary-accent) !important;
+}
+
+.logo-icon, .empty-state-branding .logo-icon-lg {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease !important;
+}
+.logo-icon:hover, .empty-state-branding .logo-icon-lg:hover {
+  transform: scale(1.1) rotate(3deg) !important;
+  filter: drop-shadow(0 10px 30px rgba(99, 102, 241, 0.55)) !important;
+}
+
+/* 8. Context Menu & Dropdown Items */
+.dropdown-item, .context-item {
+  transition: transform 0.16s ease, background 0.14s ease, color 0.14s ease !important;
+}
+.dropdown-item:hover, .context-item:hover {
+  transform: translateX(4px) !important;
+  background: rgba(99, 102, 241, 0.1) !important;
+  color: var(--text-main) !important;
+}
+.dropdown-item:active, .context-item:active {
+  transform: scale(0.98) !important;
+}
+
+
+
+
+  .quick-action-card {
+    flex-direction: row;
+    text-align: left;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+}
+
+
+
+/* ================= TELEGRAM/WHATSAPP STYLE WELCOME PILL ================= */
+.welcome-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  letter-spacing: -0.01em;
+}
+
+.pill-lock {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+[data-theme="light"] .welcome-pill {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--text-muted);
+}
+
+
+
+
+
+
+/* ================= PRIVACY STANDBY SHIELD ================= */
+.empty-state-branding {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-main);
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.empty-state-branding .logo-icon-lg {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(79, 70, 229, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.2);
+  transition: transform 0.25s var(--spring-bounce);
+}
+
+.empty-state-branding .logo-icon-lg:hover {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.empty-state-branding .brand-logo-img-lg {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.empty-state-branding h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-main);
+  letter-spacing: -0.025em;
+}
+
+.empty-state-branding p {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  margin-bottom: 16px;
+}
+
+[data-theme="light"] .empty-state-branding h1 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .empty-state-branding h1 span {
+  color: #4f46e5 !important;
+}
+
+[data-theme="light"] .empty-state-branding p {
+  color: #64748b !important;
+}
+
+.welcome-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  letter-spacing: -0.01em;
+}
+
+[data-theme="light"] .welcome-pill {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  color: var(--text-muted);
+}
+
+/* Privacy Shield Concealment */
+.chat-wrapper.empty-state .empty-state-branding {
+  display: block;
+}
+
+.chat-wrapper.empty-state .chat-header {
+  background: transparent !important;
+  border-bottom: none !important;
+  box-shadow: none !important;
+}
+
+.chat-wrapper.empty-state .room-avatar,
+.chat-wrapper.empty-state .room-text-details,
+.chat-wrapper.empty-state .welcome-banner,
+.chat-wrapper.empty-state .chat-intro-watermark,
+.chat-wrapper.empty-state .messages-feed,
+.chat-wrapper.empty-state .message-card,
+.chat-wrapper.empty-state .date-divider,
+.chat-wrapper.empty-state .pinned-banner,
+.chat-wrapper.empty-state .chat-footer {
+  display: none !important;
+}
+
+
+
+/* ================= INTERACTIVE POINTER SPOTLIGHT (STANDBY) ================= */
+.interactive-pointer-halo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(99, 102, 241, 0.06) 45%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+  transform: translate3d(-1000px, -1000px, 0);
+  transition: opacity 0.3s ease;
+  z-index: 0;
+}
+
+.interactive-pointer-halo.active {
+  opacity: 1;
+}
+
+[data-theme="light"] .interactive-pointer-halo {
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.14) 0%, rgba(79, 70, 229, 0.04) 45%, transparent 70%);
+}
+
+.empty-state-branding .logo-icon-lg {
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.25s ease !important;
+}
+
+.empty-state-branding .logo-icon-lg:hover {
+  transform: scale(1.14) rotate(4deg) translateY(-3px) !important;
+  box-shadow: 0 16px 36px rgba(99, 102, 241, 0.38) !important;
+  border-color: #6366f1 !important;
+}
+
+.empty-state-branding .logo-icon-lg:active {
+  transform: scale(0.95) !important;
+}
+
+.pill-spark {
+  color: #f59e0b;
+  font-size: 0.85rem;
+}
+
+
+
+/* ================= NEXT-GEN NATIVE PREMIUM CRAFT SYSTEM ================= */
+
+/* 1. Floating Intelligent Action Capsule (Input Bar) */
+.chat-footer {
+  padding: 0 20px 20px 20px !important;
+  background: transparent !important;
+  border-top: none !important;
+  position: relative;
+  z-index: 10;
+}
+
+.chat-input-container {
+  background: rgba(14, 18, 28, 0.88) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  padding: 6px 10px 6px 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease !important;
+}
+
+.chat-input-container:focus-within {
+  border-color: rgba(99, 102, 241, 0.55) !important;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.55), 0 0 30px rgba(99, 102, 241, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  transform: translateY(-1.5px) !important;
+}
+
+[data-theme="light"] .chat-input-container {
+  background: rgba(255, 255, 255, 0.92) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+[data-theme="light"] .chat-input-container:focus-within {
+  border-color: rgba(79, 70, 229, 0.45) !important;
+  box-shadow: 0 20px 44px rgba(79, 70, 229, 0.14), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+/* 2. Sculpted Asymmetrical Message Bubbles */
+.message-card.outgoing .msg-bubble {
+  border-radius: 18px 18px 4px 18px !important;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 18px rgba(79, 70, 229, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.message-card.incoming .msg-bubble {
+  border-radius: 18px 18px 18px 4px !important;
+  background: rgba(18, 22, 34, 0.85) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="light"] .message-card.incoming .msg-bubble {
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.07) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
+
+/* 3. Mature Minimalist Standby State */
+.empty-state-branding {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; /* Let clicks pass to the halo */
+  z-index: 10;
+  text-align: center;
+}
+
+.mature-logo {
+  margin-bottom: 24px;
+  opacity: 0.9;
+  transform: scale(0.85); /* Slightly smaller logo */
+}
+
+.mature-greeting {
+  font-size: 1.4rem;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+[data-theme="light"] .mature-greeting {
+  color: rgba(0, 0, 0, 0.85);
+}
+
+.mature-subtext {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.45);
+  letter-spacing: 0.01em;
+  margin: 0 0 32px 0;
+  font-weight: 400;
+}
+
+[data-theme="light"] .mature-subtext {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.mature-pill {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.35) !important;
+  font-size: 0.75rem !important;
+  padding: 6px 14px !important;
+  border-radius: 6px !important;
+  letter-spacing: 0.02em;
+  font-weight: 500;
+  opacity: 0.8;
+}
+
+[data-theme="light"] .mature-pill {
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  color: rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Ensure the pill spark isn't too bright */
+.mature-pill .pill-spark {
+  opacity: 0.6;
+}
+
+
+
+/* Spatial 3D Physics */
+[data-tilt] {
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.6s var(--spring-stiff), box-shadow 0.4s ease, border-color 0.4s ease !important;
+}
+
+[data-tilt] > * {
+  transform: translateZ(10px);
+  transition: transform 0.6s var(--spring-stiff);
+}
+
+[data-magnetic] {
+  will-change: transform;
+  transition: transform 0.5s var(--spring-bouncy), background 0.2s ease, opacity 0.2s ease !important;
+}
+
+
+
+/* ========================================================
+   ULTRA-PREMIUM HIGH-GRADE DESIGN SYSTEM (Linear / Raycast)
+   ======================================================== */
+
+/* 1. Global Ambient Mesh Background */
+body {
+  background-color: #080a11 !important;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(79, 70, 229, 0.04) 0px, transparent 50%) !important;
+  color: #f1f5f9;
+  letter-spacing: -0.012em;
+}
+
+[data-theme="light"] body {
+  background-color: #f8fafc !important;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.04) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(241, 245, 249, 1) 0px, transparent 50%) !important;
+}
+
+/* 2. Unified SVG Icons Formatting */
+.icon-btn svg,
+.channel-icon svg,
+.search-icon svg,
+.dropdown-icon svg,
+.control-icon svg,
+.input-action-btn svg,
+.context-icon svg,
+.pinned-icon svg,
+.reply-icon svg,
+.attach-icon svg {
+  display: inline-block;
+  vertical-align: middle;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.85px;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  transition: all 0.2s var(--spring-stiff);
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-main) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme="light"] .icon-btn {
+  background: rgba(0, 0, 0, 0.03) !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  color: #475569 !important;
+}
+
+[data-theme="light"] .icon-btn:hover {
+  background: rgba(0, 0, 0, 0.06) !important;
+  color: #0f172a !important;
+}
+
+/* 3. Refined Sidebar Navigation */
+.chat-sidebar {
+  background: rgba(10, 13, 22, 0.82) !important;
+  backdrop-filter: blur(24px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(180%) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+[data-theme="light"] .chat-sidebar {
+  background: rgba(255, 255, 255, 0.85) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.channel-item, .user-item {
+  border-radius: 10px !important;
+  padding: 8px 12px !important;
+  transition: all 0.2s var(--spring-stiff) !important;
+  border: 1px solid transparent !important;
+}
+
+.channel-item:hover, .user-item:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.channel-item.active, .user-item.active {
+  background: rgba(99, 102, 241, 0.12) !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* 4. Minimalist Chat Intro Watermark */
+.chat-intro-watermark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 20px 24px;
+  opacity: 0.85;
+}
+
+.intro-icon-ring {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-accent);
+  margin-bottom: 14px;
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.12);
+}
+
+.intro-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+}
+
+.intro-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  max-width: 360px;
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* 5. Minimalist Header */
+.chat-header {
+  background: rgba(10, 13, 22, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+  padding: 10px 20px !important;
+}
+
+[data-theme="light"] .chat-header {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+.room-title {
+  font-size: 0.98rem !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.015em !important;
+}
+
+.room-subtitle {
+  font-size: 0.75rem !important;
+  color: var(--text-dim) !important;
+}
+
+/* 6. Composer Quick Toggles */
+.input-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.control-toggle-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 4px 10px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  font-size: 0.75rem !important;
+  font-weight: 500 !important;
+  color: var(--text-muted) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.control-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-main) !important;
+}
+
+.control-toggle-btn.active {
+  background: rgba(99, 102, 241, 0.15) !important;
+  border-color: rgba(99, 102, 241, 0.3) !important;
+  color: var(--primary-accent) !important;
+}
+
+.control-select-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 2px 8px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  font-size: 0.75rem !important;
+  color: var(--text-muted) !important;
+}
+
+.control-select {
+  background: transparent !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  font-size: 0.75rem !important;
+  font-family: inherit !important;
+  outline: none !important;
+  cursor: pointer !important;
+}
+
+.control-select option {
+  background: #0f131f !important;
+  color: #f1f5f9 !important;
+}
+
+
+/* ================= ZERO-LEAK VISIBILITY GUARDS ================= */
+.hidden,
+[hidden],
+.icon-btn.hidden,
+.logout-btn.hidden,
+.modal.hidden,
+.dropdown-item.hidden,
+.about-modal.hidden {
+  display: none !important;
+}
+
+
+/* ================= RESPONSIVE MOBILE BUTTON GUARDS ================= */
+.mobile-toggle-btn,
+.mobile-only-btn {
+  display: none !important;
+}
 
 @media (max-width: 768px) {
-  .empty-state-branding h1 {
-    font-size: 1.8rem;
-    line-height: 1.3;
-    padding: 0 16px;
+  .mobile-toggle-btn,
+  .mobile-only-btn {
+    display: inline-flex !important;
   }
+}
+
+
+/* ================= LIGHT MODE HOVER & CONTRAST ENHANCEMENTS ================= */
+[data-theme="light"] .interactive-pointer-halo {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(99, 102, 241, 0.1) 35%, rgba(99, 102, 241, 0.02) 65%, transparent 75%) !important;
+  mix-blend-mode: multiply !important;
+}
+
+[data-theme="light"] .channel-item:hover,
+[data-theme="light"] .online-user-item:hover,
+[data-theme="light"] .user-item:hover {
+  background: rgba(99, 102, 241, 0.08) !important;
+  border-color: rgba(99, 102, 241, 0.2) !important;
+  color: #1e1b4b !important;
+}
+
+[data-theme="light"] .icon-btn:hover {
+  background: rgba(99, 102, 241, 0.1) !important;
+  border-color: rgba(99, 102, 241, 0.25) !important;
+  color: #4338ca !important;
+}
+
+[data-theme="light"] .control-toggle-btn:hover {
+  background: rgba(99, 102, 241, 0.08) !important;
+  color: #1e1b4b !important;
+}
+
+[data-theme="light"] .empty-state-branding .logo-icon-lg:hover {
+  box-shadow: 0 16px 36px rgba(79, 70, 229, 0.25) !important;
+  border-color: #6366f1 !important;
+}
+
+
+/* ================= BORDERLESS FLOATING EMBLEM ================= */
+.empty-state-branding .logo-icon-lg,
+.empty-state-branding .mature-logo {
+  width: auto !important;
+  height: auto !important;
+  margin: 0 auto 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  cursor: pointer !important;
+  transition: transform 0.35s var(--spring-bouncy), filter 0.3s ease !important;
+}
+
+.empty-state-branding .logo-icon-lg:hover,
+.empty-state-branding .mature-logo:hover {
+  transform: scale(1.12) rotate(2deg) translateY(-2px) !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.empty-state-branding .brand-logo-img-lg {
+  width: 58px !important;
+  height: 58px !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 8px 24px rgba(99, 102, 241, 0.45)) !important;
+  transition: filter 0.3s ease, transform 0.3s ease !important;
+}
+
+.empty-state-branding .logo-icon-lg:hover .brand-logo-img-lg,
+.empty-state-branding .mature-logo:hover .brand-logo-img-lg {
+  filter: drop-shadow(0 14px 34px rgba(99, 102, 241, 0.72)) !important;
+}
+
+[data-theme="light"] .empty-state-branding .brand-logo-img-lg {
+  filter: drop-shadow(0 8px 20px rgba(79, 70, 229, 0.3)) !important;
+}
+
+[data-theme="light"] .empty-state-branding .logo-icon-lg:hover .brand-logo-img-lg,
+[data-theme="light"] .empty-state-branding .mature-logo:hover .brand-logo-img-lg {
+  filter: drop-shadow(0 14px 30px rgba(79, 70, 229, 0.5)) !important;
 }
