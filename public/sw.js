@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v99-session-auto-provisioning';
+const CACHE_NAME = 'schat-v100-universal-sessions';
 
 const PRECACHE_URLS = [
   '/',

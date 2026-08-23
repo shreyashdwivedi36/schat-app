@@ -3823,6 +3823,15 @@ hideElement(typingBanner);
     });
   });
 
+  
+  // Register background session heartbeat for multi-device monitoring
+  if (authToken) {
+    fetch('/api/sessions/heartbeat', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${authToken}` }
+    }).catch(() => {});
+  }
+
   if (authToken && currentUser) {
     initializeChatSession();
   } else {

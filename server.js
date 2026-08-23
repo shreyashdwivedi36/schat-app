@@ -623,38 +623,65 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   } catch (e) {}
 })();
 
+
+// ==========================================
+// UNIVERSAL MULTI-DEVICE SESSION TRACKER
+// ==========================================
+async function upsertUserSession(userId, sessionId, userAgentHeader, ipAddress) {
+  if (!userId) return null;
+  try {
+    const userAgentInfo = parseUserAgent(userAgentHeader || '');
+    const ip = (ipAddress || '127.0.0.1').split(',')[0].trim();
+    // Device-specific unique deterministic session ID if not in JWT
+    const sessId = sessionId || `sess_${userId}_${Buffer.from(userAgentInfo.device + userAgentInfo.browser).toString('hex').slice(0, 16)}`;
+
+    const existing = await db.get('SELECT id FROM user_sessions WHERE user_id = ? AND session_id = ?', [userId, sessId]);
+    if (existing) {
+      await db.run('UPDATE user_sessions SET last_active = ?, ip_address = ?, device = ?, browser = ? WHERE id = ?', [new Date().toISOString(), ip, userAgentInfo.device, userAgentInfo.browser, existing.id]);
+    } else {
+      await db.run(
+        'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address, last_active) VALUES (?, ?, ?, ?, ?, ?)',
+        [sessId, userId, userAgentInfo.device, userAgentInfo.browser, ip, new Date().toISOString()]
+      );
+    }
+    return sessId;
+  } catch (e) {
+    console.error('Session upsert error:', e);
+    return null;
+  }
+}
+
 // ==========================================
 // ACTIVE SESSIONS & DEVICE MANAGEMENT API
 // ==========================================
 
+
+app.post('/api/sessions/heartbeat', authMiddleware, async (req, res) => {
+  try {
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1').split(',')[0].trim();
+    await upsertUserSession(req.user.id, req.user.sessionId, req.headers['user-agent'], ip);
+    res.json({ ok: true });
+  } catch (e) {
+    res.json({ ok: false });
+  }
+});
+
 app.get('/api/sessions', authMiddleware, async (req, res) => {
   try {
-    let sessions = await db.all('SELECT session_id, device, browser, ip_address, last_active, created_at FROM user_sessions WHERE user_id = ? ORDER BY created_at DESC', [req.user.id]);
-    const currentSessionId = req.user.sessionId || `sess_${req.user.id}_active`;
-    const hasCurrent = (sessions || []).some(s => s.session_id === currentSessionId);
-    
-    // Auto-register current viewing session on the fly if not yet recorded
-    if (!hasCurrent) {
-      const userAgentInfo = parseUserAgent(req.headers['user-agent'] || '');
-      const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1').split(',')[0].trim();
-      
-      await db.run(
-        'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address, last_active) VALUES (?, ?, ?, ?, ?, ?)',
-        [currentSessionId, req.user.id, userAgentInfo.device, userAgentInfo.browser, ip, new Date().toISOString()]
-      );
-      
-      sessions = await db.all('SELECT session_id, device, browser, ip_address, last_active, created_at FROM user_sessions WHERE user_id = ? ORDER BY created_at DESC', [req.user.id]);
-    }
+    const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1').split(',')[0].trim();
+    const currentSessionId = await upsertUserSession(req.user.id, req.user.sessionId, req.headers['user-agent'], ip);
+
+    const sessions = await db.all('SELECT session_id, device, browser, ip_address, last_active, created_at FROM user_sessions WHERE user_id = ? ORDER BY last_active DESC', [req.user.id]);
     
     const formatted = (sessions || []).map(s => ({
       ...s,
-      is_current: s.session_id === currentSessionId || (!req.user.sessionId && s.session_id.includes('active'))
+      is_current: s.session_id === currentSessionId || s.session_id === req.user.sessionId
     }));
-    
+
     if (!formatted.some(s => s.is_current) && formatted.length > 0) {
       formatted[0].is_current = true;
     }
-    
+
     res.json({ sessions: formatted });
   } catch (err) {
     console.error('Get sessions error:', err);
