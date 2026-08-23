@@ -605,6 +605,24 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
 });
 
 
+
+// Auto-seed past chat history into contacts table
+(async () => {
+  try {
+    const pastConversations = await db.all('SELECT DISTINCT user_id, recipient_id FROM messages WHERE recipient_id IS NOT NULL');
+    for (const conv of (pastConversations || [])) {
+      const u1 = Math.min(Number(conv.user_id), Number(conv.recipient_id));
+      const u2 = Math.max(Number(conv.user_id), Number(conv.recipient_id));
+      if (u1 && u2 && u1 !== u2) {
+        const existing = await db.get('SELECT id FROM contacts WHERE (requester_id = ? AND recipient_id = ?) OR (requester_id = ? AND recipient_id = ?)', [u1, u2, u2, u1]);
+        if (!existing) {
+          await db.run('INSERT INTO contacts (requester_id, recipient_id, status) VALUES (?, ?, ?)', [u1, u2, 'accepted']);
+        }
+      }
+    }
+  } catch (e) {}
+})();
+
 // ==========================================
 // ACTIVE SESSIONS & DEVICE MANAGEMENT API
 // ==========================================

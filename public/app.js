@@ -1163,6 +1163,7 @@ const startSChat = () => {
     if (!activeRecipient) {
       if (attachBtnGlobal) attachBtnGlobal.style.display = 'none';
       if (micBtnGlobal) micBtnGlobal.style.display = 'none';
+      if (headerRemoveContactBtn) headerRemoveContactBtn.style.display = 'none';
       globalChannelBtn.classList.add('active');
       roomAvatar.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>';
       roomTitle.textContent = 'Global Channel';
@@ -1171,6 +1172,7 @@ const startSChat = () => {
     } else {
       if (attachBtnGlobal) attachBtnGlobal.style.display = 'flex';
       if (micBtnGlobal) micBtnGlobal.style.display = 'flex';
+      if (headerRemoveContactBtn) headerRemoveContactBtn.style.display = 'flex';
       if (unreadCounts[activeRecipient.id]) {
         unreadCounts[activeRecipient.id] = 0;
       }
@@ -1697,7 +1699,7 @@ const enterChat = async () => {
             showAlert('Your chat request was declined.', 'info');
             outgoingContactRequests = outgoingContactRequests.filter(r => Number(r.id) !== Number(data.recipient_id));
             fetchUserContacts();
-            if (contactSearchBtn) contactSearchBtn.click();
+            renderContactSearchResults();
           }
         }
       } catch (e) {
@@ -2624,6 +2626,17 @@ const enterChat = async () => {
   const sessionsList = document.getElementById('sessionsList');
   const revokeAllOtherSessionsBtn = document.getElementById('revokeAllOtherSessionsBtn');
 
+  
+  const headerSessionsBtn = document.getElementById('headerSessionsBtn');
+  if (headerSessionsBtn) {
+    headerSessionsBtn.addEventListener('click', () => {
+      if (sessionsModal) {
+        showElement(sessionsModal);
+        fetchUserSessions();
+      }
+    });
+  }
+
   if (openSessionsModalBtn) {
     openSessionsModalBtn.addEventListener('click', () => {
       if (profileModal) hideElement(profileModal);
@@ -2784,6 +2797,68 @@ const enterChat = async () => {
     closePendingRequestsModal.addEventListener('click', () => hideElement(pendingRequestsModal));
   }
 
+  
+  // Sidebar Tab Switching (Messages vs Requests)
+  const tabDirectMessages = document.getElementById('tabDirectMessages');
+  const tabIncomingRequests = document.getElementById('tabIncomingRequests');
+  const sidebarMessagesContent = document.getElementById('sidebarMessagesContent');
+  const sidebarRequestsContent = document.getElementById('sidebarRequestsContent');
+  const sidebarRequestsList = document.getElementById('sidebarRequestsList');
+  const sidebarRequestsBadge = document.getElementById('sidebarRequestsBadge');
+
+  if (tabDirectMessages && tabIncomingRequests) {
+    tabDirectMessages.addEventListener('click', () => {
+      tabDirectMessages.classList.add('active');
+      tabIncomingRequests.classList.remove('active');
+      if (sidebarMessagesContent) {
+        sidebarMessagesContent.style.display = 'block';
+        sidebarMessagesContent.classList.remove('hidden');
+      }
+      if (sidebarRequestsContent) {
+        sidebarRequestsContent.style.display = 'none';
+        sidebarRequestsContent.classList.add('hidden');
+      }
+    });
+
+    tabIncomingRequests.addEventListener('click', () => {
+      tabIncomingRequests.classList.add('active');
+      tabDirectMessages.classList.remove('active');
+      if (sidebarRequestsContent) {
+        sidebarRequestsContent.style.display = 'block';
+        sidebarRequestsContent.classList.remove('hidden');
+      }
+      if (sidebarMessagesContent) {
+        sidebarMessagesContent.style.display = 'none';
+        sidebarMessagesContent.classList.add('hidden');
+      }
+      renderSidebarRequestsList();
+    });
+  }
+
+  function renderSidebarRequestsList() {
+    if (!sidebarRequestsList) return;
+    if (incomingContactRequests.length === 0) {
+      sidebarRequestsList.innerHTML = '<div style="text-align:center; padding: 1.5rem 10px; color: var(--text-muted); font-size: 0.8rem;">No pending chat requests.</div>';
+      return;
+    }
+
+    sidebarRequestsList.innerHTML = incomingContactRequests.map(req => `
+      <div class="sidebar-request-card">
+        <div class="sidebar-request-user">
+          <div class="avatar">${req.avatar || '👤'}</div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">@${escapeHtml(req.username)}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(req.bio || 'Wants to chat')}</div>
+          </div>
+        </div>
+        <div class="sidebar-request-actions">
+          <button type="button" class="unban-btn" onclick="acceptContactRequest(${req.id}, '${escapeHtml(req.username)}')">Accept</button>
+          <button type="button" class="ban-btn" onclick="declineContactRequest(${req.id})">Decline</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
   async function fetchUserContacts() {
     try {
       const res = await fetch('/api/contacts', {
@@ -2795,34 +2870,23 @@ const enterChat = async () => {
         incomingContactRequests = data.incoming_requests || [];
         outgoingContactRequests = data.outgoing_requests || [];
 
-        // Update Requests button badge & Prominent Banner
         const incomingCount = incomingContactRequests.length;
-        const incomingRequestsBanner = document.getElementById('incomingRequestsBanner');
-        const requestsBannerText = document.getElementById('requestsBannerText');
-
-        if (incomingRequestsBanner && requestsBannerText) {
+        if (sidebarRequestsBadge) {
           if (incomingCount > 0) {
-            requestsBannerText.textContent = `${incomingCount} pending chat request${incomingCount > 1 ? 's' : ''}`;
-            incomingRequestsBanner.style.display = 'flex';
-            incomingRequestsBanner.classList.remove('hidden');
+            sidebarRequestsBadge.textContent = incomingCount;
+            sidebarRequestsBadge.style.display = 'inline-block';
           } else {
-            incomingRequestsBanner.style.display = 'none';
-            incomingRequestsBanner.classList.add('hidden');
+            sidebarRequestsBadge.style.display = 'none';
           }
         }
 
-        if (pendingRequestsBtn && requestsCountText) {
-          if (incomingCount > 0) {
-            requestsCountText.textContent = `Requests (${incomingCount})`;
-            pendingRequestsBtn.style.display = 'inline-flex';
-            pendingRequestsBtn.classList.remove('hidden');
-          } else {
-            pendingRequestsBtn.style.display = 'none';
-            pendingRequestsBtn.classList.add('hidden');
-          }
-        }
-
+        renderSidebarRequestsList();
         updateOnlineUsers();
+
+        // If search modal is open, re-render results live
+        if (addContactModal && addContactModal.style.display !== 'none' && contactSearchInput && contactSearchInput.value.trim()) {
+          renderContactSearchResults();
+        }
       }
     } catch (e) {
       console.error('Fetch contacts error:', e);
@@ -2952,8 +3016,64 @@ const enterChat = async () => {
       }).join('');
     };
 
-    contactSearchBtn.addEventListener('click', handleContactSearch);
-    contactSearchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleContactSearch(); });
+    function renderContactSearchResults() {
+      const q = (contactSearchInput.value || '').trim().toLowerCase();
+      if (!q) {
+        contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">Type a username above to search.</div>';
+        return;
+      }
+
+      const results = allRegisteredUsers.filter(u => {
+        if (Number(u.id) === Number(currentUser.id)) return false;
+        return (u.username && u.username.toLowerCase().includes(q)) || (u.email && u.email.toLowerCase().includes(q));
+      });
+
+      if (results.length === 0) {
+        contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">No users found matching that username.</div>';
+        return;
+      }
+
+      contactSearchResults.innerHTML = results.map(u => {
+        const isContact = acceptedContacts.some(c => Number(c.id) === Number(u.id));
+        const isOutgoing = outgoingContactRequests.some(r => Number(r.id) === Number(u.id));
+        const isIncoming = incomingContactRequests.some(r => Number(r.id) === Number(u.id));
+
+        let actionBtn = '';
+        if (isContact) {
+          actionBtn = `
+            <div style="display: flex; gap: 6px;">
+              <button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="startChatWithContact(${u.id}, '${escapeHtml(u.username)}')">Chat</button>
+              <button type="button" class="btn-danger-outline" style="padding: 5px 10px; font-size: 0.78rem; border-radius: 8px; cursor: pointer;" onclick="removeContactPermanently(${u.id}, '${escapeHtml(u.username)}')">Remove</button>
+            </div>
+          `;
+        } else if (isOutgoing) {
+          actionBtn = `<button type="button" class="btn-danger-outline" style="padding: 5px 12px; font-size: 0.78rem; border-radius: 8px; cursor: pointer;" onclick="cancelContactRequest(${u.id}, '${escapeHtml(u.username)}')">Cancel Request</button>`;
+        } else if (isIncoming) {
+          actionBtn = `<button type="button" class="unban-btn" onclick="acceptContactRequest(${u.id}, '${escapeHtml(u.username)}')">Accept Request</button>`;
+        } else {
+          actionBtn = `<button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="sendContactRequest(${u.id}, '${escapeHtml(u.username)}')">Send Request</button>`;
+        }
+
+        return `
+          <div class="contact-item-row">
+            <div class="contact-user-info">
+              <div class="avatar">${u.avatar || '👤'}</div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(u.username)}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.bio || 'SChat User')}</div>
+              </div>
+            </div>
+            <div>
+              ${actionBtn}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    contactSearchInput.addEventListener('input', renderContactSearchResults);
+    contactSearchBtn.addEventListener('click', renderContactSearchResults);
+    contactSearchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') renderContactSearchResults(); });
   }
 
   window.sendContactRequest = async (targetId, username) => {
@@ -2973,7 +3093,7 @@ const enterChat = async () => {
         if (!outgoingContactRequests.some(r => Number(r.id) === Number(targetId))) {
           outgoingContactRequests.push({ id: targetId, username });
         }
-        if (contactSearchBtn) contactSearchBtn.click();
+        renderContactSearchResults();
         fetchUserContacts();
       } else {
         showAlert(data.error || 'Failed to send request', 'error');
@@ -2996,7 +3116,7 @@ const enterChat = async () => {
       if (res.ok) {
         showAlert(`Request to @${username} cancelled.`, 'info');
         outgoingContactRequests = outgoingContactRequests.filter(r => Number(r.id) !== Number(targetId));
-        if (contactSearchBtn) contactSearchBtn.click();
+        renderContactSearchResults();
         fetchUserContacts();
       } else {
         const err = await res.json();
@@ -3012,6 +3132,38 @@ const enterChat = async () => {
     const target = allRegisteredUsers.find(u => Number(u.id) === Number(targetId)) || { id: targetId, username };
     switchChatTab(target);
   };
+
+  
+  window.removeContactPermanently = async (targetId, username) => {
+    if (!confirm(`Remove @${username} from your contacts and chat list?`)) return;
+    try {
+      const res = await fetch(`/api/contacts/${targetId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        showAlert(`@${username} removed from contacts.`, 'info');
+        if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id && activeRecipient.id.toString() === targetId.toString()) {
+          switchChatTab('empty');
+        }
+        fetchUserContacts();
+      } else {
+        const err = await res.json();
+        showAlert(err.error || 'Failed to remove contact', 'error');
+      }
+    } catch (e) {
+      showAlert('Network error', 'error');
+    }
+  };
+
+  const headerRemoveContactBtn = document.getElementById('headerRemoveContactBtn');
+  if (headerRemoveContactBtn) {
+    headerRemoveContactBtn.addEventListener('click', () => {
+      if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id) {
+        removeContactPermanently(activeRecipient.id, activeRecipient.username);
+      }
+    });
+  }
 
   if (ctxRemoveContactBtn) {
     ctxRemoveContactBtn.addEventListener('click', async () => {

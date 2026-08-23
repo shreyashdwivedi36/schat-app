@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=95">
+  <link rel="stylesheet" href="style.css?v=96">
 </head>
 <body>
 
@@ -400,38 +400,39 @@
 
         <!-- Active Channels / Online Users -->
         <div class="sidebar-section flex-fill">
-          <!-- Prominent Glowing Incoming Requests Banner -->
-          <div id="incomingRequestsBanner" class="incoming-requests-banner hidden" style="display: none;">
-            <div class="requests-banner-left">
-              <span class="pulse-dot"></span>
-              <span id="requestsBannerText" style="font-size: 0.78rem; font-weight: 700; color: #a5b4fc;">1 pending request</span>
-            </div>
-            <button type="button" id="viewRequestsBannerBtn" class="requests-banner-btn">Review</button>
+          <!-- Sidebar Navigation Tabs -->
+          <div class="sidebar-nav-tabs">
+            <button type="button" id="tabDirectMessages" class="sidebar-tab-item active">
+              <span>Messages</span>
+              <span id="onlineCountBadge" class="tab-badge">0</span>
+            </button>
+            <button type="button" id="tabIncomingRequests" class="sidebar-tab-item">
+              <span>Requests</span>
+              <span id="sidebarRequestsBadge" class="tab-badge requests-badge" style="display: none;">0</span>
+            </button>
+            <button type="button" id="addContactBtn" class="sidebar-tab-action" title="Find & Add Contacts" aria-label="Add contact">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="8.5" cy="7" r="4"></circle>
+                <line x1="20" y1="8" x2="20" y2="14"></line>
+                <line x1="23" y1="11" x2="17" y2="11"></line>
+              </svg>
+            </button>
           </div>
 
-          <div class="section-title dm-section-title" style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <span>DIRECT MESSAGES</span>
-              <span id="onlineCountBadge" class="count-badge">0</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <button type="button" id="pendingRequestsBtn" class="requests-pill-btn hidden" style="display: none;" title="Pending Chat Requests">
-                <span class="pulse-dot"></span>
-                <span id="requestsCountText">Requests (0)</span>
-              </button>
-              <button type="button" id="addContactBtn" class="add-contact-btn" title="Find & Add Contacts" aria-label="Add contact">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                  <circle cx="8.5" cy="7" r="4"></circle>
-                  <line x1="20" y1="8" x2="20" y2="14"></line>
-                  <line x1="23" y1="11" x2="17" y2="11"></line>
-                </svg>
-              </button>
+          <!-- Messages Container -->
+          <div id="sidebarMessagesContent" class="sidebar-tab-content">
+            <ul id="onlineUsersList" class="online-users-list">
+              <!-- User items injected dynamically -->
+            </ul>
+          </div>
+
+          <!-- Embedded Requests Container -->
+          <div id="sidebarRequestsContent" class="sidebar-tab-content hidden" style="display: none;">
+            <div id="sidebarRequestsList" class="sidebar-requests-list">
+              <!-- Requests injected dynamically -->
             </div>
           </div>
-          <ul id="onlineUsersList" class="online-users-list">
-            <!-- User items injected dynamically -->
-          </ul>
         </div>
 
         <!-- Sidebar Footer Owner Credit Badge -->
@@ -682,7 +683,7 @@
     </div>
   </div>
 
-  <script src="motion-fx.js?v=95" type="module"></script>
+  <script src="motion-fx.js?v=96" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -757,7 +758,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=95" type="module"></script>
+  <script src="/app.js?v=96" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

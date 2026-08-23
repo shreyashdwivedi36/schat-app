@@ -4517,3 +4517,114 @@ body {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
 }
+
+
+/* ================= SIDEBAR TABS & EMBEDDED REQUESTS ================= */
+.sidebar-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--panel-border);
+  margin-bottom: 12px;
+}
+
+.sidebar-tab-item {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-tab-item:hover {
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.sidebar-tab-item.active {
+  background: var(--primary-accent);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
+}
+
+.tab-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.tab-badge.requests-badge {
+  background: #ef4444;
+  color: #ffffff;
+  animation: pulseDot 1.5s infinite ease-in-out;
+}
+
+.sidebar-tab-action {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-tab-action:hover {
+  background: var(--primary-accent);
+  color: #ffffff;
+  border-color: var(--primary-accent);
+}
+
+/* Embedded Sidebar Request Cards */
+.sidebar-request-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.sidebar-request-card:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+.sidebar-request-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.sidebar-request-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.sidebar-request-actions button {
+  flex: 1;
+  padding: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 8px;
+}

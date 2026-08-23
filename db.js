@@ -102,6 +102,16 @@ if (process.env.DATABASE_URL) {
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_text TEXT DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS push_subscription TEXT DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS muted_chats TEXT DEFAULT '[]';`); } catch(e){}
+            // Auto-migrate past messages into accepted contacts
+      try {
+        await pool.query(`
+          INSERT INTO contacts (requester_id, recipient_id, status)
+          SELECT DISTINCT LEAST(user_id, recipient_id), GREATEST(user_id, recipient_id), 'accepted'
+          FROM messages
+          WHERE recipient_id IS NOT NULL AND user_id != recipient_id
+          ON CONFLICT (requester_id, recipient_id) DO NOTHING;
+        `);
+      } catch (e) {}
       console.log('Connected to PostgreSQL Database cleanly with all 9 features.');
     } catch (err) {
       console.error('PostgreSQL Init Error:', err);
@@ -152,6 +162,30 @@ if (process.env.DATABASE_URL) {
     } catch (e) {}
   }
 
+    // Auto-seed past message conversations into accepted contacts
+  if (data.messages && data.messages.length > 0) {
+    data.messages.forEach(m => {
+      if (m.recipient_id && Number(m.user_id) !== Number(m.recipient_id)) {
+        const u1 = Math.min(Number(m.user_id), Number(m.recipient_id));
+        const u2 = Math.max(Number(m.user_id), Number(m.recipient_id));
+        const exists = data.contacts.some(c => (
+          (Number(c.requester_id) === u1 && Number(c.recipient_id) === u2) ||
+          (Number(c.requester_id) === u2 && Number(c.recipient_id) === u1)
+        ));
+        if (!exists) {
+          data.lastContactId += 1;
+          data.contacts.push({
+            id: data.lastContactId,
+            requester_id: u1,
+            recipient_id: u2,
+            status: 'accepted',
+            created_at: m.created_at || new Date().toISOString(),
+            updated_at: m.created_at || new Date().toISOString()
+          });
+        }
+      }
+    });
+  }
   const saveData = () => fs.writeFileSync(fallbackPath, JSON.stringify(data, null, 2), 'utf8');
 
   dbInstance = {

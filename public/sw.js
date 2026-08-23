@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v95-contact-request-lifecycle';
+const CACHE_NAME = 'schat-v96-complete-sessions-and-contacts-polish';
 
 const PRECACHE_URLS = [
   '/',
