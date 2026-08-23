@@ -245,47 +245,94 @@ const startSChat = () => {
     });
   }
 
+  let currentAdminFilter = 'all';
+  let loadedAdminUsers = [];
+
+  function setupAdminFilterButtons() {
+    document.querySelectorAll('[data-admin-filter]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('[data-admin-filter]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentAdminFilter = btn.dataset.adminFilter;
+        renderAdminUsersList();
+      });
+    });
+  }
+
+  function renderAdminUsersList() {
+    if (!adminUserList) return;
+    
+    const countAll = loadedAdminUsers.length;
+    const countSuspended = loadedAdminUsers.filter(u => Number(u.is_banned) === 1 || u.is_banned === true || u.is_banned === '1').length;
+    const countActive = countAll - countSuspended;
+
+    const elAll = document.getElementById('countAll');
+    const elActive = document.getElementById('countActive');
+    const elSuspended = document.getElementById('countSuspended');
+    if (elAll) elAll.textContent = countAll;
+    if (elActive) elActive.textContent = countActive;
+    if (elSuspended) elSuspended.textContent = countSuspended;
+
+    let filtered = loadedAdminUsers;
+    if (currentAdminFilter === 'active') {
+      filtered = loadedAdminUsers.filter(u => !(Number(u.is_banned) === 1 || u.is_banned === true || u.is_banned === '1'));
+    } else if (currentAdminFilter === 'suspended') {
+      filtered = loadedAdminUsers.filter(u => Number(u.is_banned) === 1 || u.is_banned === true || u.is_banned === '1');
+    }
+
+    if (filtered.length === 0) {
+      adminUserList.innerHTML = `<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">No ${currentAdminFilter === 'all' ? '' : currentAdminFilter} users found.</div>`;
+      return;
+    }
+
+    adminUserList.innerHTML = filtered.map(u => {
+      const isBanned = Boolean(Number(u.is_banned) === 1 || u.is_banned === true || u.is_banned === '1');
+      const isSuperAdmin = (u.username || '').toLowerCase() === 'admin' || (u.username || '').toLowerCase() === 'shreyash36';
+
+      const statusBadge = isBanned 
+        ? '<span class="admin-status-badge banned">Suspended</span>' 
+        : '<span class="admin-status-badge active">Active</span>';
+      
+      let actionBtn = '';
+      if (isSuperAdmin) {
+        actionBtn = '<span style="font-size: 0.75rem; color: var(--primary-accent); font-weight: 700;">Super Admin</span>';
+      } else if (isBanned) {
+        actionBtn = `<button type="button" class="unban-btn" onclick="unbanUser(${u.id}, '${escapeHtml(u.username)}')">Unban User</button>`;
+      } else {
+        actionBtn = `<button type="button" class="ban-btn" onclick="banUser(${u.id}, '${escapeHtml(u.username)}')">Ban User</button>`;
+      }
+
+      return `
+        <div class="admin-user-item ${isBanned ? 'is-banned-card' : ''}">
+          <div class="admin-user-info">
+            <div class="avatar">${u.avatar || '👤'}</div>
+            <div>
+              <div style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                ${escapeHtml(u.username)}
+                ${statusBadge}
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.email || '')} | ID: ${u.id}</div>
+            </div>
+          </div>
+          <div class="admin-user-actions">
+            ${actionBtn}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
   async function fetchAdminUsers() {
     if (!adminUserList) return;
     adminUserList.innerHTML = '<div style="text-align:center; padding: 1rem; color: var(--text-muted);">Loading users...</div>';
     try {
+      setupAdminFilterButtons();
       const res = await fetch('/api/admin/users', {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (res.ok) {
-        const users = await res.json();
-        if (!users || users.length === 0) {
-          adminUserList.innerHTML = '<div style="text-align:center; padding: 1rem; color: var(--text-muted);">No registered users found.</div>';
-          return;
-        }
-        adminUserList.innerHTML = users.map(u => {
-          const isBanned = u.is_banned === 1;
-          const statusBadge = isBanned 
-            ? '<span class="admin-status-badge banned">Suspended</span>' 
-            : '<span class="admin-status-badge active">Active</span>';
-          
-          const actionBtn = isBanned
-            ? `<button class="unban-btn" onclick="unbanUser(${u.id}, '${escapeHtml(u.username)}')">Unban User</button>`
-            : `<button class="ban-btn" onclick="banUser(${u.id}, '${escapeHtml(u.username)}')">Ban User</button>`;
-
-          return `
-            <div class="admin-user-item ${isBanned ? 'is-banned-card' : ''}">
-              <div class="admin-user-info">
-                <div class="avatar">${u.avatar || '👤'}</div>
-                <div>
-                  <div style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                    ${escapeHtml(u.username)}
-                    ${statusBadge}
-                  </div>
-                  <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.email)} | ID: ${u.id}</div>
-                </div>
-              </div>
-              <div class="admin-user-actions">
-                ${actionBtn}
-              </div>
-            </div>
-          `;
-        }).join('');
+        loadedAdminUsers = await res.json() || [];
+        renderAdminUsersList();
       } else {
         adminUserList.innerHTML = '<div style="color: #ef4444; text-align:center; padding: 1rem;">Failed to load users</div>';
       }
@@ -304,6 +351,10 @@ const startSChat = () => {
       });
       if (res.ok) {
         showAlert(`@${username} has been suspended.`, 'success');
+        // Update local object immediately for instant response
+        const target = loadedAdminUsers.find(u => Number(u.id) === Number(userId));
+        if (target) target.is_banned = 1;
+        renderAdminUsersList();
         fetchAdminUsers();
       } else {
         const err = await res.json();
@@ -324,6 +375,10 @@ const startSChat = () => {
       });
       if (res.ok) {
         showAlert(`@${username} access has been restored.`, 'success');
+        // Update local object immediately for instant response
+        const target = loadedAdminUsers.find(u => Number(u.id) === Number(userId));
+        if (target) target.is_banned = 0;
+        renderAdminUsersList();
         fetchAdminUsers();
       } else {
         const err = await res.json();

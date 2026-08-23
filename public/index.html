@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=91">
+  <link rel="stylesheet" href="style.css?v=92">
 </head>
 <body>
 
@@ -640,7 +640,14 @@
 
         <div class="admin-section" style="background: rgba(255, 255, 255, 0.03); border: 1px solid var(--panel-border); border-radius: 16px; padding: 18px;">
           <h3 style="font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 6px;">User Management</h3>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4;">Total control over registered accounts.</p>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">Suspend or restore registered user accounts.</p>
+          
+          <div class="admin-filter-bar">
+            <button type="button" class="admin-filter-btn active" data-admin-filter="all">All (<span id="countAll">0</span>)</button>
+            <button type="button" class="admin-filter-btn" data-admin-filter="active">Active (<span id="countActive">0</span>)</button>
+            <button type="button" class="admin-filter-btn" data-admin-filter="suspended">Suspended (<span id="countSuspended">0</span>)</button>
+          </div>
+
           <div id="adminUserList" class="admin-user-list">
             <!-- User items injected here -->
           </div>
@@ -650,7 +657,7 @@
     </div>
   </div>
 
-  <script src="motion-fx.js?v=91" type="module"></script>
+  <script src="motion-fx.js?v=92" type="module"></script>
 
   <!-- Image Lightbox Modal -->
   <div id="imageLightbox" class="lightbox-overlay hidden">
@@ -666,7 +673,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=91" type="module"></script>
+  <script src="/app.js?v=92" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

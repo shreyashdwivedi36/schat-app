@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v91-mobile-drawer-autoclose';
+const CACHE_NAME = 'schat-v92-resilient-unban-system';
 
 const PRECACHE_URLS = [
   '/',
