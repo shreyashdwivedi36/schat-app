@@ -77,6 +77,32 @@ function translateText(text, targetLang = 'en', sourceLang = 'auto') {
   });
 }
 
+
+const crypto = require('crypto');
+
+function parseUserAgent(ua) {
+  if (!ua) return { device: 'Web (Desktop)', browser: 'Browser' };
+  let device = 'Desktop';
+  if (/mobile/i.test(ua)) device = 'Mobile';
+  else if (/tablet|ipad/i.test(ua)) device = 'Tablet';
+
+  let os = 'Device';
+  if (/windows/i.test(ua)) os = 'Windows';
+  else if (/macintosh|mac os x/i.test(ua)) os = 'macOS';
+  else if (/android/i.test(ua)) os = 'Android';
+  else if (/iphone|ipad|ipod/i.test(ua)) os = 'iOS';
+  else if (/linux/i.test(ua)) os = 'Linux';
+
+  let browser = 'Web Browser';
+  if (/edg/i.test(ua)) browser = 'Microsoft Edge';
+  else if (/chrome|crios/i.test(ua)) browser = 'Google Chrome';
+  else if (/firefox|fxios/i.test(ua)) browser = 'Mozilla Firefox';
+  else if (/safari/i.test(ua) && !/chrome/i.test(ua)) browser = 'Apple Safari';
+  else if (/opera|opr/i.test(ua)) browser = 'Opera';
+
+  return { device: `${os} (${device})`, browser };
+}
+
 // Input Sanitization & Validation Helpers
 function sanitizeString(str, maxLen = 2000) {
   if (typeof str !== 'string') return '';
@@ -575,6 +601,261 @@ app.delete('/api/messages/:id', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error('Delete Message Error:', err);
     res.status(500).json({ error: 'Failed to delete message.' });
+  }
+});
+
+
+// ==========================================
+// ACTIVE SESSIONS & DEVICE MANAGEMENT API
+// ==========================================
+
+app.get('/api/sessions', authMiddleware, async (req, res) => {
+  try {
+    const sessions = await db.all('SELECT session_id, device, browser, ip_address, last_active, created_at FROM user_sessions WHERE user_id = ? ORDER BY created_at DESC', [req.user.id]);
+    const currentSessionId = req.user.sessionId || null;
+    const formatted = (sessions || []).map(s => ({
+      ...s,
+      is_current: s.session_id === currentSessionId
+    }));
+    res.json({ sessions: formatted });
+  } catch (err) {
+    console.error('Get sessions error:', err);
+    res.status(500).json({ error: 'Failed to retrieve active sessions.' });
+  }
+});
+
+app.delete('/api/sessions/:sessionId', authMiddleware, async (req, res) => {
+  const { sessionId } = req.params;
+  if (!sessionId) return res.status(400).json({ error: 'Session ID required.' });
+  if (sessionId === req.user.sessionId) {
+    return res.status(400).json({ error: 'Cannot revoke your current active session here. Use Logout instead.' });
+  }
+
+  try {
+    await db.run('DELETE FROM user_sessions WHERE session_id = ? AND user_id = ?', [sessionId, req.user.id]);
+    // Force disconnect revoked session via WebSocket
+    broadcast({ type: 'session_revoked', sessionId, userId: req.user.id });
+    res.json({ message: 'Session revoked successfully.' });
+  } catch (err) {
+    console.error('Revoke session error:', err);
+    res.status(500).json({ error: 'Failed to revoke session.' });
+  }
+});
+
+app.delete('/api/sessions', authMiddleware, async (req, res) => {
+  const currentSessionId = req.user.sessionId;
+  if (!currentSessionId) return res.status(400).json({ error: 'Current session identifier missing.' });
+
+  try {
+    await db.run('DELETE FROM user_sessions WHERE user_id = ? AND session_id != ?', [req.user.id, currentSessionId]);
+    broadcast({ type: 'all_other_sessions_terminated', userId: req.user.id, keepSessionId: currentSessionId });
+    res.json({ message: 'All other sessions have been logged out.' });
+  } catch (err) {
+    console.error('Revoke all sessions error:', err);
+    res.status(500).json({ error: 'Failed to revoke other sessions.' });
+  }
+});
+
+
+// ==========================================
+// PRIVACY CONTACTS & CHAT REQUESTS API
+// ==========================================
+
+app.get('/api/contacts', authMiddleware, async (req, res) => {
+  try {
+    const allUsers = await db.all('SELECT id, username, email, avatar, bio, is_banned FROM users WHERE id != ?', [req.user.id]);
+    const userMap = {};
+    (allUsers || []).forEach(u => { userMap[u.id] = u; });
+
+    const allContacts = await db.all('SELECT requester_id, recipient_id, status, created_at FROM contacts WHERE requester_id = ? OR recipient_id = ?', [req.user.id, req.user.id]);
+
+    const accepted = [];
+    const incomingPending = [];
+    const outgoingPending = [];
+
+    (allContacts || []).forEach(c => {
+      if (c.status === 'accepted') {
+        const partnerId = Number(c.requester_id) === Number(req.user.id) ? c.recipient_id : c.requester_id;
+        if (userMap[partnerId]) {
+          accepted.push({
+            ...userMap[partnerId],
+            connected_at: c.created_at
+          });
+        }
+      } else if (c.status === 'pending') {
+        if (Number(c.recipient_id) === Number(req.user.id)) {
+          if (userMap[c.requester_id]) {
+            incomingPending.push({
+              ...userMap[c.requester_id],
+              request_date: c.created_at
+            });
+          }
+        } else if (Number(c.requester_id) === Number(req.user.id)) {
+          if (userMap[c.recipient_id]) {
+            outgoingPending.push({
+              ...userMap[c.recipient_id],
+              request_date: c.created_at
+            });
+          }
+        }
+      }
+    });
+
+    res.json({
+      accepted_contacts: accepted,
+      incoming_requests: incomingPending,
+      outgoing_requests: outgoingPending
+    });
+  } catch (err) {
+    console.error('Get contacts error:', err);
+    res.status(500).json({ error: 'Failed to retrieve contacts.' });
+  }
+});
+
+app.post('/api/contacts/request', authMiddleware, async (req, res) => {
+  const { target_id, username } = req.body;
+  try {
+    let targetUser = null;
+    if (target_id) {
+      const parsedId = parseInt(target_id, 10);
+      targetUser = await db.get('SELECT id, username, avatar FROM users WHERE id = ?', [parsedId]);
+    } else if (username) {
+      targetUser = await db.get('SELECT id, username, avatar FROM users WHERE username = ?', [username.trim()]);
+    }
+
+    if (!targetUser) return res.status(404).json({ error: 'User not found.' });
+    if (Number(targetUser.id) === Number(req.user.id)) return res.status(400).json({ error: 'Cannot send a contact request to yourself.' });
+
+    // Check existing contact relationship
+    const existing = await db.get(
+      'SELECT id, requester_id, recipient_id, status FROM contacts WHERE (requester_id = ? AND recipient_id = ?) OR (requester_id = ? AND recipient_id = ?)',
+      [req.user.id, targetUser.id, targetUser.id, req.user.id]
+    );
+
+    if (existing) {
+      if (existing.status === 'accepted') {
+        return res.status(400).json({ error: 'You are already contacts with @' + targetUser.username });
+      }
+      if (existing.status === 'pending') {
+        if (Number(existing.requester_id) === Number(req.user.id)) {
+          return res.status(400).json({ error: 'Contact request already pending.' });
+        } else {
+          // If the other user already sent a request, auto-accept it!
+          await db.run('UPDATE contacts SET status = ? WHERE id = ?', ['accepted', existing.id]);
+          broadcast({
+            type: 'contact_request_accepted',
+            user1: req.user.id,
+            user2: targetUser.id
+          });
+          return res.json({ message: 'Request accepted! You are now connected with @' + targetUser.username, status: 'accepted' });
+        }
+      }
+    }
+
+    await db.run('INSERT INTO contacts (requester_id, recipient_id, status) VALUES (?, ?, ?)', [req.user.id, targetUser.id, 'pending']);
+
+    // Send real-time notification to recipient
+    broadcast({
+      type: 'contact_request_received',
+      toUserId: targetUser.id,
+      requester: {
+        id: req.user.id,
+        username: req.user.username,
+        avatar: req.user.avatar
+      }
+    });
+
+    res.json({ message: `Chat request sent to @${targetUser.username}!`, status: 'pending' });
+  } catch (err) {
+    console.error('Send contact request error:', err);
+    res.status(500).json({ error: 'Failed to send contact request.' });
+  }
+});
+
+app.post('/api/contacts/accept', authMiddleware, async (req, res) => {
+  const { requester_id } = req.body;
+  if (!requester_id) return res.status(400).json({ error: 'Requester ID required.' });
+
+  try {
+    await db.run('UPDATE contacts SET status = ? WHERE requester_id = ? AND recipient_id = ?', ['accepted', requester_id, req.user.id]);
+    
+    broadcast({
+      type: 'contact_request_accepted',
+      user1: req.user.id,
+      user2: requester_id
+    });
+
+    res.json({ message: 'Contact request accepted!' });
+  } catch (err) {
+    console.error('Accept contact error:', err);
+    res.status(500).json({ error: 'Failed to accept contact request.' });
+  }
+});
+
+app.post('/api/contacts/cancel', authMiddleware, async (req, res) => {
+  const { target_id } = req.body;
+  if (!target_id) return res.status(400).json({ error: 'Target ID required.' });
+  const parsedTargetId = parseInt(target_id, 10);
+
+  try {
+    await db.run('DELETE FROM contacts WHERE requester_id = ? AND recipient_id = ? AND status = ?', [req.user.id, parsedTargetId, 'pending']);
+    
+    // Notify recipient to clear banner
+    broadcast({
+      type: 'contact_request_cancelled',
+      requester_id: req.user.id,
+      recipient_id: parsedTargetId
+    });
+
+    res.json({ message: 'Chat request cancelled.' });
+  } catch (err) {
+    console.error('Cancel contact request error:', err);
+    res.status(500).json({ error: 'Failed to cancel contact request.' });
+  }
+});
+
+app.post('/api/contacts/decline', authMiddleware, async (req, res) => {
+  const { requester_id } = req.body;
+  if (!requester_id) return res.status(400).json({ error: 'Requester ID required.' });
+  const parsedRequesterId = parseInt(requester_id, 10);
+
+  try {
+    await db.run('DELETE FROM contacts WHERE requester_id = ? AND recipient_id = ? AND status = ?', [parsedRequesterId, req.user.id, 'pending']);
+    
+    // Notify requester that request was declined
+    broadcast({
+      type: 'contact_request_declined',
+      requester_id: parsedRequesterId,
+      recipient_id: req.user.id
+    });
+
+    res.json({ message: 'Contact request declined.' });
+  } catch (err) {
+    console.error('Decline contact error:', err);
+    res.status(500).json({ error: 'Failed to decline contact request.' });
+  }
+});
+
+app.delete('/api/contacts/:targetId', authMiddleware, async (req, res) => {
+  const { targetId } = req.params;
+  if (!targetId) return res.status(400).json({ error: 'Target ID required.' });
+
+  try {
+    await db.run(
+      'DELETE FROM contacts WHERE (requester_id = ? AND recipient_id = ?) OR (requester_id = ? AND recipient_id = ?)',
+      [req.user.id, targetId, targetId, req.user.id]
+    );
+
+    broadcast({
+      type: 'contact_removed',
+      user1: req.user.id,
+      user2: targetId
+    });
+
+    res.json({ message: 'Contact removed successfully.' });
+  } catch (err) {
+    console.error('Remove contact error:', err);
+    res.status(500).json({ error: 'Failed to remove contact.' });
   }
 });
 

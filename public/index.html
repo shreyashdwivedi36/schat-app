@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=92">
+  <link rel="stylesheet" href="style.css?v=95">
 </head>
 <body>
 
@@ -400,9 +400,34 @@
 
         <!-- Active Channels / Online Users -->
         <div class="sidebar-section flex-fill">
-          <div class="section-title">
-            <span>DIRECT MESSAGES</span>
-            <span id="onlineCountBadge" class="count-badge">1</span>
+          <!-- Prominent Glowing Incoming Requests Banner -->
+          <div id="incomingRequestsBanner" class="incoming-requests-banner hidden" style="display: none;">
+            <div class="requests-banner-left">
+              <span class="pulse-dot"></span>
+              <span id="requestsBannerText" style="font-size: 0.78rem; font-weight: 700; color: #a5b4fc;">1 pending request</span>
+            </div>
+            <button type="button" id="viewRequestsBannerBtn" class="requests-banner-btn">Review</button>
+          </div>
+
+          <div class="section-title dm-section-title" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span>DIRECT MESSAGES</span>
+              <span id="onlineCountBadge" class="count-badge">0</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" id="pendingRequestsBtn" class="requests-pill-btn hidden" style="display: none;" title="Pending Chat Requests">
+                <span class="pulse-dot"></span>
+                <span id="requestsCountText">Requests (0)</span>
+              </button>
+              <button type="button" id="addContactBtn" class="add-contact-btn" title="Find & Add Contacts" aria-label="Add contact">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="8.5" cy="7" r="4"></circle>
+                  <line x1="20" y1="8" x2="20" y2="14"></line>
+                  <line x1="23" y1="11" x2="17" y2="11"></line>
+                </svg>
+              </button>
+            </div>
           </div>
           <ul id="onlineUsersList" class="online-users-list">
             <!-- User items injected dynamically -->
@@ -657,7 +682,66 @@
     </div>
   </div>
 
-  <script src="motion-fx.js?v=92" type="module"></script>
+  <script src="motion-fx.js?v=95" type="module"></script>
+
+
+  <!-- Active Devices & Sessions Modal -->
+  <div id="sessionsModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="sessionsModalTitle">
+    <div class="modal-card" style="max-width: 580px; text-align: left;">
+      <button id="closeSessionsModal" class="modal-close-btn" aria-label="Close modal">&times;</button>
+      <div class="modal-header">
+        <h2 id="sessionsModalTitle" style="color: var(--primary-accent); margin-bottom: 0.3rem;">📱 Active Devices & Sessions</h2>
+        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">Review and manage where your account is currently logged in. You can remotely terminate un-recognized sessions.</p>
+      </div>
+      <div class="modal-body" style="padding: 10px 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+          <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Current & Remote Logins</span>
+          <button type="button" id="revokeAllOtherSessionsBtn" class="btn-danger-outline" style="font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; cursor: pointer;">
+            Log Out All Other Devices
+          </button>
+        </div>
+        <div id="sessionsList" class="sessions-list-container">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add New Contact Modal -->
+  <div id="addContactModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="addContactModalTitle">
+    <div class="modal-card" style="max-width: 520px; text-align: left;">
+      <button id="closeAddContactModal" class="modal-close-btn" aria-label="Close modal">&times;</button>
+      <div class="modal-header">
+        <h2 id="addContactModalTitle" style="color: var(--primary-accent); margin-bottom: 0.3rem;">🤝 Find & Add Contacts</h2>
+        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">Search by @username to send a private direct chat request.</p>
+      </div>
+      <div class="modal-body" style="padding: 10px 0;">
+        <div class="contact-search-box" style="display: flex; gap: 8px; margin-bottom: 16px;">
+          <input type="text" id="contactSearchInput" placeholder="Enter username..." style="flex: 1; height: 42px; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--panel-border); color: var(--text-main); padding: 0 14px;" />
+          <button type="button" id="contactSearchBtn" class="btn btn-primary" style="padding: 0 20px; font-weight: 700; border-radius: 12px; margin-top: 0; width: auto;">Search</button>
+        </div>
+        <div id="contactSearchResults" class="contact-search-results">
+          <!-- Search results injected here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pending Chat Requests Modal -->
+  <div id="pendingRequestsModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="pendingRequestsModalTitle">
+    <div class="modal-card" style="max-width: 520px; text-align: left;">
+      <button id="closePendingRequestsModal" class="modal-close-btn" aria-label="Close modal">&times;</button>
+      <div class="modal-header">
+        <h2 id="pendingRequestsModalTitle" style="color: var(--primary-accent); margin-bottom: 0.3rem;">📥 Incoming Chat Requests</h2>
+        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">Accept to start direct messaging, or decline to dismiss.</p>
+      </div>
+      <div class="modal-body" style="padding: 10px 0;">
+        <div id="pendingRequestsList" class="pending-requests-container">
+          <!-- Incoming requests injected here -->
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Image Lightbox Modal -->
   <div id="imageLightbox" class="lightbox-overlay hidden">
@@ -673,7 +757,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=92" type="module"></script>
+  <script src="/app.js?v=95" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v92-resilient-unban-system';
+const CACHE_NAME = 'schat-v95-contact-request-lifecycle';
 
 const PRECACHE_URLS = [
   '/',

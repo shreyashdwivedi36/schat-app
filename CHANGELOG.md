@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.5.0] - 2026-08-23
+
+### 📱 Active Multi-Device Sessions & Device Security
+- **Multi-Device Login Telemetry**: Added database-backed active session tracking (`user_sessions`) capturing OS (Windows, macOS, iOS, Android, Linux), browser engine, IP address, and last-active timestamps.
+- **Current Device Safety**: Highlighted the active viewing device as `This Device (Active Now)` with protection against accidental self-revocation.
+- **Remote Session Revocation**: Users can terminate any remote login individually or execute **"Log Out All Other Devices"** with real-time WebSocket disconnection.
+- **JWT Session Binding**: Embedded unique session tokens in JWT payloads with automatic sliding session renewal.
+
+### 🤝 Privacy-First Contact Request System
+- **Mutual Permission Model**: Replaced unrestricted user listings with a mutual contact request architecture (`contacts`). Only accepted contacts appear in the Direct Messages sidebar.
+- **Find & Add Contacts**: Added a search modal to discover users by `@username` and dispatch private chat requests.
+- **Dynamic Request Lifecycle**:
+  - Tapping **"Send Request"** immediately transforms into an active **"Cancel Request"** button with visual toast confirmation.
+  - Tapping **"Cancel Request"** takes back the request and removes the notification from the recipient's screen in real time.
+  - If the recipient declines, the button automatically resets to **"Send Request"**.
+  - If accepted, the button transforms into **"Chat"** and adds the contact to the active DM list.
+- **High-Visibility Notification Surfaces**:
+  - Interactive toast chime: `📩 @username sent you a chat request!`.
+  - Prominent glowing animated banner above the Direct Messages list: `📩 1 pending chat request [Review]`.
+  - Pulsing `📥 Requests (N)` pill badge next to section header.
+- **Revoke Connection**: Added **"Remove Contact"** in the context menu to un-link and remove contacts from both users' screens.
+
+### 🎨 Spatial UI Physics & Vector Iconography Overhaul
+- **1:1 Interactive Cursor Spotlight**: Zero-idle-CPU dynamic radial spotlight tracking mouse coordinates across the standby screen.
+- **Magnetic Snap Hover & 3D Tilt**: Magnetic attraction on action buttons with mathematical CSS `linear()` spring elasticity and 3D parallax tilt hover physics.
+- **Universal SVG Vector System**: Replaced all raw Unicode emojis with unified, pixel-perfect 1.85px stroke SVG line vector icons.
+- **Clean Standby Privacy Shield**: Borderless floating SChat emblem with ambient backlight drop shadow and isolated message stream transitions.
+
+### 🛡️ Core Reliability & Brand Protection
+- **SChat™ Trademark Branding**: Branded metadata, headers, and copyright notices with official `™` notation.
+- **Cryptographic SHA-256 Ownership Proof**: Generated `proof_of_ownership.json` and captured immutable public snapshots on the Wayback Machine.
+
+---
+
 ## [v1.2.0] - 2026-08-19
 
 ### ✨ Added
@@ -27,6 +61,8 @@ All notable changes to this project will be documented in this file.
 - **Native Context Menu Media Downloads**: Added an option in the right-click context menu to fetch and save original-quality Voice Notes and Images directly to device storage.
 - **Global Channel Media Moderation**: Disabled media uploading in the Global Chat to prevent spam, restricting heavy Cloudinary uploads strictly to 1-on-1 private messaging.
 
+---
+
 ## [v1.1.0] - 2026-08-18
 
 ### ✨ Added
@@ -41,12 +77,16 @@ All notable changes to this project will be documented in this file.
 - Phantom typing indicators appearing across all active clients.
 - Status synchronisation issues across active tabs.
 
+---
+
 ## [v1.0.1] - 2026-08-15
 
 ### ✨ Added
 - **Live Inline Translation**: Integrated Google Translate API for one-click message translation.
 - **Progressive Web App (PWA)**: Added service worker, manifest, and offline caching allowing the app to be installed to mobile home screens.
 - **Audio Waveform Visualizer**: Added dynamic real-time visualization to the voice message recorder.
+
+---
 
 ## [v1.0.0] - 2026-08-10
 

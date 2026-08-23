@@ -4330,3 +4330,190 @@ body {
   font-weight: 700;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
 }
+
+
+/* ================= ACTIVE SESSIONS & CONTACTS STYLING ================= */
+
+.dm-section-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.dm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dm-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.add-contact-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.add-contact-btn:hover {
+  background: var(--primary-accent);
+  color: #ffffff;
+  border-color: var(--primary-accent);
+}
+
+.requests-pill-btn {
+  background: rgba(99, 102, 241, 0.18);
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  color: #a5b4fc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.requests-pill-btn:hover {
+  background: var(--primary-accent);
+  color: #ffffff;
+}
+
+/* Session Cards */
+.session-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--panel-border);
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.session-card.is-current-session {
+  border-color: rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.session-icon {
+  font-size: 1.5rem;
+  margin-right: 12px;
+}
+
+.session-details {
+  flex: 1;
+}
+
+.session-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.session-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.current-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  padding: 2px 6px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.btn-danger-outline {
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+  transition: all 0.2s ease;
+}
+
+.btn-danger-outline:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* Contact Search Items */
+.contact-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--panel-border);
+  margin-bottom: 8px;
+}
+
+.contact-user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+/* ================= PROMINENT INCOMING REQUESTS BANNER ================= */
+.incoming-requests-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22) 0%, rgba(139, 92, 246, 0.18) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.45);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2);
+  animation: glowPulse 2s infinite ease-in-out;
+}
+
+@keyframes glowPulse {
+  0%, 100% { border-color: rgba(99, 102, 241, 0.45); box-shadow: 0 4px 16px rgba(99, 102, 241, 0.2); }
+  50% { border-color: rgba(139, 92, 246, 0.8); box-shadow: 0 4px 22px rgba(139, 92, 246, 0.4); }
+}
+
+.requests-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.requests-banner-btn {
+  background: var(--primary-accent);
+  color: #ffffff;
+  border: none;
+  border-radius: 7px;
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.requests-banner-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+}

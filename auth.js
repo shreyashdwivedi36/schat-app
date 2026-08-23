@@ -45,9 +45,19 @@ function comparePassword(password, hash) {
   return bcrypt.compareSync(password, hash);
 }
 
-function generateToken(user) {
+function generateToken(user, sessionId = null) {
+  const payload = {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    avatar: user.avatar,
+    role: user.role || 'user'
+  };
+  if (sessionId || user.sessionId) {
+    payload.sessionId = sessionId || user.sessionId;
+  }
   return jwt.sign(
-    { id: user.id, username: user.username, email: user.email, avatar: user.avatar, role: user.role || 'user' },
+    payload,
     JWT_SECRET,
     { expiresIn: '30d' }
   );
@@ -75,7 +85,7 @@ function authMiddleware(req, res, next) {
 
   req.user = decoded;
   // Sliding Session: issue a renewed token on every authenticated request
-  const renewedToken = generateToken(decoded);
+  const renewedToken = generateToken(decoded, decoded.sessionId);
   res.setHeader('X-Renewed-Token', renewedToken);
   next();
 }

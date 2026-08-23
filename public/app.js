@@ -31,6 +31,11 @@ const startSChat = () => {
   let typingTimeout = null;
   let isSendingTyping = false;
   let allRegisteredUsers = [];
+  // Active Sessions & Privacy Contacts State
+  let acceptedContacts = [];
+  let incomingContactRequests = [];
+  let outgoingContactRequests = [];
+
   let onlineUserIds = new Set();
   let chattedUserIds = new Set();
   let lastRenderedDate = null;
@@ -1333,6 +1338,7 @@ const enterChat = async () => {
         chattedUserIds = new Set(convData.conversationUserIds || []);
       }
       
+      await fetchUserContacts();
       updateOnlineUsers();
     } catch (err) {
       console.error('Failed to load users/conversations:', err);
@@ -1648,6 +1654,51 @@ const enterChat = async () => {
           updateOnlineUsers(data.onlineUsers);
         } else if (data.type === 'typing') {
           handleTypingEvent(data);
+        } else if (data.type === 'user_banned') {
+          if (currentUser && Number(data.userId) === Number(currentUser.id)) {
+            performLogout();
+            showAlert('Your account has been suspended by administrator.', 'error');
+          }
+        } else if (data.type === 'session_revoked') {
+          if (currentUser && Number(data.userId) === Number(currentUser.id) && currentUser.sessionId === data.sessionId) {
+            performLogout();
+            showAlert('This session was terminated from another device.', 'error');
+          }
+        } else if (data.type === 'all_other_sessions_terminated') {
+          if (currentUser && Number(data.userId) === Number(currentUser.id) && currentUser.sessionId !== data.keepSessionId) {
+            performLogout();
+            showAlert('All other active sessions were logged out.', 'info');
+          }
+        } else if (data.type === 'contact_request_received') {
+          if (currentUser && Number(data.toUserId) === Number(currentUser.id)) {
+            playSound('incoming');
+            showAlert(`New chat request from @${data.requester.username}!`, 'info');
+            fetchUserContacts();
+          }
+        } else if (data.type === 'contact_request_accepted') {
+          if (currentUser && (Number(data.user1) === Number(currentUser.id) || Number(data.user2) === Number(currentUser.id))) {
+            playSound('join');
+            showAlert('Chat request accepted! Contact added to your messages.', 'success');
+            fetchUserContacts();
+          }
+        } else if (data.type === 'contact_removed') {
+          if (currentUser && (Number(data.user1) === Number(currentUser.id) || Number(data.user2) === Number(currentUser.id))) {
+            fetchUserContacts();
+          }
+        } else if (data.type === 'contact_request_cancelled') {
+          if (currentUser && Number(data.recipient_id) === Number(currentUser.id)) {
+            fetchUserContacts();
+            if (pendingRequestsModal && pendingRequestsModal.style.display !== 'none') {
+              renderPendingRequests();
+            }
+          }
+        } else if (data.type === 'contact_request_declined') {
+          if (currentUser && Number(data.requester_id) === Number(currentUser.id)) {
+            showAlert('Your chat request was declined.', 'info');
+            outgoingContactRequests = outgoingContactRequests.filter(r => Number(r.id) !== Number(data.recipient_id));
+            fetchUserContacts();
+            if (contactSearchBtn) contactSearchBtn.click();
+          }
         }
       } catch (e) {
         console.error('Error handling WS message:', e);
@@ -2506,16 +2557,24 @@ const enterChat = async () => {
     
     const query = (searchTerm || '').toLowerCase().trim();
 
-    let displayUsers = allRegisteredUsers.filter(u => {
+    let displayUsers = acceptedContacts.filter(u => {
       if (Number(u.id) === Number(currentUser.id)) return false;
       if (query) {
          return u.username.toLowerCase().includes(query);
       }
-      return chattedUserIds.has(Number(u.id));
+      return true;
     });
 
     if (displayUsers.length === 0) {
-      onlineUsersList.innerHTML = `<li class="online-user-item disabled"><span class="u-name">${query ? 'No users found' : 'No recent chats'}</span></li>`;
+      if (query) {
+        onlineUsersList.innerHTML = `<li class="online-user-item disabled"><span class="u-name">No contacts found</span></li>`;
+      } else {
+        onlineUsersList.innerHTML = `
+          <li class="online-user-item empty-contacts-prompt" style="cursor: pointer; justify-content: center; text-align: center; padding: 14px 10px;" onclick="document.getElementById('addContactBtn')?.click()">
+            <div style="font-size: 0.78rem; color: var(--primary-accent); font-weight: 600;">+ Find & Add Contacts</div>
+          </li>
+        `;
+      }
       return;
     }
 
@@ -2554,6 +2613,434 @@ const enterChat = async () => {
       onlineUsersList.appendChild(li);
     });
   };
+
+  
+  // ==========================================
+  // ACTIVE SESSIONS & DEVICE MANAGEMENT LOGIC
+  // ==========================================
+  const sessionsModal = document.getElementById('sessionsModal');
+  const openSessionsModalBtn = document.getElementById('openSessionsModalBtn');
+  const closeSessionsModal = document.getElementById('closeSessionsModal');
+  const sessionsList = document.getElementById('sessionsList');
+  const revokeAllOtherSessionsBtn = document.getElementById('revokeAllOtherSessionsBtn');
+
+  if (openSessionsModalBtn) {
+    openSessionsModalBtn.addEventListener('click', () => {
+      if (profileModal) hideElement(profileModal);
+      if (sessionsModal) {
+        showElement(sessionsModal);
+        fetchUserSessions();
+      }
+    });
+  }
+
+  if (closeSessionsModal && sessionsModal) {
+    closeSessionsModal.addEventListener('click', () => hideElement(sessionsModal));
+  }
+
+  async function fetchUserSessions() {
+    if (!sessionsList) return;
+    sessionsList.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">Loading active sessions...</div>';
+    try {
+      const res = await fetch('/api/sessions', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const sessions = data.sessions || [];
+        if (sessions.length === 0) {
+          sessionsList.innerHTML = '<div style="text-align:center; padding: 1rem; color: var(--text-muted);">No active sessions found.</div>';
+          return;
+        }
+        sessionsList.innerHTML = sessions.map(s => {
+          const isCurrent = Boolean(s.is_current);
+          const icon = s.device.includes('Mobile') || s.device.includes('Android') || s.device.includes('iOS') ? '📱' : '💻';
+          const lastActiveDate = new Date(s.last_active || s.created_at).toLocaleString([], {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+          });
+
+          const actionBtn = isCurrent
+            ? '<span class="current-badge">This Device</span>'
+            : `<button type="button" class="btn-danger-outline" style="font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; cursor: pointer;" onclick="revokeSession('${s.session_id}')">Revoke</button>`;
+
+          return `
+            <div class="session-card ${isCurrent ? 'is-current-session' : ''}">
+              <div style="display: flex; align-items: center;">
+                <div class="session-icon">${icon}</div>
+                <div class="session-details">
+                  <div class="session-title">
+                    ${escapeHtml(s.device)}
+                    <span style="font-size: 0.78rem; font-weight: 500; opacity: 0.85;">— ${escapeHtml(s.browser)}</span>
+                  </div>
+                  <div class="session-meta">
+                    IP: ${escapeHtml(s.ip_address)} • Last active: ${lastActiveDate}
+                  </div>
+                </div>
+              </div>
+              <div>
+                ${actionBtn}
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        sessionsList.innerHTML = '<div style="color: #ef4444; text-align:center; padding: 1rem;">Failed to load sessions</div>';
+      }
+    } catch (e) {
+      sessionsList.innerHTML = '<div style="color: #ef4444; text-align:center; padding: 1rem;">Network error</div>';
+    }
+  }
+
+  window.revokeSession = async (sessionId) => {
+    if (!confirm('Are you sure you want to terminate this remote session? That device will be immediately logged out.')) return;
+    try {
+      const res = await fetch(`/api/sessions/${sessionId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        showAlert('Session terminated successfully.', 'success');
+        fetchUserSessions();
+      } else {
+        const err = await res.json();
+        showAlert(err.error || 'Failed to revoke session', 'error');
+      }
+    } catch (e) {
+      showAlert('Network error', 'error');
+    }
+  };
+
+  if (revokeAllOtherSessionsBtn) {
+    revokeAllOtherSessionsBtn.addEventListener('click', async () => {
+      if (!confirm('Log out all other active devices? Only your current device will remain signed in.')) return;
+      try {
+        const res = await fetch('/api/sessions', {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+          showAlert('All other devices have been logged out.', 'success');
+          fetchUserSessions();
+        } else {
+          const err = await res.json();
+          showAlert(err.error || 'Failed to revoke other sessions', 'error');
+        }
+      } catch (e) {
+        showAlert('Network error', 'error');
+      }
+    });
+  }
+
+
+  // ==========================================
+  // PRIVACY CONTACTS & CHAT REQUESTS LOGIC
+  // ==========================================
+  const addContactBtn = document.getElementById('addContactBtn');
+  const addContactModal = document.getElementById('addContactModal');
+  const closeAddContactModal = document.getElementById('closeAddContactModal');
+  const contactSearchInput = document.getElementById('contactSearchInput');
+  const contactSearchBtn = document.getElementById('contactSearchBtn');
+  const contactSearchResults = document.getElementById('contactSearchResults');
+
+  const pendingRequestsBtn = document.getElementById('pendingRequestsBtn');
+  const pendingRequestsModal = document.getElementById('pendingRequestsModal');
+  const closePendingRequestsModal = document.getElementById('closePendingRequestsModal');
+  const pendingRequestsList = document.getElementById('pendingRequestsList');
+  const requestsCountText = document.getElementById('requestsCountText');
+  const ctxRemoveContactBtn = document.getElementById('ctxRemoveContactBtn');
+
+  if (addContactBtn && addContactModal) {
+    addContactBtn.addEventListener('click', () => {
+      showElement(addContactModal);
+      if (contactSearchInput) {
+        contactSearchInput.value = '';
+        contactSearchInput.focus();
+      }
+      if (contactSearchResults) contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1rem; color: var(--text-muted);">Enter a username above to search.</div>';
+    });
+  }
+
+  if (closeAddContactModal && addContactModal) {
+    closeAddContactModal.addEventListener('click', () => hideElement(addContactModal));
+  }
+
+  
+  const viewRequestsBannerBtn = document.getElementById('viewRequestsBannerBtn');
+  if (viewRequestsBannerBtn && pendingRequestsModal) {
+    viewRequestsBannerBtn.addEventListener('click', () => {
+      showElement(pendingRequestsModal);
+      renderPendingRequests();
+    });
+  }
+
+  if (pendingRequestsBtn && pendingRequestsModal) {
+    pendingRequestsBtn.addEventListener('click', () => {
+      showElement(pendingRequestsModal);
+      renderPendingRequests();
+    });
+  }
+
+  if (closePendingRequestsModal && pendingRequestsModal) {
+    closePendingRequestsModal.addEventListener('click', () => hideElement(pendingRequestsModal));
+  }
+
+  async function fetchUserContacts() {
+    try {
+      const res = await fetch('/api/contacts', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        acceptedContacts = data.accepted_contacts || [];
+        incomingContactRequests = data.incoming_requests || [];
+        outgoingContactRequests = data.outgoing_requests || [];
+
+        // Update Requests button badge & Prominent Banner
+        const incomingCount = incomingContactRequests.length;
+        const incomingRequestsBanner = document.getElementById('incomingRequestsBanner');
+        const requestsBannerText = document.getElementById('requestsBannerText');
+
+        if (incomingRequestsBanner && requestsBannerText) {
+          if (incomingCount > 0) {
+            requestsBannerText.textContent = `${incomingCount} pending chat request${incomingCount > 1 ? 's' : ''}`;
+            incomingRequestsBanner.style.display = 'flex';
+            incomingRequestsBanner.classList.remove('hidden');
+          } else {
+            incomingRequestsBanner.style.display = 'none';
+            incomingRequestsBanner.classList.add('hidden');
+          }
+        }
+
+        if (pendingRequestsBtn && requestsCountText) {
+          if (incomingCount > 0) {
+            requestsCountText.textContent = `Requests (${incomingCount})`;
+            pendingRequestsBtn.style.display = 'inline-flex';
+            pendingRequestsBtn.classList.remove('hidden');
+          } else {
+            pendingRequestsBtn.style.display = 'none';
+            pendingRequestsBtn.classList.add('hidden');
+          }
+        }
+
+        updateOnlineUsers();
+      }
+    } catch (e) {
+      console.error('Fetch contacts error:', e);
+    }
+  }
+
+  function renderPendingRequests() {
+    if (!pendingRequestsList) return;
+    if (incomingContactRequests.length === 0) {
+      pendingRequestsList.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">No incoming requests right now.</div>';
+      return;
+    }
+
+    pendingRequestsList.innerHTML = incomingContactRequests.map(req => `
+      <div class="contact-item-row">
+        <div class="contact-user-info">
+          <div class="avatar">${req.avatar || '👤'}</div>
+          <div>
+            <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(req.username)}</div>
+            <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(req.bio || 'Wants to connect with you')}</div>
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" class="unban-btn" onclick="acceptContactRequest(${req.id}, '${escapeHtml(req.username)}')">Accept</button>
+          <button type="button" class="ban-btn" onclick="declineContactRequest(${req.id})">Decline</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.acceptContactRequest = async (requesterId, username) => {
+    try {
+      const res = await fetch('/api/contacts/accept', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ requester_id: requesterId })
+      });
+      if (res.ok) {
+        showAlert(`Connected with @${username}!`, 'success');
+        if (pendingRequestsModal) hideElement(pendingRequestsModal);
+        fetchUserContacts();
+      } else {
+        const err = await res.json();
+        showAlert(err.error || 'Failed to accept request', 'error');
+      }
+    } catch (e) {
+      showAlert('Network error', 'error');
+    }
+  };
+
+  window.declineContactRequest = async (requesterId) => {
+    try {
+      const res = await fetch('/api/contacts/decline', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ requester_id: requesterId })
+      });
+      if (res.ok) {
+        showAlert('Request declined.', 'info');
+        incomingContactRequests = incomingContactRequests.filter(r => Number(r.id) !== Number(requesterId));
+        renderPendingRequests();
+        if (pendingRequestsBtn && requestsCountText) {
+          if (incomingContactRequests.length > 0) {
+            requestsCountText.textContent = `Requests (${incomingContactRequests.length})`;
+          } else {
+            pendingRequestsBtn.style.display = 'none';
+            if (pendingRequestsModal) hideElement(pendingRequestsModal);
+          }
+        }
+      }
+    } catch (e) {
+      showAlert('Network error', 'error');
+    }
+  };
+
+  if (contactSearchBtn && contactSearchInput) {
+    const handleContactSearch = () => {
+      const q = (contactSearchInput.value || '').trim().toLowerCase();
+      if (!q) return;
+
+      const results = allRegisteredUsers.filter(u => {
+        if (Number(u.id) === Number(currentUser.id)) return false;
+        return u.username.toLowerCase().includes(q) || (u.email && u.email.toLowerCase().includes(q));
+      });
+
+      if (results.length === 0) {
+        contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">No users found matching that username.</div>';
+        return;
+      }
+
+      contactSearchResults.innerHTML = results.map(u => {
+        const isContact = acceptedContacts.some(c => Number(c.id) === Number(u.id));
+        const isOutgoing = outgoingContactRequests.some(r => Number(r.id) === Number(u.id));
+        const isIncoming = incomingContactRequests.some(r => Number(r.id) === Number(u.id));
+
+        let actionBtn = '';
+        if (isContact) {
+          actionBtn = `<button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="startChatWithContact(${u.id}, '${escapeHtml(u.username)}')">Chat</button>`;
+        } else if (isOutgoing) {
+          actionBtn = `<button type="button" class="btn-danger-outline" style="padding: 5px 12px; font-size: 0.78rem; border-radius: 8px; cursor: pointer;" onclick="cancelContactRequest(${u.id}, '${escapeHtml(u.username)}')">Cancel Request</button>`;
+        } else if (isIncoming) {
+          actionBtn = `<button type="button" class="unban-btn" onclick="acceptContactRequest(${u.id}, '${escapeHtml(u.username)}')">Accept Request</button>`;
+        } else {
+          actionBtn = `<button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="sendContactRequest(${u.id}, '${escapeHtml(u.username)}')">Send Request</button>`;
+        }
+
+        return `
+          <div class="contact-item-row">
+            <div class="contact-user-info">
+              <div class="avatar">${u.avatar || '👤'}</div>
+              <div>
+                <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(u.username)}</div>
+                <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.bio || 'SChat User')}</div>
+              </div>
+            </div>
+            <div>
+              ${actionBtn}
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    contactSearchBtn.addEventListener('click', handleContactSearch);
+    contactSearchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleContactSearch(); });
+  }
+
+  window.sendContactRequest = async (targetId, username) => {
+    try {
+      const res = await fetch('/api/contacts/request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ target_id: targetId })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showAlert(data.message || `Chat request sent to @${username}!`, 'success');
+        // Update local outgoing list immediately
+        if (!outgoingContactRequests.some(r => Number(r.id) === Number(targetId))) {
+          outgoingContactRequests.push({ id: targetId, username });
+        }
+        if (contactSearchBtn) contactSearchBtn.click();
+        fetchUserContacts();
+      } else {
+        showAlert(data.error || 'Failed to send request', 'error');
+      }
+    } catch (e) {
+      showAlert('Network error', 'error');
+    }
+  };
+
+  window.cancelContactRequest = async (targetId, username) => {
+    try {
+      const res = await fetch('/api/contacts/cancel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ target_id: targetId })
+      });
+      if (res.ok) {
+        showAlert(`Request to @${username} cancelled.`, 'info');
+        outgoingContactRequests = outgoingContactRequests.filter(r => Number(r.id) !== Number(targetId));
+        if (contactSearchBtn) contactSearchBtn.click();
+        fetchUserContacts();
+      } else {
+        const err = await res.json();
+        showAlert(err.error || 'Failed to cancel request', 'error');
+      }
+    } catch (e) {
+      showAlert('Network error', 'error');
+    }
+  };
+
+  window.startChatWithContact = (targetId, username) => {
+    if (addContactModal) hideElement(addContactModal);
+    const target = allRegisteredUsers.find(u => Number(u.id) === Number(targetId)) || { id: targetId, username };
+    switchChatTab(target);
+  };
+
+  if (ctxRemoveContactBtn) {
+    ctxRemoveContactBtn.addEventListener('click', async () => {
+      if (channelContextMenuTarget === 'global') return;
+      const targetUser = allRegisteredUsers.find(u => u.id.toString() === channelContextMenuTarget.toString());
+      const username = targetUser ? targetUser.username : 'user';
+
+      if (!confirm(`Remove @${username} from your contacts and chat list?`)) return;
+
+      try {
+        const res = await fetch(`/api/contacts/${channelContextMenuTarget}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (res.ok) {
+          showAlert(`@${username} removed from contacts.`, 'info');
+          if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id && activeRecipient.id.toString() === channelContextMenuTarget.toString()) {
+            switchChatTab('empty');
+          }
+          fetchUserContacts();
+        } else {
+          const err = await res.json();
+          showAlert(err.error || 'Failed to remove contact', 'error');
+        }
+      } catch (e) {
+        showAlert('Network error', 'error');
+      }
+    });
+  }
 
   // ================= VOICE MESSAGES =================
   const micBtn = document.getElementById('micBtn');

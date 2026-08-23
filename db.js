@@ -59,6 +59,26 @@ if (process.env.DATABASE_URL) {
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id)
         );
+                CREATE TABLE IF NOT EXISTS user_sessions (
+          id SERIAL PRIMARY KEY,
+          session_id VARCHAR(64) UNIQUE NOT NULL,
+          user_id INTEGER NOT NULL,
+          device VARCHAR(100) DEFAULT 'Unknown Device',
+          browser VARCHAR(100) DEFAULT 'Unknown Browser',
+          ip_address VARCHAR(45) DEFAULT '127.0.0.1',
+          last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id)
+        );
+        CREATE TABLE IF NOT EXISTS contacts (
+          id SERIAL PRIMARY KEY,
+          requester_id INTEGER NOT NULL,
+          recipient_id INTEGER NOT NULL,
+          status VARCHAR(20) DEFAULT 'pending',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(requester_id, recipient_id)
+        );
         CREATE TABLE IF NOT EXISTS blocked_users (
           id SERIAL PRIMARY KEY,
           blocker_id INTEGER NOT NULL,
@@ -115,7 +135,7 @@ if (process.env.DATABASE_URL) {
 } else {
   // Pure JSON File fallback for zero-dependency local dev
   const fallbackPath = path.join(__dirname, 'db_fallback.json');
-  let data = { users: [], messages: [], channels: [], blocked_users: [], lastUserId: 0, lastMsgId: 0, lastChanId: 0 };
+    let data = { users: [], messages: [], channels: [], blocked_users: [], user_sessions: [], contacts: [], lastUserId: 0, lastMsgId: 0, lastChanId: 0, lastSessionId: 0, lastContactId: 0 };
 
   if (fs.existsSync(fallbackPath)) {
     try {
@@ -124,6 +144,8 @@ if (process.env.DATABASE_URL) {
       data.messages = raw.messages || [];
       data.channels = raw.channels || [];
       data.blocked_users = raw.blocked_users || [];
+      data.user_sessions = raw.user_sessions || [];
+      data.contacts = raw.contacts || [];
       data.lastUserId = raw.lastUserId || data.users.length;
       data.lastMsgId = raw.lastMsgId || data.messages.length;
       data.lastChanId = raw.lastChanId || data.channels.length;
@@ -208,6 +230,75 @@ if (process.env.DATABASE_URL) {
         }
         return { changes: 0 };
       }
+            if (sql.includes('INSERT INTO user_sessions')) {
+        const [session_id, user_id, device, browser, ip_address] = params;
+        data.lastSessionId += 1;
+        const newSession = {
+          id: data.lastSessionId,
+          session_id,
+          user_id: Number(user_id),
+          device: device || 'Desktop',
+          browser: browser || 'Browser',
+          ip_address: ip_address || '127.0.0.1',
+          last_active: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        };
+        data.user_sessions.push(newSession);
+        saveData();
+        return { id: newSession.id, changes: 1 };
+      }
+      if (sql.includes('DELETE FROM user_sessions WHERE session_id = ? AND user_id = ?')) {
+        const [session_id, user_id] = params;
+        const initLen = data.user_sessions.length;
+        data.user_sessions = data.user_sessions.filter(s => !(s.session_id === session_id && Number(s.user_id) === Number(user_id)));
+        saveData();
+        return { changes: initLen - data.user_sessions.length };
+      }
+      if (sql.includes('DELETE FROM user_sessions WHERE user_id = ? AND session_id != ?')) {
+        const [user_id, keep_session_id] = params;
+        const initLen = data.user_sessions.length;
+        data.user_sessions = data.user_sessions.filter(s => !(Number(s.user_id) === Number(user_id) && s.session_id !== keep_session_id));
+        saveData();
+        return { changes: initLen - data.user_sessions.length };
+      }
+      if (sql.includes('INSERT INTO contacts')) {
+        const [requester_id, recipient_id, status] = params;
+        data.lastContactId += 1;
+        const newContact = {
+          id: data.lastContactId,
+          requester_id: Number(requester_id),
+          recipient_id: Number(recipient_id),
+          status: status || 'pending',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        data.contacts.push(newContact);
+        saveData();
+        return { id: newContact.id, changes: 1 };
+      }
+      if (sql.includes('UPDATE contacts SET status = ?')) {
+        const [status, requester_id, recipient_id] = params;
+        const c = data.contacts.find(con => Number(con.requester_id) === Number(requester_id) && Number(con.recipient_id) === Number(recipient_id));
+        if (c) {
+          c.status = status;
+          c.updated_at = new Date().toISOString();
+          saveData();
+          return { changes: 1 };
+        }
+        return { changes: 0 };
+      }
+      if (sql.includes('DELETE FROM contacts WHERE')) {
+        if (params.length === 2) {
+          const [u1, u2] = params;
+          const initLen = data.contacts.length;
+          data.contacts = data.contacts.filter(c => !(
+            (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
+            (Number(c.requester_id) === Number(u2) && Number(c.recipient_id) === Number(u1))
+          ));
+          saveData();
+          return { changes: initLen - data.contacts.length };
+        }
+      }
       if (sql.includes('INSERT INTO blocked_users')) {
         const [blocker_id, blocked_id] = params;
         data.blocked_users.push({ id: data.blocked_users.length + 1, blocker_id, blocked_id });
@@ -250,13 +341,54 @@ if (process.env.DATABASE_URL) {
       }
     },
     async get(sql, params = []) {
-      if (sql.includes('FROM users WHERE username = ?')) return data.users.find(u => u.username === params[0] || u.email === params[0]) || null;
-      if (sql.includes('FROM users WHERE email = ?')) return data.users.find(u => u.email === params[0]) || null;
-      if (sql.includes('FROM users WHERE id = ?')) return data.users.find(u => u.id === params[0]) || null;
-      if (sql.includes('FROM messages WHERE id = ?')) return data.messages.find(m => m.id === params[0]) || null;
+      if (sql.includes('FROM users WHERE username = ?')) {
+        const query = (params[0] || '').toLowerCase();
+        return data.users.find(u => (u.username && u.username.toLowerCase() === query) || (u.email && u.email.toLowerCase() === query)) || null;
+      }
+      if (sql.includes('FROM users WHERE email = ?')) {
+        const query = (params[0] || '').toLowerCase();
+        return data.users.find(u => u.email && u.email.toLowerCase() === query) || null;
+      }
+      if (sql.includes('FROM users WHERE id = ?')) {
+        return data.users.find(u => Number(u.id) === Number(params[0])) || null;
+      }
+      if (sql.includes('FROM messages WHERE id = ?')) {
+        return data.messages.find(m => Number(m.id) === Number(params[0])) || null;
+      }
+      if (sql.includes('FROM contacts WHERE')) {
+        if (params.length === 4) {
+          const [u1, u2, u3, u4] = params;
+          return data.contacts.find(c => (
+            (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
+            (Number(c.requester_id) === Number(u3) && Number(c.recipient_id) === Number(u4))
+          )) || null;
+        } else if (params.length === 2) {
+          const [u1, u2] = params;
+          return data.contacts.find(c => (
+            (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
+            (Number(c.requester_id) === Number(u2) && Number(c.recipient_id) === Number(u1))
+          )) || null;
+        }
+      }
       return null;
     },
     async all(sql, params = []) {
+            if (sql.includes('FROM user_sessions WHERE user_id = ?')) {
+        const [uId] = params;
+        return data.user_sessions.filter(s => Number(s.user_id) === Number(uId));
+      }
+      if (sql.includes('FROM contacts WHERE')) {
+        if (params.length === 2) {
+          const [u1, u2] = params;
+          return data.contacts.filter(c => (
+            (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
+            (Number(c.requester_id) === Number(u2) && Number(c.recipient_id) === Number(u1))
+          ));
+        } else if (params.length === 1) {
+          const [uId] = params;
+          return data.contacts.filter(c => Number(c.requester_id) === Number(uId) || Number(c.recipient_id) === Number(uId));
+        }
+      }
       if (sql.includes('FROM blocked_users')) {
         const blocker_id = params[0];
         return data.blocked_users.filter(b => b.blocker_id === blocker_id);
