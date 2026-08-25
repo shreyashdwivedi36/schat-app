@@ -698,21 +698,9 @@ const startSChat = () => {
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const newBio = profileBioInput ? profileBioInput.value.trim() : (currentUser?.bio || '');
-      let finalAvatar = stagedAvatar || currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
+      const finalAvatar = stagedAvatar || currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
 
       showAlert('Saving profile changes...', 'info');
-
-      // If avatar is a Base64 data URL from cropper, try uploading to Cloudinary for ultra-fast CDN loading
-      if (typeof finalAvatar === 'string' && finalAvatar.startsWith('data:image/')) {
-        try {
-          const cdnResult = await uploadToCloudinary(finalAvatar, 'image');
-          if (cdnResult && cdnResult.includes('cloudinary.com')) {
-            finalAvatar = cdnResult.replace('/image/upload/', '/image/upload/c_fill,g_face,w_256,h_256,q_auto,f_auto/');
-          }
-        } catch (cErr) {
-          console.warn('Cloudinary upload fallback to data URL:', cErr);
-        }
-      }
 
       try {
         const res = await fetch('/api/me', {
@@ -4312,66 +4300,60 @@ hideElement(typingBanner);
 
       const croppedDataUrl = cropOutputCanvas.toDataURL('image/webp', 0.88);
 
-      if (cropperSourceContext === 'lightbox') {
-        // Direct Save Flow for Lightbox Modal
-        showAlert('Saving profile photo...', 'info');
-        try {
-          const res = await fetch('/api/profile/avatar', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${authToken}`
-            },
-            body: JSON.stringify({ avatar: croppedDataUrl })
-          });
+      // Unify staged state and live DOM updates immediately
+      stagedAvatar = croppedDataUrl;
+      if (currentUser) {
+        currentUser.avatar = croppedDataUrl;
+        localStorage.setItem('schat_user', JSON.stringify(currentUser));
+      }
 
-          if (res.ok) {
-            currentUser.avatar = croppedDataUrl;
-            localStorage.setItem('schat_user', JSON.stringify(currentUser));
-            
-            // Update Lightbox image immediately
-            const lightboxAvatarShield = document.getElementById('lightboxAvatarShield');
-            if (lightboxAvatarShield) {
-              lightboxAvatarShield.style.backgroundImage = `url('${croppedDataUrl}')`;
-              lightboxAvatarShield.innerHTML = '';
-            }
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+      if (profileAvatarPreview) {
+        profileAvatarPreview.innerHTML = renderAvatarHTML(croppedDataUrl, currentUser?.username || 'User', 'no-hover');
+      }
 
-            // Update Sidebar avatar
-            const myAvatar = document.getElementById('myAvatar');
-            if (myAvatar) myAvatar.innerHTML = renderAvatarHTML(croppedDataUrl, currentUser.username, 'sidebar');
+      const myAvatar = document.getElementById('myAvatar');
+      if (myAvatar) {
+        myAvatar.innerHTML = renderAvatarHTML(croppedDataUrl, currentUser?.username || 'User', 'no-hover');
+      }
 
-            showAlert('Profile photo updated successfully!', 'success');
+      const lightboxAvatarShield = document.getElementById('lightboxAvatarShield');
+      if (lightboxAvatarShield) {
+        lightboxAvatarShield.style.backgroundImage = `url('${croppedDataUrl}')`;
+        lightboxAvatarShield.innerHTML = '';
+      }
 
-            if (ws && ws.readyState === WebSocket.OPEN) {
-              ws.send(JSON.stringify({ type: 'profile_update', avatar: croppedDataUrl }));
-            }
-          } else {
-            const err = await res.json();
-            showAlert(err.error || 'Failed to save photo.', 'error');
-          }
-        } catch (err) {
-          console.error('Lightbox avatar upload error:', err);
-          showAlert('Network error saving photo.', 'error');
-        }
-      } else {
-        // Staged Preview Flow for Profile Settings Modal
-        stagedAvatar = croppedDataUrl;
-
-        // Preview on Hero Card
-        const profileAvatarPreview = document.getElementById('profileAvatarPreview');
-        if (profileAvatarPreview) {
-          profileAvatarPreview.innerHTML = renderAvatarHTML(stagedAvatar, currentUser?.username || 'User', 'no-hover');
-        }
-
-        // Unselect all preset cards
-        if (presetAvatarsGrid) {
-          presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
-        }
-
-        showAlert('Photo cropped! Click "Save Changes" to apply.', 'info');
+      if (presetAvatarsGrid) {
+        presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
       }
 
       closeCropper();
+      showAlert('Saving profile photo...', 'info');
+
+      // Direct Save to Backend Database
+      try {
+        const res = await fetch('/api/profile/avatar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ avatar: croppedDataUrl })
+        });
+
+        if (res.ok) {
+          showAlert('Profile photo updated & saved successfully!', 'success');
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'profile_update', avatar: croppedDataUrl }));
+          }
+        } else {
+          const err = await res.json();
+          showAlert(err.error || 'Failed to save photo.', 'error');
+        }
+      } catch (err) {
+        console.error('Avatar save error:', err);
+        showAlert('Network error saving photo.', 'error');
+      }
     });
   }
 
