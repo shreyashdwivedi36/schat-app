@@ -3943,19 +3943,18 @@ hideElement(typingBanner);
 
     if (!avatarLightboxModal) return;
 
+    // Close any other open modals to prevent layering clash
+    if (profileModal) hideElement(profileModal);
+    if (aboutModal) hideElement(aboutModal);
+    if (sessionsModal) hideElement(sessionsModal);
+
     const isImg = isImageAvatar(avatarUrl);
     if (isImg) {
       lightboxAvatarShield.style.backgroundImage = `url('${avatarUrl}')`;
       lightboxAvatarShield.innerHTML = '';
     } else {
       lightboxAvatarShield.style.backgroundImage = 'none';
-      lightboxAvatarShield.innerHTML = `<span style="font-size: 5rem; display: flex; align-items: center; justify-content: center; height: 100%;">${avatarUrl}</span>`;
-    }
-
-    if (lightboxWatermark) {
-      const viewerName = currentUser ? currentUser.username : 'Guest';
-      const today = new Date().toLocaleDateString();
-      lightboxWatermark.textContent = `SChat™ • @${viewerName} • ${today}`;
+      lightboxAvatarShield.innerHTML = `<span style="font-size: 6rem; display: flex; align-items: center; justify-content: center; height: 100%;">${avatarUrl}</span>`;
     }
 
     if (lightboxUsername) lightboxUsername.textContent = `@${uname}`;
@@ -3964,17 +3963,17 @@ hideElement(typingBanner);
     if (lightboxActions) {
       if (isSelf) {
         lightboxActions.innerHTML = `
-          <button type="button" class="btn btn-primary lightbox-action-btn" onclick="document.getElementById('profileAvatarInput').click(); window.hideAvatarLightbox();">
+          <button type="button" class="cinematic-pill-btn primary" onclick="document.getElementById('profileAvatarInput').click(); window.hideAvatarLightbox();">
             📷 Change Photo
           </button>
-          <button type="button" class="btn-danger-outline lightbox-action-btn" style="border-radius:12px; padding:8px 16px; font-size:0.84rem; cursor:pointer;" onclick="window.resetAvatarToEmoji(); window.hideAvatarLightbox();">
-            🗑️ Reset Emoji
+          <button type="button" class="cinematic-pill-btn danger" onclick="window.resetAvatarToEmoji(); window.hideAvatarLightbox();">
+            🗑️ Reset to Emoji
           </button>
         `;
       } else {
         lightboxActions.innerHTML = `
-          <button type="button" class="btn btn-primary lightbox-action-btn" onclick="window.hideAvatarLightbox();">
-            Close Preview
+          <button type="button" class="cinematic-pill-btn primary" onclick="window.hideAvatarLightbox();">
+            ✕ Close Preview
           </button>
         `;
       }

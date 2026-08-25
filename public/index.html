@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=105">
+  <link rel="stylesheet" href="style.css?v=106">
 </head>
 <body>
 
@@ -303,23 +303,28 @@
       </div>
 
       
-      <!-- Avatar Maximize Lightbox Modal (Protected Viewer) -->
-      <div id="avatarLightboxModal" class="about-modal hidden" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="lightboxUsername">
-        <div class="lightbox-backdrop" id="closeAvatarLightboxBackdrop"></div>
-        <div class="lightbox-card">
-          <button id="closeAvatarLightboxBtn" class="modal-close-btn" aria-label="Close photo preview">✕</button>
-          <div class="lightbox-avatar-wrapper">
-            <div id="lightboxAvatarShield" class="lightbox-avatar-shield">
+      <!-- Avatar Maximize Lightbox Modal (Cinematic Protected Viewer) -->
+      <div id="avatarLightboxModal" class="cinematic-lightbox-modal hidden" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="lightboxUsername">
+        <div class="cinematic-backdrop" id="closeAvatarLightboxBackdrop"></div>
+        <button id="closeAvatarLightboxBtn" class="cinematic-close-btn" aria-label="Close preview" title="Close (Esc)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <div class="cinematic-lightbox-container">
+          <div class="cinematic-avatar-aura"></div>
+          <div class="cinematic-avatar-wrapper">
+            <div id="lightboxAvatarShield" class="cinematic-avatar-shield">
               <!-- Protected photo background -->
             </div>
-            <!-- Anti-Leak Dynamic Security Watermark -->
-            <div id="lightboxWatermark" class="lightbox-watermark"></div>
           </div>
-          <div class="lightbox-info">
-            <h3 id="lightboxUsername" class="lightbox-username">@username</h3>
-            <p id="lightboxBio" class="lightbox-bio">Hey there! I am using SChat.</p>
+          <div class="cinematic-info">
+            <div class="cinematic-badge">Profile Preview</div>
+            <h3 id="lightboxUsername" class="cinematic-username">@username</h3>
+            <p id="lightboxBio" class="cinematic-bio">Hey there! I am using SChat.</p>
           </div>
-          <div id="lightboxActions" class="lightbox-actions">
+          <div id="lightboxActions" class="cinematic-actions">
             <!-- Injected dynamically: Chat / Change / Remove / Close -->
           </div>
         </div>
@@ -754,7 +759,7 @@
     </div>
   </div>
 
-  <script src="motion-fx.js?v=105" type="module"></script>
+  <script src="motion-fx.js?v=106" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -829,7 +834,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=105" type="module"></script>
+  <script src="/app.js?v=106" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
