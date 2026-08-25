@@ -13,6 +13,16 @@ import { MotionFX } from './motion-fx.js';
 
 
 const startSChat = () => {
+  function escapeHtml(str) {
+    if (!str || typeof str !== 'string') return '';
+    return str.replace(/[&<>'"]/g, tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag] || tag));
+  }
 
   // ==========================================
   // PROTECTED AVATARS & COMPRESSION HELPERS
@@ -669,9 +679,21 @@ const startSChat = () => {
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const newBio = profileBioInput ? profileBioInput.value.trim() : (currentUser?.bio || '');
-      const finalAvatar = stagedAvatar || currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
+      let finalAvatar = stagedAvatar || currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
 
       showAlert('Saving profile changes...', 'info');
+
+      // If avatar is a Base64 data URL from cropper, try uploading to Cloudinary for ultra-fast CDN loading
+      if (typeof finalAvatar === 'string' && finalAvatar.startsWith('data:image/')) {
+        try {
+          const cdnResult = await uploadToCloudinary(finalAvatar, 'image');
+          if (cdnResult && cdnResult.includes('cloudinary.com')) {
+            finalAvatar = cdnResult.replace('/image/upload/', '/image/upload/c_fill,g_face,w_256,h_256,q_auto,f_auto/');
+          }
+        } catch (cErr) {
+          console.warn('Cloudinary upload fallback to data URL:', cErr);
+        }
+      }
 
       try {
         const res = await fetch('/api/me', {
@@ -690,7 +712,7 @@ const startSChat = () => {
           
           if (myBioEl) myBioEl.textContent = newBio;
           const myAvatar = document.getElementById('myAvatar');
-          if (myAvatar) myAvatar.innerHTML = renderAvatarHTML(finalAvatar, currentUser.username, 'sidebar');
+          if (myAvatar) myAvatar.innerHTML = renderAvatarHTML(finalAvatar, currentUser.username, 'no-hover');
 
           showAlert('Profile updated successfully!', 'success');
           closeProfileModal();
@@ -2710,17 +2732,7 @@ const enterChat = async () => {
     });
   }
 
-  const escapeHtml = (str) => {
-    return str.replace(/[&<>'"]/g, 
-      tag => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        "'": '&#39;',
-        '"': '&quot;'
-      }[tag] || tag)
-    );
-  };
+
 
   const scrollToBottom = () => {
     messagesFeed.scrollTop = messagesFeed.scrollHeight;
