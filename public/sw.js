@@ -8,13 +8,14 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v112-contact-removal-fix';
+const CACHE_NAME = 'schat-v113-production-release';
 
 const PRECACHE_URLS = [
   '/',
   '/index.html',
   '/app.js',
   '/style.css',
+  '/motion-fx.js',
   '/logo.png',
   '/badge.png'
 ];
