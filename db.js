@@ -361,11 +361,12 @@ if (process.env.DATABASE_URL) {
             Number(c.recipient_id) === Number(u2) &&
             (!status || c.status === status)
           ));
-        } else if (params.length === 2) {
-          const [u1, u2] = params;
+        } else if (params.length === 4 || params.length === 2) {
+          const u1 = Number(params[0]);
+          const u2 = Number(params[1]);
           data.contacts = data.contacts.filter(c => !(
-            (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
-            (Number(c.requester_id) === Number(u2) && Number(c.recipient_id) === Number(u1))
+            (Number(c.requester_id) === u1 && Number(c.recipient_id) === u2) ||
+            (Number(c.requester_id) === u2 && Number(c.recipient_id) === u1)
           ));
         }
         saveData();

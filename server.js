@@ -929,11 +929,12 @@ app.post('/api/contacts/decline', authMiddleware, async (req, res) => {
 app.delete('/api/contacts/:targetId', authMiddleware, async (req, res) => {
   const { targetId } = req.params;
   if (!targetId) return res.status(400).json({ error: 'Target ID required.' });
+  const parsedTargetId = parseInt(targetId, 10);
 
   try {
     await db.run(
       'DELETE FROM contacts WHERE (requester_id = ? AND recipient_id = ?) OR (requester_id = ? AND recipient_id = ?)',
-      [req.user.id, targetId, targetId, req.user.id]
+      [req.user.id, parsedTargetId, parsedTargetId, req.user.id]
     );
 
     broadcast({

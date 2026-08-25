@@ -3268,6 +3268,8 @@ const enterChat = async () => {
         if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id && activeRecipient.id.toString() === targetId.toString()) {
           switchChatTab('empty');
         }
+        acceptedContacts = acceptedContacts.filter(c => Number(c.id) !== Number(targetId));
+        renderContactSearchResults();
         fetchUserContacts();
       } else {
         const err = await res.json();
