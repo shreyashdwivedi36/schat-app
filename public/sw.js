@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v101-realtime-contacts-fix';
+const CACHE_NAME = 'schat-v102-profile-photos-lightbox';
 
 const PRECACHE_URLS = [
   '/',

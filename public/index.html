@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=101">
+  <link rel="stylesheet" href="style.css?v=102">
 </head>
 <body>
 
@@ -302,6 +302,29 @@
         </div>
       </div>
 
+      
+      <!-- Avatar Maximize Lightbox Modal (Protected Viewer) -->
+      <div id="avatarLightboxModal" class="about-modal hidden" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="lightboxUsername">
+        <div class="lightbox-backdrop" id="closeAvatarLightboxBackdrop"></div>
+        <div class="lightbox-card">
+          <button id="closeAvatarLightboxBtn" class="modal-close-btn" aria-label="Close photo preview">✕</button>
+          <div class="lightbox-avatar-wrapper">
+            <div id="lightboxAvatarShield" class="lightbox-avatar-shield">
+              <!-- Protected photo background -->
+            </div>
+            <!-- Anti-Leak Dynamic Security Watermark -->
+            <div id="lightboxWatermark" class="lightbox-watermark"></div>
+          </div>
+          <div class="lightbox-info">
+            <h3 id="lightboxUsername" class="lightbox-username">@username</h3>
+            <p id="lightboxBio" class="lightbox-bio">Hey there! I am using SChat.</p>
+          </div>
+          <div id="lightboxActions" class="lightbox-actions">
+            <!-- Injected dynamically: Chat / Change / Remove / Close -->
+          </div>
+        </div>
+      </div>
+
       <!-- Profile Settings Modal -->
       <div id="profileModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="profileModalTitle">
         <div class="modal-card">
@@ -311,7 +334,24 @@
             <span class="modal-version">Customize your account</span>
           </div>
           <form id="profileForm" class="modal-body">
-            <div class="input-group">
+            <div class="profile-avatar-section">
+              <div class="profile-avatar-uploader" id="profileAvatarUploadBtn" title="Click to upload real photo or change avatar">
+                <div id="profileAvatarPreview" class="avatar-shield profile-avatar-shield">
+                  <!-- Injected dynamically -->
+                </div>
+                <div class="avatar-camera-badge" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                </div>
+              </div>
+              <input type="file" id="profileAvatarInput" accept="image/png, image/jpeg, image/webp, image/heic" style="display: none;">
+              <div class="profile-avatar-hint">Tap avatar to upload photo (auto-compressed)</div>
+              <button type="button" id="profileAvatarResetBtn" class="profile-avatar-reset-btn hidden">Reset to Emoji</button>
+            </div>
+
+            <div class="input-group" style="margin-top: 14px;">
               <label>Status Bio</label>
               <input type="text" id="profileBioInput" placeholder="Set status bio..." maxLength="255">
             </div>
@@ -714,7 +754,7 @@
     </div>
   </div>
 
-  <script src="motion-fx.js?v=101" type="module"></script>
+  <script src="motion-fx.js?v=102" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -789,7 +829,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=101" type="module"></script>
+  <script src="/app.js?v=102" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

@@ -4707,3 +4707,251 @@ body {
   background: rgba(99, 102, 241, 0.15);
   border-color: var(--primary-accent);
 }
+
+
+/* ==========================================
+   PROTECTED AVATAR & LIGHTBOX STYLES
+   ========================================== */
+
+.avatar-shield {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+}
+
+.avatar-shield:hover {
+  transform: scale(1.05);
+}
+
+.avatar-shield.no-hover:hover {
+  transform: none;
+}
+
+.avatar-shield-emoji {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+/* Profile Modal Uploader */
+.profile-avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.profile-avatar-uploader {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  padding: 3px;
+  background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.profile-avatar-uploader:hover {
+  transform: scale(1.06);
+}
+
+.profile-avatar-shield {
+  width: 100%;
+  height: 100%;
+  background-color: var(--panel-bg);
+}
+
+.avatar-camera-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  background: var(--primary-accent);
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--panel-bg);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.profile-avatar-hint {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  text-align: center;
+}
+
+.profile-avatar-reset-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 0.76rem;
+  cursor: pointer;
+  margin-top: 5px;
+  text-decoration: underline;
+  padding: 2px 6px;
+}
+
+.profile-avatar-reset-btn:hover {
+  color: #f87171;
+}
+
+/* ==========================================
+   MAXIMIZE AVATAR LIGHTBOX MODAL
+   ========================================== */
+
+#avatarLightboxModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.lightbox-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  animation: fadeIn 0.25s ease-out;
+}
+
+.lightbox-card {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 360px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 24px;
+  padding: 2rem 1.5rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(99, 102, 241, 0.15);
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lightbox-avatar-wrapper {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  padding: 4px;
+  background: linear-gradient(135deg, var(--primary-accent), var(--secondary-accent));
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+}
+
+.lightbox-avatar-shield {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: var(--panel-bg);
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+  transition: filter 0.15s ease;
+}
+
+/* Anti-Leak Security Watermark */
+.lightbox-watermark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.18);
+  text-transform: uppercase;
+  transform: rotate(-30deg);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.lightbox-info {
+  margin-bottom: 1.25rem;
+  width: 100%;
+}
+
+.lightbox-username {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+
+.lightbox-bio {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.lightbox-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.lightbox-action-btn {
+  padding: 8px 16px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Anti-Screenshot & Print Lockdown */
+@media print {
+  #avatarLightboxModal,
+  .avatar-shield,
+  .profile-avatar-shield {
+    display: none !important;
+  }
+}
