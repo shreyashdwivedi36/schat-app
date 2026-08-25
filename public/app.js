@@ -25,6 +25,52 @@ const startSChat = () => {
   }
 
   // ==========================================
+  // UNIVERSAL FLOATING TOAST ENGINE
+  // ==========================================
+  function getToastContainer() {
+    let container = document.getElementById('globalToastContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'globalToastContainer';
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+
+  function showAppToast(message, type = 'info') {
+    if (!message) return;
+    const container = getToastContainer();
+    const toast = document.createElement('div');
+    toast.className = `global-toast toast-${type}`;
+    
+    let icon = 'ℹ️';
+    if (type === 'success') icon = '✅';
+    if (type === 'error') icon = '⚠️';
+    
+    toast.innerHTML = `<span style="font-size: 1.1rem; line-height: 1;">${icon}</span> <span>${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('toast-leaving');
+      setTimeout(() => {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, 300);
+    }, 3200);
+  }
+
+  function showAlert(message, type = 'error') {
+    showAppToast(message, type);
+    if (typeof authAlert !== 'undefined' && authAlert) {
+      authAlert.textContent = message;
+      authAlert.className = `alert-banner ${type}`;
+      authAlert.classList.remove('hidden');
+      setTimeout(() => authAlert.classList.add('hidden'), 4000);
+    }
+  }
+  window.showAlert = showAlert;
+  window.showAppToast = showAppToast;
+
+  // ==========================================
   // PROTECTED AVATARS & COMPRESSION HELPERS
   // ==========================================
   const isImageAvatar = (avatar) => {
@@ -721,8 +767,8 @@ const startSChat = () => {
           const myAvatar = document.getElementById('myAvatar');
           if (myAvatar) myAvatar.innerHTML = renderAvatarHTML(finalAvatar, currentUser.username, 'no-hover');
 
-          showAlert('Profile updated successfully!', 'success');
           closeProfileModal();
+          showAppToast('Profile updated successfully!', 'success');
 
           if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'profile_update', avatar: finalAvatar, bio: newBio }));
@@ -1001,12 +1047,7 @@ const startSChat = () => {
     btn.textContent = input.type === 'password' ? '👁️' : '🔒';
   };
 
-  const showAlert = (message, type = 'error') => {
-    authAlert.textContent = message;
-    authAlert.className = `alert-banner ${type}`;
-    showElement(authAlert);
-    setTimeout(() => authAlert.classList.add('hidden'), 4000);
-  };
+
 
   const swapAuthForms = async (fromForm, toForm) => {
     hideElement(authAlert);

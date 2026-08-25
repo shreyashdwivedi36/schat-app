@@ -5565,3 +5565,72 @@ emoji-picker.schat-emoji-picker {
 #avatarCropperModal {
   z-index: 1000001 !important;
 }
+
+
+/* =========================================================
+   UNIVERSAL FLOATING GLASSMORPHISM TOAST NOTIFICATION SYSTEM
+   ========================================================= */
+#globalToastContainer {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000005;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  width: 90%;
+  max-width: 420px;
+}
+
+.global-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  background: rgba(18, 24, 38, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(99, 102, 241, 0.2);
+  animation: toastEnter 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.global-toast.toast-success {
+  border-color: rgba(52, 199, 89, 0.4);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(52, 199, 89, 0.25);
+}
+
+.global-toast.toast-error {
+  border-color: rgba(255, 59, 48, 0.4);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(255, 59, 48, 0.25);
+}
+
+.global-toast.toast-info {
+  border-color: rgba(10, 132, 255, 0.4);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45), 0 0 20px rgba(10, 132, 255, 0.25);
+}
+
+.global-toast.toast-leaving {
+  opacity: 0;
+  transform: translateY(-16px) scale(0.94);
+}
+
+@keyframes toastEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
