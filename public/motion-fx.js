@@ -16,13 +16,14 @@
 let animate = fallbackAnimate;
 let stagger = fallbackStagger;
 
-try {
-  const motion = await import('https://cdn.jsdelivr.net/npm/motion@11.16.0/+esm');
-  if (typeof motion.animate === 'function') animate = motion.animate;
-  if (typeof motion.stagger === 'function') stagger = motion.stagger;
-} catch (err) {
-  console.warn('Motion CDN unavailable, using WAAPI fallback.', err);
-}
+import('https://cdn.jsdelivr.net/npm/motion@11.16.0/+esm')
+  .then(motion => {
+    if (typeof motion.animate === 'function') animate = motion.animate;
+    if (typeof motion.stagger === 'function') stagger = motion.stagger;
+  })
+  .catch(err => {
+    // Graceful fallback to WAAPI
+  });
 
 const reduced = false; // Forced false to ensure premium animations play on all devices
 

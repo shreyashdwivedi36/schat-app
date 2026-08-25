@@ -13,6 +13,66 @@ import { MotionFX } from './motion-fx.js';
 
 
 const startSChat = () => {
+
+  // ==========================================
+  // PROTECTED AVATARS & COMPRESSION HELPERS
+  // ==========================================
+  const isImageAvatar = (avatar) => {
+    if (!avatar) return false;
+    return typeof avatar === 'string' && (avatar.startsWith('http://') || avatar.startsWith('https://') || avatar.startsWith('data:image/') || avatar.startsWith('/'));
+  };
+
+  const renderAvatarHTML = (avatar, username = '', extraClass = '', onClickAttr = '') => {
+    const isImg = isImageAvatar(avatar);
+    const escapedUser = escapeHtml(username || 'User');
+    const clickHandler = onClickAttr ? `onclick="${onClickAttr}"` : '';
+    
+    if (isImg) {
+      const safeUrl = escapeHtml(avatar);
+      return `<div class="avatar-shield ${extraClass}" style="background-image: url('${safeUrl}');" aria-label="${escapedUser}'s avatar" ${clickHandler}></div>`;
+    } else {
+      const char = escapeHtml(avatar || '👤');
+      return `<div class="avatar-shield avatar-shield-emoji ${extraClass}" aria-label="${escapedUser}'s avatar" ${clickHandler}>${char}</div>`;
+    }
+  };
+
+  const compressAndProcessAvatar = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const TARGET_SIZE = 256;
+          canvas.width = TARGET_SIZE;
+          canvas.height = TARGET_SIZE;
+          const ctx = canvas.getContext('2d');
+
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = 'high';
+
+          const minDim = Math.min(img.width, img.height);
+          const startX = (img.width - minDim) / 2;
+          const startY = (img.height - minDim) / 2;
+
+          ctx.drawImage(img, startX, startY, minDim, minDim, 0, 0, TARGET_SIZE, TARGET_SIZE);
+
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              canvas.toBlob((jpgBlob) => resolve(jpgBlob), 'image/jpeg', 0.84);
+            }
+          }, 'image/webp', 0.84);
+        };
+        img.onerror = () => reject(new Error('Failed to load image.'));
+        img.src = event.target.result;
+      };
+      reader.onerror = () => reject(new Error('Failed to read file.'));
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Application State
   let authToken = localStorage.getItem('schat_token') || null;
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
