@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v116-preset-graphic-avatars';
+const CACHE_NAME = 'schat-v117-avatar-upload-fix';
 
 const PRECACHE_URLS = [
   '/',

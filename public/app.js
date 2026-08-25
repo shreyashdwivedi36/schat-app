@@ -4083,9 +4083,13 @@ hideElement(typingBanner);
       if (!file) return;
 
       try {
-        showAlert('Processing & compressing photo...', 'info');
+        showAlert('Compressing & processing photo...', 'info');
         const compressedBlob = await compressAndProcessAvatar(file);
-        showAlert('Uploading to secure CDN...', 'info');
+
+        // Deselect any preset avatar checkmark
+        document.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
+
+        showAlert('Uploading profile photo...', 'info');
         
         let cdnUrl = await uploadToCloudinary(compressedBlob, 'image');
         if (cdnUrl && cdnUrl.includes('cloudinary.com')) {
@@ -4104,13 +4108,24 @@ hideElement(typingBanner);
         if (res.ok) {
           currentUser.avatar = cdnUrl;
           localStorage.setItem('schat_user', JSON.stringify(currentUser));
-          showAlert('Profile photo updated successfully!', 'success');
-          updateMyProfileUI();
+          
+          // Live DOM updates across Hero preview and Sidebar
+          if (profileAvatarPreview) {
+            profileAvatarPreview.innerHTML = renderAvatarHTML(cdnUrl, 'profile');
+          }
+          if (myAvatar) {
+            myAvatar.innerHTML = renderAvatarHTML(cdnUrl, 'sidebar');
+          }
+          document.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
+
+          showAlert('Profile photo updated & saved successfully!', 'success');
+
           if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'profile_update', avatar: cdnUrl }));
           }
         } else {
-          showAlert('Failed to save profile photo.', 'error');
+          const err = await res.json();
+          showAlert(err.error || 'Failed to save profile photo.', 'error');
         }
       } catch (err) {
         console.error('Avatar upload error:', err);
@@ -4597,9 +4612,12 @@ window.addEventListener('DOMContentLoaded', initSpatialPhysics);
       presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
 
-      // Update Hero Preview
+      // Update Hero Preview and Sidebar in real-time
       if (profileAvatarPreview) {
         profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, 'profile');
+      }
+      if (myAvatar) {
+        myAvatar.innerHTML = renderAvatarHTML(avatarUrl, 'sidebar');
       }
 
       // Save to server
@@ -4616,8 +4634,13 @@ window.addEventListener('DOMContentLoaded', initSpatialPhysics);
         if (res.ok) {
           currentUser.avatar = avatarUrl;
           localStorage.setItem('schat_user', JSON.stringify(currentUser));
-          updateHeaderProfileAvatar();
-          showAlert('Avatar updated successfully!', 'success');
+          if (myAvatar) {
+            myAvatar.innerHTML = renderAvatarHTML(avatarUrl, 'sidebar');
+          }
+          showAlert('Preset avatar updated successfully!', 'success');
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'profile_update', avatar: avatarUrl }));
+          }
         } else {
           const err = await res.json();
           showAlert(err.error || 'Failed to update avatar', 'error');
