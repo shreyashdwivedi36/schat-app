@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgCosmic" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="60%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="visorGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="40%" stop-color="#f59e0b"/>
+      <stop offset="70%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+    <linearGradient id="suitGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="60%" stop-color="#e2e8f0"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <linearGradient id="auraGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#c084fc" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" fill="url(#bgCosmic)"/>
+  <!-- Stars -->
+  <circle cx="30" cy="40" r="1.5" fill="#fff" opacity="0.8"/>
+  <circle cx="170" cy="35" r="1.2" fill="#fff" opacity="0.7"/>
+  <circle cx="160" cy="140" r="1.8" fill="#818cf8" opacity="0.9"/>
+  <circle cx="40" cy="150" r="1.2" fill="#c084fc" opacity="0.8"/>
+  <circle cx="90" cy="20" r="1" fill="#fff" opacity="0.6"/>
+  <!-- Aura Halo -->
+  <circle cx="100" cy="100" r="75" fill="url(#auraGlow)"/>
+  <!-- Helmet Base -->
+  <circle cx="100" cy="95" r="54" fill="url(#suitGrad)" filter="drop-shadow(0 10px 20px rgba(0,0,0,0.6))"/>
+  <rect x="75" y="140" width="50" height="20" rx="8" fill="#cbd5e1"/>
+  <!-- Visor Ring -->
+  <ellipse cx="100" cy="95" rx="42" ry="34" fill="#0f172a"/>
+  <!-- Golden Reflective Visor -->
+  <ellipse cx="100" cy="95" rx="38" ry="30" fill="url(#visorGold)"/>
+  <!-- Visor Reflections -->
+  <path d="M 72 82 Q 95 72 122 80 Q 128 92 120 102 Q 95 90 74 95 Z" fill="#ffffff" opacity="0.35"/>
+  <circle cx="82" cy="85" r="3" fill="#ffffff" opacity="0.8"/>
+  <!-- Helmet Details -->
+  <rect x="52" y="88" width="8" height="18" rx="3" fill="#64748b"/>
+  <rect x="140" y="88" width="8" height="18" rx="3" fill="#64748b"/>
+  <circle cx="56" cy="97" r="2" fill="#38bdf8" filter="url(#glow)"/>
+  <circle cx="144" cy="97" r="2" fill="#38bdf8" filter="url(#glow)"/>
+  <!-- Torso Collar -->
+  <path d="M 45 180 Q 100 150 155 180 L 165 200 L 35 200 Z" fill="url(#suitGrad)"/>
+  <path d="M 80 162 L 120 162 L 115 185 L 85 185 Z" fill="#0284c7" opacity="0.9"/>
+  <circle cx="100" cy="173" r="3" fill="#38bdf8" filter="url(#glow)"/>
+</svg>

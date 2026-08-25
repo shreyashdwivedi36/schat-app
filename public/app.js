@@ -86,7 +86,7 @@ const startSChat = () => {
   let deferredPrompt = null;
   let ws = null;
   let pingInterval = null;
-  let selectedAvatar = '👤';
+  let selectedAvatar = '/avatars/cosmic-astronaut.svg';
   let soundEnabled = true;
   let typingTimeout = null;
   let isSendingTyping = false;
@@ -968,14 +968,16 @@ const startSChat = () => {
     swapAuthForms(registerForm, loginForm);
   });
 
-  avatarPicker.addEventListener('click', (e) => {
-    const opt = e.target.closest('.avatar-opt');
-    if (!opt) return;
-    avatarPicker.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
-    opt.classList.add('selected');
-    selectedAvatar = opt.dataset.avatar;
-    MotionFX.press(opt);
-  });
+  if (avatarPicker) {
+    avatarPicker.addEventListener('click', (e) => {
+      const opt = e.target.closest('.avatar-opt');
+      if (!opt) return;
+      avatarPicker.querySelectorAll('.avatar-opt').forEach(b => b.classList.remove('selected'));
+      opt.classList.add('selected');
+      selectedAvatar = opt.dataset.avatar;
+      MotionFX.press(opt);
+    });
+  }
 
   if (soundToggleBtn) {
     soundToggleBtn.addEventListener('click', () => {
@@ -4579,3 +4581,49 @@ const initSpatialPhysics = () => {
 
 // Initialize physics engine on load
 window.addEventListener('DOMContentLoaded', initSpatialPhysics);
+
+
+  // Preset Avatars Gallery Selection
+  const presetAvatarsGrid = document.getElementById('presetAvatarsGrid');
+  if (presetAvatarsGrid) {
+    presetAvatarsGrid.addEventListener('click', async (e) => {
+      const card = e.target.closest('.preset-avatar-card');
+      if (!card) return;
+      
+      const avatarUrl = card.dataset.avatarUrl;
+      if (!avatarUrl) return;
+
+      // Update UI active card
+      presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+
+      // Update Hero Preview
+      if (profileAvatarPreview) {
+        profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, 'profile');
+      }
+
+      // Save to server
+      try {
+        const res = await fetch('/api/profile/avatar', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ avatar: avatarUrl })
+        });
+
+        if (res.ok) {
+          currentUser.avatar = avatarUrl;
+          localStorage.setItem('schat_user', JSON.stringify(currentUser));
+          updateHeaderProfileAvatar();
+          showAlert('Avatar updated successfully!', 'success');
+        } else {
+          const err = await res.json();
+          showAlert(err.error || 'Failed to update avatar', 'error');
+        }
+      } catch (err) {
+        showAlert('Network error updating avatar', 'error');
+      }
+    });
+  }

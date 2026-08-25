@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=115">
+  <link rel="stylesheet" href="style.css?v=116">
 </head>
 <body>
 
@@ -164,19 +164,7 @@
           <h2 class="form-title">Create Account</h2>
           <p class="form-desc">Start messaging instantly with real-time speed</p>
 
-          <div class="avatar-selector">
-            <label>Choose Your Avatar</label>
-            <div class="avatar-options" id="avatarPicker">
-              <button type="button" class="avatar-opt selected" data-avatar="⚡">⚡</button>
-              <button type="button" class="avatar-opt" data-avatar="🚀">🚀</button>
-              <button type="button" class="avatar-opt" data-avatar="👾">👾</button>
-              <button type="button" class="avatar-opt" data-avatar="🦊">🦊</button>
-              <button type="button" class="avatar-opt" data-avatar="💎">💎</button>
-              <button type="button" class="avatar-opt" data-avatar="🔥">🔥</button>
-              <button type="button" class="avatar-opt" data-avatar="🤖">🤖</button>
-              <button type="button" class="avatar-opt" data-avatar="🌌">🌌</button>
-            </div>
-          </div>
+
 
           <div class="input-group">
             <label for="regUsername">Username</label>
@@ -356,12 +344,53 @@
                 <span class="input-hint">Your bio is visible to everyone across SChat.</span>
               </div>
               
+              <!-- Preset Graphic Vector Avatars Gallery -->
+              <div class="preset-avatars-section">
+                <label class="section-sublabel">Choose a Preset Avatar</label>
+                <div class="preset-avatars-grid" id="presetAvatarsGrid">
+                  <div class="preset-avatar-card" data-avatar-url="/avatars/cosmic-astronaut.svg" title="Cosmic Astronaut">
+                    <img src="/avatars/cosmic-astronaut.svg" alt="Cosmic Astronaut" class="preset-avatar-img" />
+                    <span class="preset-avatar-name">Astronaut</span>
+                  </div>
+                  <div class="preset-avatar-card" data-avatar-url="/avatars/cyber-samurai.svg" title="Cyber Samurai">
+                    <img src="/avatars/cyber-samurai.svg" alt="Cyber Samurai" class="preset-avatar-img" />
+                    <span class="preset-avatar-name">Samurai</span>
+                  </div>
+                  <div class="preset-avatar-card" data-avatar-url="/avatars/mecha-robot.svg" title="Mecha Robot">
+                    <img src="/avatars/mecha-robot.svg" alt="Mecha Robot" class="preset-avatar-img" />
+                    <span class="preset-avatar-name">Mecha</span>
+                  </div>
+                  <div class="preset-avatar-card" data-avatar-url="/avatars/neon-wolf.svg" title="Neon Wolf">
+                    <img src="/avatars/neon-wolf.svg" alt="Neon Wolf" class="preset-avatar-img" />
+                    <span class="preset-avatar-name">Wolf</span>
+                  </div>
+                  <div class="preset-avatar-card" data-avatar-url="/avatars/liquid-chrome.svg" title="Liquid Chrome">
+                    <img src="/avatars/liquid-chrome.svg" alt="Liquid Chrome" class="preset-avatar-img" />
+                    <span class="preset-avatar-name">Chrome</span>
+                  </div>
+                  <div class="preset-avatar-card" data-avatar-url="/avatars/phantom-ninja.svg" title="Phantom Ninja">
+                    <img src="/avatars/phantom-ninja.svg" alt="Phantom Ninja" class="preset-avatar-img" />
+                    <span class="preset-avatar-name">Ninja</span>
+                  </div>
+                  <div class="preset-avatar-card" data-avatar-url="/avatars/synthwave-sun.svg" title="Synthwave Sun">
+                    <img src="/avatars/synthwave-sun.svg" alt="Synthwave Sun" class="preset-avatar-img" />
+                    <span class="preset-avatar-name">Synthwave</span>
+                  </div>
+                  <div class="preset-avatar-card" data-avatar-url="/avatars/phoenix-flame.svg" title="Phoenix Flame">
+                    <img src="/avatars/phoenix-flame.svg" alt="Phoenix Flame" class="preset-avatar-img" />
+                    <span class="preset-avatar-name">Phoenix</span>
+                  </div>
+                </div>
+              </div>
+
               <div class="avatar-quick-actions">
-                <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('profileAvatarInput').click();">
-                  📷 Upload New Photo
-                </button>
-                <button type="button" id="profileAvatarResetBtn" class="btn-danger-outline btn-sm hidden">
-                  🗑️ Reset to Emoji
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('profileAvatarInput').click();" style="width: 100%; justify-content: center; gap: 8px;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                    <polyline points="21 15 16 10 5 21"></polyline>
+                  </svg>
+                  <span>Upload Custom Photo from Gallery</span>
                 </button>
               </div>
 
@@ -806,7 +835,7 @@
       </div>
 
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-    <script src="motion-fx.js?v=115" type="module"></script>
+    <script src="motion-fx.js?v=116" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -881,7 +910,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=115" type="module"></script>
+  <script src="/app.js?v=116" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

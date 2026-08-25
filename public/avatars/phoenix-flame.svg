@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgPhoenix" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#450a0a"/>
+      <stop offset="60%" stop-color="#1c0505"/>
+      <stop offset="100%" stop-color="#050101"/>
+    </radialGradient>
+    <linearGradient id="fireGrad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="40%" stop-color="#f97316"/>
+      <stop offset="80%" stop-color="#eab308"/>
+      <stop offset="100%" stop-color="#fef08a"/>
+    </linearGradient>
+    <filter id="fireGlow">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" fill="url(#bgPhoenix)"/>
+  <!-- Fire Ring -->
+  <circle cx="100" cy="100" r="74" fill="none" stroke="#f97316" stroke-width="2" opacity="0.3" filter="url(#fireGlow)"/>
+  <!-- Wings (Left & Right) -->
+  <path d="M 100 120 Q 40 90 35 45 Q 65 75 75 110 Q 50 70 60 40 Q 80 85 90 120 Z" fill="url(#fireGrad)" filter="url(#fireGlow)"/>
+  <path d="M 100 120 Q 160 90 165 45 Q 135 75 125 110 Q 150 70 140 40 Q 120 85 110 120 Z" fill="url(#fireGrad)" filter="url(#fireGlow)"/>
+  <!-- Head & Crest -->
+  <path d="M 100 45 Q 90 65 100 85 Q 110 65 100 45 Z" fill="#fef08a" filter="url(#fireGlow)"/>
+  <polygon points="100,40 95,55 105,55" fill="#f59e0b"/>
+  <!-- Phoenix Heart Core -->
+  <path d="M 100 90 L 115 115 L 100 145 L 85 115 Z" fill="url(#fireGrad)" stroke="#fef08a" stroke-width="1.5" filter="url(#fireGlow)"/>
+  <circle cx="100" cy="115" r="5" fill="#ffffff" filter="url(#fireGlow)"/>
+  <!-- Tail Feathers -->
+  <path d="M 100 145 Q 90 175 75 190 Q 95 170 100 150 Q 105 170 125 190 Q 110 175 100 145 Z" fill="url(#fireGrad)" filter="url(#fireGlow)"/>
+</svg>

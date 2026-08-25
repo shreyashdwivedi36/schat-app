@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgNinja" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#064e3b"/>
+      <stop offset="60%" stop-color="#022c22"/>
+      <stop offset="100%" stop-color="#01130e"/>
+    </radialGradient>
+    <linearGradient id="hoodGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <filter id="emeraldGlow">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" fill="url(#bgNinja)"/>
+  <!-- Smoke Ring -->
+  <circle cx="100" cy="100" r="72" fill="none" stroke="#10b981" stroke-width="2" opacity="0.25" stroke-dasharray="8 6"/>
+  <!-- Hood / Cowl -->
+  <path d="M 50 110 C 45 40, 155 40, 150 110 C 150 160, 50 160, 50 110 Z" fill="url(#hoodGrad)" filter="drop-shadow(0 15px 30px rgba(0,0,0,0.8))"/>
+  <!-- Face Shadow Cavity -->
+  <ellipse cx="100" cy="100" rx="38" ry="26" fill="#000000"/>
+  <!-- Lower Half Face Wrap (Menpo) -->
+  <path d="M 62 105 Q 100 130 138 105 L 132 128 Q 100 148 68 128 Z" fill="#0f172a" stroke="#1e293b" stroke-width="2"/>
+  <!-- Glowing Emerald Cyber Visor -->
+  <polygon points="70,95 100,98 96,104 66,101" fill="#10b981" filter="url(#emeraldGlow)"/>
+  <polygon points="130,95 100,98 104,104 134,101" fill="#10b981" filter="url(#emeraldGlow)"/>
+  <circle cx="100" cy="98" r="2" fill="#34d399" filter="url(#emeraldGlow)"/>
+  <!-- Forehead Clan Sigil -->
+  <polygon points="100,62 105,70 95,70" fill="#10b981" filter="url(#emeraldGlow)"/>
+  <!-- Tactical Collar -->
+  <path d="M 35 175 Q 100 145 165 175 L 175 200 L 25 200 Z" fill="#090d16" stroke="#10b981" stroke-width="1.5"/>
+</svg>

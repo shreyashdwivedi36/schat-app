@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgWolf" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#18181b"/>
+      <stop offset="60%" stop-color="#09090b"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <linearGradient id="neonCyan" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="neonPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <filter id="wolfGlow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" fill="url(#bgWolf)"/>
+  <!-- Ambient Aura -->
+  <circle cx="100" cy="100" r="75" fill="none" stroke="url(#neonPurple)" stroke-width="2" opacity="0.3" filter="url(#wolfGlow)"/>
+  <!-- Geometric Facets - Ears -->
+  <polygon points="50,45 80,85 45,95" fill="#1e1b4b" stroke="url(#neonCyan)" stroke-width="2"/>
+  <polygon points="150,45 120,85 155,95" fill="#1e1b4b" stroke="url(#neonCyan)" stroke-width="2"/>
+  <polygon points="60,55 80,85 55,85" fill="url(#neonPurple)" opacity="0.8"/>
+  <polygon points="140,55 120,85 145,85" fill="url(#neonPurple)" opacity="0.8"/>
+  <!-- Crown / Forehead -->
+  <polygon points="100,60 80,85 100,105 120,85" fill="#312e81" stroke="url(#neonCyan)" stroke-width="2"/>
+  <!-- Cheeks -->
+  <polygon points="45,95 80,85 75,130 35,130" fill="#1e1b4b" stroke="url(#neonCyan)" stroke-width="2"/>
+  <polygon points="155,95 120,85 125,130 165,130" fill="#1e1b4b" stroke="url(#neonCyan)" stroke-width="2"/>
+  <!-- Eyes -->
+  <polygon points="75,98 92,102 80,108" fill="#38bdf8" filter="url(#wolfGlow)"/>
+  <polygon points="125,98 108,102 120,108" fill="#38bdf8" filter="url(#wolfGlow)"/>
+  <!-- Snout Bridge -->
+  <polygon points="100,105 85,135 115,135" fill="url(#neonPurple)" opacity="0.9"/>
+  <!-- Snout & Jaw -->
+  <polygon points="85,135 115,135 100,165" fill="#0f172a" stroke="url(#neonCyan)" stroke-width="2"/>
+  <polygon points="94,152 106,152 100,162" fill="#38bdf8" filter="url(#wolfGlow)"/>
+  <!-- Chest Mane -->
+  <polygon points="75,130 100,165 65,185" fill="#1e1b4b" stroke="url(#neonCyan)" stroke-width="2"/>
+  <polygon points="125,130 100,165 135,185" fill="#1e1b4b" stroke="url(#neonCyan)" stroke-width="2"/>
+  <polygon points="100,165 65,185 100,198 135,185" fill="url(#neonPurple)" opacity="0.7"/>
+</svg>

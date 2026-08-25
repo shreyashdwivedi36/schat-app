@@ -122,7 +122,7 @@ app.post('/api/register', async (req, res) => {
     const username = sanitizeString(req.body.username, 50);
     const email = sanitizeString(req.body.email, 255);
     const password = req.body.password;
-    const avatar = sanitizeString(req.body.avatar, 500) || '⚡';
+    const avatar = sanitizeString(req.body.avatar, 500) || '/avatars/cosmic-astronaut.svg';
     const bio = sanitizeString(req.body.bio, 255) || 'Hey there! I am using SChat.';
 
     if (!username || !email || !password) {

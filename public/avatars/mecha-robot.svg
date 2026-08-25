@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgMecha" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#083344"/>
+      <stop offset="60%" stop-color="#082f49"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </radialGradient>
+    <linearGradient id="chassis" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="40%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+    <linearGradient id="metalPlate" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#94a3b8"/>
+    </linearGradient>
+    <filter id="cyanGlow">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" fill="url(#bgMecha)"/>
+  <!-- Outer Tech Hexagon -->
+  <polygon points="100,25 160,60 160,135 100,170 40,135 40,60" fill="none" stroke="#0ea5e9" stroke-width="2" opacity="0.3"/>
+  <!-- Droid Head Chassis -->
+  <rect x="58" y="55" width="84" height="80" rx="20" fill="url(#metalPlate)" stroke="#0284c7" stroke-width="3" filter="drop-shadow(0 10px 25px rgba(0,0,0,0.6))"/>
+  <!-- Ear Antennas -->
+  <rect x="46" y="75" width="12" height="40" rx="4" fill="#0369a1"/>
+  <rect x="142" y="75" width="12" height="40" rx="4" fill="#0369a1"/>
+  <circle cx="52" cy="70" r="3" fill="#38bdf8" filter="url(#cyanGlow)"/>
+  <circle cx="148" cy="70" r="3" fill="#38bdf8" filter="url(#cyanGlow)"/>
+  <!-- Ocular Visor Panel -->
+  <rect x="68" y="72" width="64" height="34" rx="10" fill="#020617"/>
+  <!-- Dual Glowing Optics -->
+  <circle cx="85" cy="89" r="9" fill="#06b6d4" filter="url(#cyanGlow)"/>
+  <circle cx="85" cy="89" r="4" fill="#ffffff"/>
+  <circle cx="115" cy="89" r="9" fill="#06b6d4" filter="url(#cyanGlow)"/>
+  <circle cx="115" cy="89" r="4" fill="#ffffff"/>
+  <!-- Audio Speaker Grille -->
+  <line x1="82" y1="120" x2="118" y2="120" stroke="#0284c7" stroke-width="3" stroke-linecap="round"/>
+  <line x1="88" y1="126" x2="112" y2="126" stroke="#0284c7" stroke-width="3" stroke-linecap="round"/>
+  <!-- Forehead Sensor -->
+  <polygon points="100,58 106,66 94,66" fill="#38bdf8" filter="url(#cyanGlow)"/>
+  <!-- Neck and Shoulders -->
+  <rect x="85" y="135" width="30" height="15" fill="#475569"/>
+  <path d="M 40 175 Q 100 150 160 175 L 170 200 L 30 200 Z" fill="url(#metalPlate)" stroke="#0284c7" stroke-width="2"/>
+</svg>

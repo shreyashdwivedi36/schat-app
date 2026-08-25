@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="bgChrome" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1e1e24"/>
+      <stop offset="60%" stop-color="#0b0b0e"/>
+      <stop offset="100%" stop-color="#020204"/>
+    </radialGradient>
+    <linearGradient id="iridescent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="25%" stop-color="#8b5cf6"/>
+      <stop offset="50%" stop-color="#06b6d4"/>
+      <stop offset="75%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#fbbf24"/>
+    </linearGradient>
+    <radialGradient id="mercurySphere" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="20%" stop-color="#e2e8f0"/>
+      <stop offset="45%" stop-color="#94a3b8"/>
+      <stop offset="70%" stop-color="#475569"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </radialGradient>
+    <filter id="liquidGlow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" fill="url(#bgChrome)"/>
+  <!-- Fluid Iridescent Ring -->
+  <path d="M 40 100 C 40 50, 160 30, 160 100 C 160 170, 40 150, 40 100 Z" fill="none" stroke="url(#iridescent)" stroke-width="8" opacity="0.65" filter="url(#liquidGlow)"/>
+  <!-- 3D Chrome Sphere -->
+  <circle cx="100" cy="100" r="56" fill="url(#mercurySphere)" filter="drop-shadow(0 15px 30px rgba(0,0,0,0.8))"/>
+  <!-- Liquid Swirl Reflections -->
+  <path d="M 65 80 Q 95 60 135 85 Q 120 120 85 110 Q 60 105 65 80 Z" fill="url(#iridescent)" opacity="0.45" filter="blur(2px)"/>
+  <ellipse cx="80" cy="72" rx="16" ry="9" transform="rotate(-25, 80, 72)" fill="#ffffff" opacity="0.75"/>
+  <circle cx="72" cy="68" r="4" fill="#ffffff" opacity="0.95"/>
+  <!-- Orbital Droplets -->
+  <circle cx="155" cy="65" r="7" fill="url(#mercurySphere)" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.5))"/>
+  <circle cx="45" cy="140" r="5" fill="url(#mercurySphere)" filter="drop-shadow(0 4px 8px rgba(0,0,0,0.5))"/>
+</svg>

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgSynth" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0f0728"/>
+      <stop offset="60%" stop-color="#2e1065"/>
+      <stop offset="100%" stop-color="#18053a"/>
+    </linearGradient>
+    <linearGradient id="sunGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fde047"/>
+      <stop offset="40%" stop-color="#f97316"/>
+      <stop offset="80%" stop-color="#ec4899"/>
+      <stop offset="100%" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <filter id="synthGlow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <rect width="200" height="200" fill="url(#bgSynth)"/>
+  <!-- Glowing 80s Sun -->
+  <circle cx="100" cy="85" r="48" fill="url(#sunGrad)" filter="url(#synthGlow)"/>
+  <!-- Horizontal Sun Slices (Venetian Blinds) -->
+  <rect x="50" y="80" width="100" height="3" fill="#2e1065"/>
+  <rect x="50" y="88" width="100" height="4.5" fill="#2e1065"/>
+  <rect x="50" y="98" width="100" height="6" fill="#2e1065"/>
+  <rect x="50" y="110" width="100" height="8" fill="#2e1065"/>
+  <rect x="50" y="124" width="100" height="10" fill="#2e1065"/>
+  <!-- Neon Wireframe Grid Horizon -->
+  <polygon points="0,135 200,135 200,200 0,200" fill="#09031c"/>
+  <line x1="0" y1="135" x2="200" y2="135" stroke="#06b6d4" stroke-width="2" filter="url(#synthGlow)"/>
+  <!-- Perspective Grid Lines -->
+  <line x1="100" y1="135" x2="100" y2="200" stroke="#06b6d4" stroke-width="1.5"/>
+  <line x1="100" y1="135" x2="50" y2="200" stroke="#06b6d4" stroke-width="1.5"/>
+  <line x1="100" y1="135" x2="150" y2="200" stroke="#06b6d4" stroke-width="1.5"/>
+  <line x1="100" y1="135" x2="0" y2="190" stroke="#06b6d4" stroke-width="1.5"/>
+  <line x1="100" y1="135" x2="200" y2="190" stroke="#06b6d4" stroke-width="1.5"/>
+  <line x1="0" y1="150" x2="200" y2="150" stroke="#a855f7" stroke-width="1"/>
+  <line x1="0" y1="170" x2="200" y2="170" stroke="#a855f7" stroke-width="1.5"/>
+</svg>

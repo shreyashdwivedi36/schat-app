@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v115-full-unicode-emoji-suite';
+const CACHE_NAME = 'schat-v116-preset-graphic-avatars';
 
 const PRECACHE_URLS = [
   '/',
@@ -17,7 +17,15 @@ const PRECACHE_URLS = [
   '/style.css',
   '/motion-fx.js',
   '/logo.png',
-  '/badge.png'
+  '/badge.png',
+  '/avatars/cosmic-astronaut.svg',
+  '/avatars/cyber-samurai.svg',
+  '/avatars/mecha-robot.svg',
+  '/avatars/neon-wolf.svg',
+  '/avatars/liquid-chrome.svg',
+  '/avatars/phantom-ninja.svg',
+  '/avatars/synthwave-sun.svg',
+  '/avatars/phoenix-flame.svg'
 ];
 
 self.addEventListener('install', (event) => {
