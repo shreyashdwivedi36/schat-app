@@ -2,6 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.6.0] - 2026-08-25
+
+### 🎨 Real Profile Photos & Handcrafted Vector Graphic Avatars
+- **Real Photo Upload Engine**: Integrated client-side 256x256 HTML5 Canvas WebP compression (~20KB), Cloudinary CDN offloading with local data URL fallback, instant live preview rendering, and anti-download protection.
+- **8 Handcrafted Graphic SVG Avatars (Zero Emojis)**: Created a suite of standalone, high-resolution vector illustrations:
+  - 🌌 *Cosmic Astronaut*: 3D Space Explorer with golden reflective visor and starfield nebula (`/avatars/cosmic-astronaut.svg`).
+  - ⚡ *Cyber Samurai*: Cyberpunk warrior with neon purple mask and glowing battle crest (`/avatars/cyber-samurai.svg`).
+  - 🤖 *Mecha Robot*: Titanium AI Droid with glowing cyan optics and circuit detailing (`/avatars/mecha-robot.svg`).
+  - 🦊 *Neon Wolf*: Geometric low-poly wolf with neon cyan and violet facets (`/avatars/neon-wolf.svg`).
+  - 🔮 *Liquid Chrome*: 3D iridescent mercury sphere with fluid reflections (`/avatars/liquid-chrome.svg`).
+  - 🥷 *Phantom Ninja*: Tactical shinobi in dark hood with emerald ocular visor (`/avatars/phantom-ninja.svg`).
+  - 🌅 *Synthwave Sun*: 80s retro neon sunset with wireframe horizon (`/avatars/synthwave-sun.svg`).
+  - 🔥 *Phoenix Flame*: Incandescent fire phoenix crest with golden-amber feathers (`/avatars/phoenix-flame.svg`).
+- **Profile Settings Preset Avatar Gallery**: Interactive 4x2 visual card grid in Profile Settings featuring 1-tap live equipping, active checkmark badges, and automatic preset deselection when uploading custom gallery photos.
+- **Clean Auth Registration**: Streamlined the **Create Account** form by removing the outdated emoji selector and defaulting new accounts to the Cosmic Astronaut avatar.
+
+### 🔍 Cinematic Avatar Maximize Lightbox
+- **Fullscreen Glassmorphism Viewer**: 35px backdrop blur, ambient neon back-glow, and anti-inspect watermark protection.
+- **Root Layering**: Relocated lightbox dialog directly to `<body>` root (`z-index: 999999`) to escape CSS parent stacking contexts.
+- **Precision Click Targets**: Separated avatar click (opens high-res lightbox) from username/bio click (opens Profile Settings).
+
+### 🌟 Full 1,800+ Unicode Emoji Suite
+- **Complete Unicode Library**: Integrated all 1,800+ official emojis across 9 categories (`Smileys`, `People`, `Animals`, `Food`, `Travel`, `Activities`, `Objects`, `Symbols`, `Flags`).
+- **Instant Keyword Search**: Live fuzzy search bar indexing emoji aliases in milliseconds.
+- **Skin Tone Modifiers & Recents Tab**: Select custom skin tones and access frequently used emojis instantly.
+- **Cursor-Aware Insertion**: Inserts emojis at the exact cursor position in the message bar without losing input focus.
+
+### ⚙️ Modern Tabbed Profile Settings Modal
+- **Expansive Glassmorphism Layout**: Redesigned modal with a 580px wide frosted card and top Hero Avatar banner.
+- **Segmented Tabs**: Smooth switching between `👤 Profile`, `🔒 Security`, and `💻 Active Devices`.
+- **Session Deduplication**: Optimized session telemetry so each physical browser instance appears once with `[THIS DEVICE]`.
+
+### 📎 Modern Attachment Popover Menu
+- **Sleek Action Sheet**: Replaced the plain dropdown with vibrant Cyan & Indigo gradient icon badges and clean two-line typography (`Photos & Videos`, `Documents & Files`).
+
+### ⚡ Zero-Refresh Contact Actions & Database Engine Integrity
+- **Instant Real-Time UI Toggles**: Real-time state toggling between **Send Request**, **Cancel Request**, and **Remove Contact** with 0-refresh instantaneous button updates.
+- **Database Query Matchers**: Added 3-param and 4-param `DELETE FROM contacts WHERE` handlers in `db.js` so cancellations and contact removals permanently delete from the database without bouncing back.
+
+### 🛡️ PWA Precache & Complete Integration Test Suite
+- **Offline PWA Precache**: Precached all 8 SVG vector graphic avatars and `motion-fx.js` in Service Worker (`v=117`).
+- **Automated Integration Testing**: 5/5 passed with 0 errors across sessions, avatars, contacts, and messaging APIs.
+
+---
+
 ## [v1.5.0] - 2026-08-23
 
 ### 📱 Active Multi-Device Sessions & Device Security

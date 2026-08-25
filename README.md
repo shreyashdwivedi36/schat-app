@@ -22,33 +22,43 @@ Engineered with Node.js, Express, native WebSockets (`ws`), PostgreSQL / SQLite,
 
 ## ✨ Flagship Capabilities
 
-### 📱 1. Active Multi-Device Session Management
+### 🎨 1. Real Profile Photos & 8 Handcrafted Graphic Avatars
+- **Real Photo Upload Engine**: Client-side 256x256 HTML5 Canvas WebP compression (~20KB) with Cloudinary CDN offload and instant live previews.
+- **8 Handcrafted Graphic SVG Artworks (Zero Emojis)**: Standalone vector illustrations (*Cosmic Astronaut*, *Cyber Samurai*, *Mecha Robot*, *Neon Wolf*, *Liquid Chrome*, *Phantom Ninja*, *Synthwave Sun*, *Phoenix Flame*).
+- **Preset Avatar Gallery**: 1-tap preset avatar equipping in Profile Settings with automatic checkmark tracking.
+- **Cinematic Avatar Maximize Lightbox**: Fullscreen 35px glassmorphism modal with ambient neon back-glow and anti-download protection.
+
+### 🌟 2. Full 1,800+ Unicode Emoji Suite & Search
+- **Complete Unicode Library**: Integrated all 1,800+ official emojis across 9 categories.
+- **Instant Keyword Search**: Live fuzzy search bar finding any emoji in milliseconds.
+- **Skin Tone Modifiers & Recents**: Fast access to favorite skin tones and pinned recently used emojis.
+- **Smart Cursor Insertion**: Inserts emojis at your exact typing cursor position in the message bar.
+
+### 📱 3. Active Multi-Device Session Management
 - **Device & Browser Fingerprinting**: Live telemetry tracking device type (💻 Desktop / 📱 Mobile), OS (Windows, macOS, iOS, Android, Linux), Browser engine, and IP address.
 - **Current Device Protection**: Highlights the active viewing device as `This Device (Active Now)` to prevent accidental self-disconnection.
 - **Remote Session Revocation**: Terminate individual unrecognized logins or use **"Log Out All Other Devices"** to instantly broadcast WebSocket session termination and invalidate tokens remotely.
 
-### 🤝 2. Privacy-First Contact Request System
+### 🤝 4. Privacy-First Contact Request System
 - **Clean Direct Messages**: Unsolicited direct messages are blocked by default. Only **Mutual Accepted Contacts** appear in the Direct Messages sidebar.
-- **Search & Connect**: Discover other users by `@username` and send private chat requests.
-- **Dynamic Request Lifecycle**: Instant visual feedback with **Send Request** ➔ **Cancel Request** ➔ **Chat** dynamic state management.
+- **Search & Connect**: Discover other users by `@username` and send private chat requests with instant zero-refresh button toggles (**Send Request** ➔ **Cancel Request** ➔ **Chat** / **Remove**).
 - **Pending Requests Inbox**: Incoming requests trigger real-time notifications with instant **Accept** or **Decline** actions.
-- **Revoke Connection**: Either user can remove a contact at any time, instantly removing the conversation from both users' screens.
 
-### 🎨 3. Spatial UI Physics & Vector Iconography
+### 🎨 5. Spatial UI Physics & Vector Iconography
 - **1:1 Interactive Cursor Spotlight**: Hardware-accelerated dynamic radial spotlight tracking mouse coordinates in real time with 0% idle CPU overhead.
 - **Magnetic Snap Hover**: Buttons and channels feature magnetic attraction with mathematical CSS `linear()` spring elasticity.
 - **3D Parallax Tilt**: Interactive card tilt angles responding directly to pointer coordinates.
-- **Crisp SVG Vector System**: Replaced all raw Unicode emojis with unified, pixel-perfect 1.85px stroke SVG line vector icons.
+- **Crisp SVG Vector System**: Unified, pixel-perfect 1.85px stroke SVG line vector icons.
 
-### 🎙️ 4. Voice Notes & Waveform Engine
+### 🎙️ 6. Voice Notes & Waveform Engine
 - Native `MediaRecorder` audio recording with 16kbps Opus compression.
 - Live canvas audio waveform visualizer during recording and playback.
 - Cloudinary media offloading with optimistic UI delivery and sweeping progress animations.
 
-### 🌐 5. Live Multilingual Translation
+### 🌐 7. Live Multilingual Translation
 - Instant inline message translation powered by Google Translate API for seamless cross-language communication.
 
-### ⏱️ 6. Ephemeral Privacy Messages
+### ⏱️ 8. Ephemeral Privacy Messages
 - Toggleable Gaussian privacy blur (`👁️`) to prevent shoulder surfing.
 - Configurable self-destruct timers (`⏱️ 10s`, `1m`, `5m`, `1h`) with synchronized countdown badges.
 
