@@ -5429,3 +5429,134 @@ emoji-picker.schat-emoji-picker {
     backdrop-filter: none !important;
   }
 }
+
+
+/* ==========================================
+   INTERACTIVE CIRCULAR AVATAR CROPPER
+   ========================================== */
+
+.cropper-modal-card {
+  max-width: 360px;
+  width: 92vw;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.cropper-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.cropper-viewport-wrap {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+.cropper-viewport-wrap:active {
+  cursor: grabbing;
+}
+
+#cropperCanvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.cropper-circle-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+  border: 2px dashed rgba(99, 102, 241, 0.8);
+  pointer-events: none;
+}
+
+.cropper-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 0 10px;
+}
+
+.cropper-controls input[type="range"] {
+  flex: 1;
+  accent-color: var(--primary-accent);
+  cursor: pointer;
+}
+
+.cropper-footer {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.cropper-footer .btn {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ==========================================
+   MOBILE FIT & COMPACT PROFILE MODAL
+   ========================================== */
+
+.modal-card.profile-settings-card {
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+@media (max-width: 480px) {
+  .modal-card.profile-settings-card {
+    width: 94vw;
+    max-height: 88vh;
+    padding: 12px 10px;
+    gap: 8px;
+  }
+
+  .profile-hero-card {
+    padding: 8px 10px;
+    gap: 10px;
+  }
+
+  .profile-avatar-uploader {
+    width: 64px;
+    height: 64px;
+  }
+
+  .avatar-camera-badge {
+    width: 22px;
+    height: 22px;
+  }
+
+  .preset-avatars-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
+  }
+
+  .preset-avatar-card {
+    padding: 4px 2px;
+  }
+
+  .preset-avatar-img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .preset-avatar-name {
+    font-size: 0.65rem;
+  }
+}

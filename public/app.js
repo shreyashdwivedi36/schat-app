@@ -603,27 +603,31 @@ const startSChat = () => {
     });
   });
 
+  // Staged avatar for profile editing (only saved on 'Save Changes' submit)
+  let stagedAvatar = null;
+
   const openProfileModal = () => {
     if (profileModal) {
       if (window.innerWidth <= 768 && typeof closeSidebar === 'function') {
         closeSidebar();
       }
+      
+      stagedAvatar = currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
+
       if (profileBioInput && currentUser) profileBioInput.value = currentUser.bio || '';
       const profileHeroUsername = document.getElementById('profileHeroUsername');
       const profileHeroEmail = document.getElementById('profileHeroEmail');
       const profileAvatarPreview = document.getElementById('profileAvatarPreview');
       
-      const currentAv = currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
-
       if (currentUser) {
         if (profileHeroUsername) profileHeroUsername.textContent = `@${currentUser.username}`;
         if (profileHeroEmail) profileHeroEmail.textContent = currentUser.email || '';
-        if (profileAvatarPreview) profileAvatarPreview.innerHTML = renderAvatarHTML(currentAv, currentUser.username, 'no-hover');
+        if (profileAvatarPreview) profileAvatarPreview.innerHTML = renderAvatarHTML(stagedAvatar, currentUser.username, 'no-hover');
       }
 
-      // Highlight active preset avatar card ONLY IF current avatar is one of the presets
+      // Highlight active preset avatar card ONLY IF staged avatar matches
       document.querySelectorAll('.preset-avatar-card').forEach(card => {
-        if (card.dataset.avatarUrl && card.dataset.avatarUrl === currentAv) {
+        if (card.dataset.avatarUrl && card.dataset.avatarUrl === stagedAvatar) {
           card.classList.add('active');
         } else {
           card.classList.remove('active');
@@ -658,10 +662,15 @@ const startSChat = () => {
   });
   if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
 
-    if (profileForm) {
+  // Save Profile Changes (Commits staged avatar and bio to server & database)
+  if (profileForm) {
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const newBio = profileBioInput.value.trim();
+      const newBio = profileBioInput ? profileBioInput.value.trim() : (currentUser?.bio || '');
+      const finalAvatar = stagedAvatar || currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
+
+      showAlert('Saving profile changes...', 'info');
+
       try {
         const res = await fetch('/api/me', {
           method: 'PUT',
@@ -669,15 +678,32 @@ const startSChat = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
           },
-          body: JSON.stringify({ bio: newBio, avatar: currentUser.avatar })
+          body: JSON.stringify({ bio: newBio, avatar: finalAvatar })
         });
+
         if (res.ok) {
           currentUser.bio = newBio;
+          currentUser.avatar = finalAvatar;
           localStorage.setItem('schat_user', JSON.stringify(currentUser));
+          
           if (myBioEl) myBioEl.textContent = newBio;
+          const myAvatar = document.getElementById('myAvatar');
+          if (myAvatar) myAvatar.innerHTML = renderAvatarHTML(finalAvatar, currentUser.username, 'sidebar');
+
+          showAlert('Profile updated successfully!', 'success');
           closeProfileModal();
+
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'profile_update', avatar: finalAvatar, bio: newBio }));
+          }
+        } else {
+          const err = await res.json();
+          showAlert(err.error || 'Failed to save changes.', 'error');
         }
-      } catch (e) {}
+      } catch (err) {
+        console.error('Save profile error:', err);
+        showAlert('Error saving profile changes.', 'error');
+      }
     });
   }
 
@@ -4074,153 +4100,224 @@ hideElement(typingBanner);
     }
   });
 
-  // Profile Avatar Upload & Reset Handlers
-  const profileAvatarUploadBtn = document.getElementById('profileAvatarUploadBtn');
-  const profileAvatarInput = document.getElementById('profileAvatarInput');
-  const profileAvatarResetBtn = document.getElementById('profileAvatarResetBtn');
-
-  if (profileAvatarUploadBtn && profileAvatarInput) {
-    profileAvatarUploadBtn.addEventListener('click', () => profileAvatarInput.click());
-
-    profileAvatarInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
-      const myAvatar = document.getElementById('myAvatar');
-
-      try {
-        showAlert('Compressing & processing photo...', 'info');
-        const compressedBlob = await compressAndProcessAvatar(file);
-
-        // Deselect any preset avatar checkmarks
-        document.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
-
-        // Instant local preview
-        const localPreview = URL.createObjectURL(compressedBlob);
-        if (profileAvatarPreview) {
-          profileAvatarPreview.innerHTML = renderAvatarHTML(localPreview, currentUser?.username || 'User', 'no-hover');
-        }
-
-        showAlert('Saving profile photo...', 'info');
-        
-        let finalAvatarUrl = null;
-        try {
-          finalAvatarUrl = await uploadToCloudinary(compressedBlob, 'image');
-          if (finalAvatarUrl && finalAvatarUrl.includes('cloudinary.com')) {
-            finalAvatarUrl = finalAvatarUrl.replace('/image/upload/', '/image/upload/c_fill,g_face,w_256,h_256,q_auto,f_auto/');
-          }
-        } catch (cErr) {
-          console.warn('Cloudinary upload failed, falling back to local base64:', cErr);
-        }
-
-        // Automatic Bulletproof Fallback: convert 256x256 WebP to Base64 Data URL (~15KB)
-        if (!finalAvatarUrl) {
-          finalAvatarUrl = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.target.result);
-            reader.readAsDataURL(compressedBlob);
-          });
-        }
-
-        const res = await fetch('/api/profile/avatar', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({ avatar: finalAvatarUrl })
-        });
-
-        if (res.ok) {
-          currentUser.avatar = finalAvatarUrl;
-          localStorage.setItem('schat_user', JSON.stringify(currentUser));
-          
-          if (profileAvatarPreview) {
-            profileAvatarPreview.innerHTML = renderAvatarHTML(finalAvatarUrl, currentUser.username, 'no-hover');
-          }
-          if (myAvatar) {
-            myAvatar.innerHTML = renderAvatarHTML(finalAvatarUrl, currentUser.username, 'no-hover');
-          }
-          document.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
-
-          showAlert('Profile photo updated & saved successfully!', 'success');
-
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'profile_update', avatar: finalAvatarUrl }));
-          }
-        } else {
-          const err = await res.json();
-          showAlert(err.error || 'Failed to save profile photo.', 'error');
-        }
-      } catch (err) {
-        console.error('Avatar upload error:', err);
-        showAlert('Error processing profile photo.', 'error');
-      } finally {
-        profileAvatarInput.value = '';
-      }
-    });
-  }
-
-  // Preset Avatars Gallery Selection inside startSChat scope
+  // Preset Avatars Gallery Selection (Staging only - previews without auto-saving)
   const presetAvatarsGrid = document.getElementById('presetAvatarsGrid');
   if (presetAvatarsGrid) {
-    presetAvatarsGrid.addEventListener('click', async (e) => {
+    presetAvatarsGrid.addEventListener('click', (e) => {
       const card = e.target.closest('.preset-avatar-card');
       if (!card) return;
       
       const avatarUrl = card.dataset.avatarUrl;
       if (!avatarUrl) return;
 
-      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
-      const myAvatar = document.getElementById('myAvatar');
+      stagedAvatar = avatarUrl;
 
       // Update UI active card
       presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
 
-      // Instant live preview
+      // Instant live staging preview in Hero Card
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
       if (profileAvatarPreview) {
-        profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
+        profileAvatarPreview.innerHTML = renderAvatarHTML(stagedAvatar, currentUser?.username || 'User', 'no-hover');
       }
-      if (myAvatar) {
-        myAvatar.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
+    });
+  }
+
+  // ==========================================
+  // INTERACTIVE CIRCULAR AVATAR CROPPER ENGINE
+  // ==========================================
+  const avatarCropperModal = document.getElementById('avatarCropperModal');
+  const cropperCanvas = document.getElementById('cropperCanvas');
+  const cropperViewport = document.getElementById('cropperViewport');
+  const cropperZoomSlider = document.getElementById('cropperZoomSlider');
+  const cancelCropBtn = document.getElementById('cancelCropBtn');
+  const closeCropperBtn = document.getElementById('closeCropperBtn');
+  const applyCropBtn = document.getElementById('applyCropBtn');
+  const profileAvatarInput = document.getElementById('profileAvatarInput');
+  const profileAvatarUploadBtn = document.getElementById('profileAvatarUploadBtn');
+
+  let cropperImg = null;
+  let cropperScale = 1;
+  let cropperOffsetX = 0;
+  let cropperOffsetY = 0;
+  let isDraggingCrop = false;
+  let cropDragStartX = 0;
+  let cropDragStartY = 0;
+
+  function renderCropper() {
+    if (!cropperCanvas || !cropperImg) return;
+    const ctx = cropperCanvas.getContext('2d');
+    const width = cropperCanvas.width;
+    const height = cropperCanvas.height;
+
+    ctx.clearRect(0, 0, width, height);
+    ctx.save();
+
+    // Base dimensions fitting canvas
+    const imgAspect = cropperImg.width / cropperImg.height;
+    let drawW, drawH;
+    if (imgAspect > 1) {
+      drawH = height * cropperScale;
+      drawW = drawH * imgAspect;
+    } else {
+      drawW = width * cropperScale;
+      drawH = drawW / imgAspect;
+    }
+
+    const drawX = (width - drawW) / 2 + cropperOffsetX;
+    const drawY = (height - drawH) / 2 + cropperOffsetY;
+
+    ctx.drawImage(cropperImg, drawX, drawY, drawW, drawH);
+    ctx.restore();
+  }
+
+  function openCropperWithImage(imgSrc) {
+    cropperImg = new Image();
+    cropperImg.onload = () => {
+      cropperScale = 1;
+      cropperOffsetX = 0;
+      cropperOffsetY = 0;
+      if (cropperZoomSlider) cropperZoomSlider.value = '1';
+      renderCropper();
+      if (avatarCropperModal) {
+        avatarCropperModal.style.display = 'flex';
+        avatarCropperModal.classList.remove('hidden');
+      }
+    };
+    cropperImg.src = imgSrc;
+  }
+
+  function closeCropper() {
+    if (avatarCropperModal) {
+      avatarCropperModal.style.display = 'none';
+      avatarCropperModal.classList.add('hidden');
+    }
+    if (profileAvatarInput) profileAvatarInput.value = '';
+  }
+
+  if (cancelCropBtn) cancelCropBtn.addEventListener('click', closeCropper);
+  if (closeCropperBtn) closeCropperBtn.addEventListener('click', closeCropper);
+
+  // Zoom Slider Event
+  if (cropperZoomSlider) {
+    cropperZoomSlider.addEventListener('input', (e) => {
+      cropperScale = parseFloat(e.target.value);
+      renderCropper();
+    });
+  }
+
+  // Mouse & Touch Pan Dragging
+  if (cropperViewport) {
+    const handleDragStart = (x, y) => {
+      isDraggingCrop = true;
+      cropDragStartX = x - cropperOffsetX;
+      cropDragStartY = y - cropperOffsetY;
+    };
+
+    const handleDragMove = (x, y) => {
+      if (!isDraggingCrop) return;
+      cropperOffsetX = x - cropDragStartX;
+      cropperOffsetY = y - cropDragStartY;
+      renderCropper();
+    };
+
+    const handleDragEnd = () => {
+      isDraggingCrop = false;
+    };
+
+    // Mouse Events
+    cropperViewport.addEventListener('mousedown', (e) => handleDragStart(e.clientX, e.clientY));
+    window.addEventListener('mousemove', (e) => handleDragMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', handleDragEnd);
+
+    // Touch Events for Mobile
+    cropperViewport.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        handleDragStart(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', (e) => {
+      if (isDraggingCrop && e.touches.length === 1) {
+        handleDragMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', handleDragEnd);
+  }
+
+  // Apply Crop & Staging Preview
+  if (applyCropBtn) {
+    applyCropBtn.addEventListener('click', () => {
+      if (!cropperCanvas || !cropperImg) return;
+
+      // Render circular 256x256 crop
+      const cropOutputCanvas = document.createElement('canvas');
+      const TARGET_SIZE = 256;
+      cropOutputCanvas.width = TARGET_SIZE;
+      cropOutputCanvas.height = TARGET_SIZE;
+      const outCtx = cropOutputCanvas.getContext('2d');
+
+      // Clip circle
+      outCtx.save();
+      outCtx.beginPath();
+      outCtx.arc(TARGET_SIZE / 2, TARGET_SIZE / 2, TARGET_SIZE / 2, 0, Math.PI * 2);
+      outCtx.clip();
+
+      // Render scaled and offset image
+      const srcCanvasW = cropperCanvas.width;
+      const srcCanvasH = cropperCanvas.height;
+      const imgAspect = cropperImg.width / cropperImg.height;
+      let drawW, drawH;
+      if (imgAspect > 1) {
+        drawH = srcCanvasH * cropperScale;
+        drawW = drawH * imgAspect;
+      } else {
+        drawW = srcCanvasW * cropperScale;
+        drawH = drawW / imgAspect;
       }
 
-      // Save to server
-      try {
-        const res = await fetch('/api/profile/avatar', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ avatar: avatarUrl })
-        });
+      const drawX = (srcCanvasW - drawW) / 2 + cropperOffsetX;
+      const drawY = (srcCanvasH - drawH) / 2 + cropperOffsetY;
 
-        if (res.ok) {
-          currentUser.avatar = avatarUrl;
-          localStorage.setItem('schat_user', JSON.stringify(currentUser));
-          
-          if (profileAvatarPreview) {
-            profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, currentUser.username, 'no-hover');
-          }
-          if (myAvatar) {
-            myAvatar.innerHTML = renderAvatarHTML(avatarUrl, currentUser.username, 'no-hover');
-          }
-          
-          showAlert('Preset avatar updated successfully!', 'success');
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'profile_update', avatar: avatarUrl }));
-          }
-        } else {
-          const err = await res.json();
-          showAlert(err.error || 'Failed to update avatar', 'error');
-        }
-      } catch (err) {
-        console.error('Preset avatar update error:', err);
-        showAlert('Network error updating avatar', 'error');
+      // Scale to target output size
+      const scaleFactor = TARGET_SIZE / srcCanvasW;
+      outCtx.drawImage(cropperImg, drawX * scaleFactor, drawY * scaleFactor, drawW * scaleFactor, drawH * scaleFactor);
+      outCtx.restore();
+
+      const croppedDataUrl = cropOutputCanvas.toDataURL('image/webp', 0.88);
+      stagedAvatar = croppedDataUrl;
+
+      // Preview on Hero Card
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+      if (profileAvatarPreview) {
+        profileAvatarPreview.innerHTML = renderAvatarHTML(stagedAvatar, currentUser?.username || 'User', 'no-hover');
       }
+
+      // Unselect all preset cards
+      if (presetAvatarsGrid) {
+        presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
+      }
+
+      closeCropper();
+      showAlert('Photo cropped! Click "Save Changes" to apply.', 'info');
+    });
+  }
+
+  // Profile Avatar Upload Handler (Triggers interactive cropper)
+  if (profileAvatarUploadBtn && profileAvatarInput) {
+    profileAvatarUploadBtn.addEventListener('click', () => profileAvatarInput.click());
+
+    profileAvatarInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        openCropperWithImage(event.target.result);
+      };
+      reader.readAsDataURL(file);
     });
   }
 

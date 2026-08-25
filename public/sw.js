@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v121-mobile-drawer-and-perf-fix';
+const CACHE_NAME = 'schat-v122-cropper-and-staged-preview';
 
 const PRECACHE_URLS = [
   '/',

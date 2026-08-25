@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=121">
+  <link rel="stylesheet" href="style.css?v=122">
 </head>
 <body>
 
@@ -391,7 +391,7 @@
               </div>
 
               <div class="settings-panel-footer">
-                <button type="submit" class="btn btn-primary">Save Profile Bio</button>
+                <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
               </div>
             </form>
           </div>
@@ -803,6 +803,32 @@
     </div>
   </div>
 
+        
+      <!-- Circular Avatar Image Cropper Modal -->
+      <div id="avatarCropperModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="cropperTitle">
+        <div class="modal-card cropper-modal-card">
+          <button id="closeCropperBtn" class="modal-close-btn" aria-label="Cancel crop">✕</button>
+          <div class="modal-header">
+            <h2 id="cropperTitle">✂️ Crop Profile Photo</h2>
+            <span class="modal-version">Drag to position, zoom to fit</span>
+          </div>
+          <div class="cropper-body">
+            <div class="cropper-viewport-wrap" id="cropperViewport">
+              <canvas id="cropperCanvas" width="280" height="280"></canvas>
+              <div class="cropper-circle-overlay"></div>
+            </div>
+            <div class="cropper-controls">
+              <span class="cropper-zoom-icon">🔍</span>
+              <input type="range" id="cropperZoomSlider" min="1" max="3.5" step="0.02" value="1" aria-label="Zoom image">
+            </div>
+          </div>
+          <div class="cropper-footer">
+            <button type="button" id="cancelCropBtn" class="btn btn-secondary btn-sm">Cancel</button>
+            <button type="button" id="applyCropBtn" class="btn btn-primary btn-sm">Apply Crop & Preview</button>
+          </div>
+        </div>
+      </div>
+
         <!-- Avatar Maximize Lightbox Modal (Cinematic Protected Viewer) -->
       <div id="avatarLightboxModal" class="cinematic-lightbox-modal hidden" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="lightboxUsername">
         <div class="cinematic-backdrop" id="closeAvatarLightboxBackdrop"></div>
@@ -831,7 +857,7 @@
       </div>
 
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-    <script src="motion-fx.js?v=121" type="module"></script>
+    <script src="motion-fx.js?v=122" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -906,7 +932,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=121" type="module"></script>
+  <script src="/app.js?v=122" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');
