@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=117">
+  <link rel="stylesheet" href="style.css?v=118">
 </head>
 <body>
 
@@ -302,7 +302,7 @@
           <div class="profile-hero-card">
             <div class="profile-hero-avatar-wrap">
               <div class="profile-avatar-uploader" id="profileAvatarUploadBtn" title="Click to upload a real photo or change avatar">
-                <div id="profileAvatarPreview" class="avatar-shield profile-avatar-shield"></div>
+                <div id="profileAvatarPreview" class="profile-avatar-preview-wrap"></div>
                 <div class="avatar-camera-badge" aria-hidden="true">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -313,10 +313,6 @@
               <input type="file" id="profileAvatarInput" accept="image/png, image/jpeg, image/webp, image/heic" style="display: none;">
             </div>
             <div class="profile-hero-info">
-              <div class="profile-hero-badges">
-                <span class="badge-pill verified">Verified Account</span>
-                <span id="profileRoleBadge" class="badge-pill role">Member</span>
-              </div>
               <h2 id="profileHeroUsername" class="profile-hero-title">@username</h2>
               <p id="profileHeroEmail" class="profile-hero-subtitle">user@example.com</p>
             </div>
@@ -835,7 +831,7 @@
       </div>
 
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-    <script src="motion-fx.js?v=117" type="module"></script>
+    <script src="motion-fx.js?v=118" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -910,7 +906,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=117" type="module"></script>
+  <script src="/app.js?v=118" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

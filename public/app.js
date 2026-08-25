@@ -612,14 +612,23 @@ const startSChat = () => {
       const profileHeroUsername = document.getElementById('profileHeroUsername');
       const profileHeroEmail = document.getElementById('profileHeroEmail');
       const profileAvatarPreview = document.getElementById('profileAvatarPreview');
-      const profileRoleBadge = document.getElementById('profileRoleBadge');
       
+      const currentAv = currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
+
       if (currentUser) {
         if (profileHeroUsername) profileHeroUsername.textContent = `@${currentUser.username}`;
-        if (profileHeroEmail) profileHeroEmail.textContent = currentUser.email || 'Verified Account';
-        if (profileAvatarPreview) profileAvatarPreview.innerHTML = renderAvatarHTML(currentUser.avatar, currentUser.username, 'no-hover');
-        if (profileRoleBadge) profileRoleBadge.textContent = currentUser.role === 'super_admin' ? 'Super Admin' : 'Member';
+        if (profileHeroEmail) profileHeroEmail.textContent = currentUser.email || '';
+        if (profileAvatarPreview) profileAvatarPreview.innerHTML = renderAvatarHTML(currentAv, currentUser.username, 'no-hover');
       }
+
+      // Highlight active preset avatar card ONLY IF current avatar is one of the presets
+      document.querySelectorAll('.preset-avatar-card').forEach(card => {
+        if (card.dataset.avatarUrl && card.dataset.avatarUrl === currentAv) {
+          card.classList.add('active');
+        } else {
+          card.classList.remove('active');
+        }
+      });
 
       const pwdAlertEl = document.getElementById('pwdAlert');
       const changeCurrPwdEl = document.getElementById('changeCurrentPwd');
@@ -632,10 +641,8 @@ const startSChat = () => {
       const firstTab = document.querySelector('.settings-tab-btn[data-tab="general"]');
       if (firstTab) firstTab.click();
 
-      profileModal.style.display = '';
+      profileModal.style.display = 'flex';
       profileModal.classList.remove('hidden');
-      const card = profileModal.querySelector('.modal-card');
-      if (card) MotionFX.popIn(card);
     }
   };
   const closeProfileModal = () => { if (profileModal) { profileModal.style.display = 'none'; profileModal.classList.add('hidden'); } };
@@ -4082,18 +4089,41 @@ hideElement(typingBanner);
       const file = e.target.files[0];
       if (!file) return;
 
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+      const myAvatar = document.getElementById('myAvatar');
+
       try {
         showAlert('Compressing & processing photo...', 'info');
         const compressedBlob = await compressAndProcessAvatar(file);
 
-        // Deselect any preset avatar checkmark
+        // Deselect any preset avatar checkmarks
         document.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
 
-        showAlert('Uploading profile photo...', 'info');
+        // Instant local preview
+        const localPreview = URL.createObjectURL(compressedBlob);
+        if (profileAvatarPreview) {
+          profileAvatarPreview.innerHTML = renderAvatarHTML(localPreview, currentUser?.username || 'User', 'no-hover');
+        }
+
+        showAlert('Saving profile photo...', 'info');
         
-        let cdnUrl = await uploadToCloudinary(compressedBlob, 'image');
-        if (cdnUrl && cdnUrl.includes('cloudinary.com')) {
-          cdnUrl = cdnUrl.replace('/image/upload/', '/image/upload/c_fill,g_face,w_256,h_256,q_auto,f_auto/');
+        let finalAvatarUrl = null;
+        try {
+          finalAvatarUrl = await uploadToCloudinary(compressedBlob, 'image');
+          if (finalAvatarUrl && finalAvatarUrl.includes('cloudinary.com')) {
+            finalAvatarUrl = finalAvatarUrl.replace('/image/upload/', '/image/upload/c_fill,g_face,w_256,h_256,q_auto,f_auto/');
+          }
+        } catch (cErr) {
+          console.warn('Cloudinary upload failed, falling back to local base64:', cErr);
+        }
+
+        // Automatic Bulletproof Fallback: convert 256x256 WebP to Base64 Data URL (~15KB)
+        if (!finalAvatarUrl) {
+          finalAvatarUrl = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.target.result);
+            reader.readAsDataURL(compressedBlob);
+          });
         }
 
         const res = await fetch('/api/profile/avatar', {
@@ -4102,26 +4132,25 @@ hideElement(typingBanner);
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
           },
-          body: JSON.stringify({ avatar: cdnUrl })
+          body: JSON.stringify({ avatar: finalAvatarUrl })
         });
 
         if (res.ok) {
-          currentUser.avatar = cdnUrl;
+          currentUser.avatar = finalAvatarUrl;
           localStorage.setItem('schat_user', JSON.stringify(currentUser));
           
-          // Live DOM updates across Hero preview and Sidebar
           if (profileAvatarPreview) {
-            profileAvatarPreview.innerHTML = renderAvatarHTML(cdnUrl, 'profile');
+            profileAvatarPreview.innerHTML = renderAvatarHTML(finalAvatarUrl, currentUser.username, 'no-hover');
           }
           if (myAvatar) {
-            myAvatar.innerHTML = renderAvatarHTML(cdnUrl, 'sidebar');
+            myAvatar.innerHTML = renderAvatarHTML(finalAvatarUrl, currentUser.username, 'no-hover');
           }
           document.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
 
           showAlert('Profile photo updated & saved successfully!', 'success');
 
           if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'profile_update', avatar: cdnUrl }));
+            ws.send(JSON.stringify({ type: 'profile_update', avatar: finalAvatarUrl }));
           }
         } else {
           const err = await res.json();
@@ -4608,16 +4637,20 @@ window.addEventListener('DOMContentLoaded', initSpatialPhysics);
       const avatarUrl = card.dataset.avatarUrl;
       if (!avatarUrl) return;
 
+      // Explicit DOM lookups
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+      const myAvatar = document.getElementById('myAvatar');
+
       // Update UI active card
       presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
 
       // Update Hero Preview and Sidebar in real-time
       if (profileAvatarPreview) {
-        profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, 'profile');
+        profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
       }
       if (myAvatar) {
-        myAvatar.innerHTML = renderAvatarHTML(avatarUrl, 'sidebar');
+        myAvatar.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
       }
 
       // Save to server
@@ -4635,7 +4668,7 @@ window.addEventListener('DOMContentLoaded', initSpatialPhysics);
           currentUser.avatar = avatarUrl;
           localStorage.setItem('schat_user', JSON.stringify(currentUser));
           if (myAvatar) {
-            myAvatar.innerHTML = renderAvatarHTML(avatarUrl, 'sidebar');
+            myAvatar.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
           }
           showAlert('Preset avatar updated successfully!', 'success');
           if (ws && ws.readyState === WebSocket.OPEN) {
