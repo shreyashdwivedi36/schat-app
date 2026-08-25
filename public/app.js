@@ -4019,9 +4019,6 @@ hideElement(typingBanner);
           <button type="button" class="cinematic-pill-btn primary" onclick="document.getElementById('profileAvatarInput').click(); window.hideAvatarLightbox();">
             📷 Change Photo
           </button>
-          <button type="button" class="cinematic-pill-btn danger" onclick="window.resetAvatarToEmoji(); window.hideAvatarLightbox();">
-            🗑️ Reset to Emoji
-          </button>
         `;
       } else {
         lightboxActions.innerHTML = `
@@ -4227,31 +4224,7 @@ hideElement(typingBanner);
     });
   }
 
-  window.resetAvatarToEmoji = async () => {
-    try {
-      const defaultEmoji = '⚡';
-      const res = await fetch('/api/profile/avatar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ avatar: defaultEmoji })
-      });
 
-      if (res.ok) {
-        currentUser.avatar = defaultEmoji;
-        localStorage.setItem('schat_user', JSON.stringify(currentUser));
-        showAlert('Avatar reset to default emoji.', 'info');
-        updateMyProfileUI();
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'profile_update', avatar: defaultEmoji }));
-        }
-      }
-    } catch (e) {
-      showAlert('Failed to reset avatar.', 'error');
-    }
-  };
 
 
   if (authToken && currentUser) {

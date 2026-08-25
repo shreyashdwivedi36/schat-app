@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v119-scope-and-server-fix';
+const CACHE_NAME = 'schat-v120-clean-lightbox';
 
 const PRECACHE_URLS = [
   '/',
