@@ -347,10 +347,10 @@ app.post('/api/profile/avatar', authMiddleware, async (req, res) => {
 
 app.put('/api/me', authMiddleware, async (req, res) => {
   try {
-    const avatar = sanitizeString(req.body.avatar, 500);
+    const avatar = sanitizeString(req.body.avatar, 200000);
     const bio = sanitizeString(req.body.bio, 255);
 
-    await db.run('UPDATE users SET avatar = ?, bio = ? WHERE id = ?', [avatar || '⚡', bio || 'Hey there!', req.user.id]);
+    await db.run('UPDATE users SET avatar = ?, bio = ? WHERE id = ?', [avatar || '/avatars/cosmic-astronaut.svg', bio || 'Hey there!', req.user.id]);
 
     res.json({ message: 'Profile updated successfully!', avatar, bio });
   } catch (err) {

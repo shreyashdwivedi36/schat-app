@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v118-perf-and-avatar-fallback';
+const CACHE_NAME = 'schat-v119-scope-and-server-fix';
 
 const PRECACHE_URLS = [
   '/',

@@ -4165,6 +4165,68 @@ hideElement(typingBanner);
     });
   }
 
+  // Preset Avatars Gallery Selection inside startSChat scope
+  const presetAvatarsGrid = document.getElementById('presetAvatarsGrid');
+  if (presetAvatarsGrid) {
+    presetAvatarsGrid.addEventListener('click', async (e) => {
+      const card = e.target.closest('.preset-avatar-card');
+      if (!card) return;
+      
+      const avatarUrl = card.dataset.avatarUrl;
+      if (!avatarUrl) return;
+
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+      const myAvatar = document.getElementById('myAvatar');
+
+      // Update UI active card
+      presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+
+      // Instant live preview
+      if (profileAvatarPreview) {
+        profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
+      }
+      if (myAvatar) {
+        myAvatar.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
+      }
+
+      // Save to server
+      try {
+        const res = await fetch('/api/profile/avatar', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ avatar: avatarUrl })
+        });
+
+        if (res.ok) {
+          currentUser.avatar = avatarUrl;
+          localStorage.setItem('schat_user', JSON.stringify(currentUser));
+          
+          if (profileAvatarPreview) {
+            profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, currentUser.username, 'no-hover');
+          }
+          if (myAvatar) {
+            myAvatar.innerHTML = renderAvatarHTML(avatarUrl, currentUser.username, 'no-hover');
+          }
+          
+          showAlert('Preset avatar updated successfully!', 'success');
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'profile_update', avatar: avatarUrl }));
+          }
+        } else {
+          const err = await res.json();
+          showAlert(err.error || 'Failed to update avatar', 'error');
+        }
+      } catch (err) {
+        console.error('Preset avatar update error:', err);
+        showAlert('Network error updating avatar', 'error');
+      }
+    });
+  }
+
   window.resetAvatarToEmoji = async () => {
     try {
       const defaultEmoji = '⚡';
@@ -4627,59 +4689,4 @@ const initSpatialPhysics = () => {
 window.addEventListener('DOMContentLoaded', initSpatialPhysics);
 
 
-  // Preset Avatars Gallery Selection
-  const presetAvatarsGrid = document.getElementById('presetAvatarsGrid');
-  if (presetAvatarsGrid) {
-    presetAvatarsGrid.addEventListener('click', async (e) => {
-      const card = e.target.closest('.preset-avatar-card');
-      if (!card) return;
-      
-      const avatarUrl = card.dataset.avatarUrl;
-      if (!avatarUrl) return;
 
-      // Explicit DOM lookups
-      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
-      const myAvatar = document.getElementById('myAvatar');
-
-      // Update UI active card
-      presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-
-      // Update Hero Preview and Sidebar in real-time
-      if (profileAvatarPreview) {
-        profileAvatarPreview.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
-      }
-      if (myAvatar) {
-        myAvatar.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
-      }
-
-      // Save to server
-      try {
-        const res = await fetch('/api/profile/avatar', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${authToken}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ avatar: avatarUrl })
-        });
-
-        if (res.ok) {
-          currentUser.avatar = avatarUrl;
-          localStorage.setItem('schat_user', JSON.stringify(currentUser));
-          if (myAvatar) {
-            myAvatar.innerHTML = renderAvatarHTML(avatarUrl, currentUser?.username || 'User', 'no-hover');
-          }
-          showAlert('Preset avatar updated successfully!', 'success');
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'profile_update', avatar: avatarUrl }));
-          }
-        } else {
-          const err = await res.json();
-          showAlert(err.error || 'Failed to update avatar', 'error');
-        }
-      } catch (err) {
-        showAlert('Network error updating avatar', 'error');
-      }
-    });
-  }
