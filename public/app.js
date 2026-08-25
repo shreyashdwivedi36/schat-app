@@ -4245,7 +4245,7 @@ if (document.readyState === 'loading') {
 function init3DMotionBackground() {
   const canvas = document.getElementById('bg3dCanvas');
   const aurora = document.getElementById('interactiveAuroraGlow');
-  if (!canvas) return;
+  if (!canvas || window.innerWidth <= 768) return;
 
   const ctx = canvas.getContext('2d');
   let width, height;

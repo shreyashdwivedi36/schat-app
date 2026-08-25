@@ -5402,13 +5402,11 @@ emoji-picker.schat-emoji-picker {
 }
 
 @media (max-width: 768px) {
-  /* Hardware accelerated mobile drawer & modals with lightweight blur */
+  /* Lightweight mobile drawer & modal styles */
   .chat-sidebar {
     backdrop-filter: blur(12px) !important;
     -webkit-backdrop-filter: blur(12px) !important;
     background: #0b0c16 !important;
-    will-change: transform;
-    transform: translate3d(0, 0, 0);
   }
 
   .about-modal {

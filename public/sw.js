@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v120-clean-lightbox';
+const CACHE_NAME = 'schat-v121-mobile-drawer-and-perf-fix';
 
 const PRECACHE_URLS = [
   '/',
