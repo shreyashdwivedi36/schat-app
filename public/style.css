@@ -5560,3 +5560,8 @@ emoji-picker.schat-emoji-picker {
     font-size: 0.65rem;
   }
 }
+
+
+#avatarCropperModal {
+  z-index: 1000001 !important;
+}

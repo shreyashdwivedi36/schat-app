@@ -4042,8 +4042,8 @@ hideElement(typingBanner);
     if (lightboxActions) {
       if (isSelf) {
         lightboxActions.innerHTML = `
-          <button type="button" class="cinematic-pill-btn primary" onclick="window.triggerLightboxPhotoUpload();">
-            📷 Change Photo
+          <button type="button" class="cinematic-pill-btn primary" onclick="window.hideAvatarLightbox(); openProfileModal();">
+            🎨 Change Avatar
           </button>
         `;
       } else {
