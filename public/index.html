@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=122">
+  <link rel="stylesheet" href="style.css?v=123">
 </head>
 <body>
 
@@ -380,7 +380,7 @@
               </div>
 
               <div class="avatar-quick-actions">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('profileAvatarInput').click();" style="width: 100%; justify-content: center; gap: 8px;">
+                <button type="button" class="btn btn-secondary" onclick="window.cropperSourceContext = 'profile'; document.getElementById('profileAvatarInput').click();" style="width: 100%; justify-content: center; gap: 8px;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                     <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -857,7 +857,7 @@
       </div>
 
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-    <script src="motion-fx.js?v=122" type="module"></script>
+    <script src="motion-fx.js?v=123" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -932,7 +932,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=122" type="module"></script>
+  <script src="/app.js?v=123" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

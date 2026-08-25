@@ -35,7 +35,8 @@ app.use(cors({
   exposedHeaders: ['X-Renewed-Token']
 }));
 
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'allow' }));
 
 
@@ -334,7 +335,7 @@ app.get('/api/push-logs', (req, res) => {
 // Update Profile Avatar (Accepts Cloudinary URLs & WebP Data URLs up to 200KB)
 app.post('/api/profile/avatar', authMiddleware, async (req, res) => {
   try {
-    const avatar = sanitizeString(req.body.avatar, 200000);
+    const avatar = sanitizeString(req.body.avatar, 500000);
     if (!avatar) return res.status(400).json({ error: 'Avatar is required.' });
     
     await db.run('UPDATE users SET avatar = ? WHERE id = ?', [avatar, req.user.id]);
@@ -347,7 +348,7 @@ app.post('/api/profile/avatar', authMiddleware, async (req, res) => {
 
 app.put('/api/me', authMiddleware, async (req, res) => {
   try {
-    const avatar = sanitizeString(req.body.avatar, 200000);
+    const avatar = sanitizeString(req.body.avatar, 500000);
     const bio = sanitizeString(req.body.bio, 255);
 
     await db.run('UPDATE users SET avatar = ?, bio = ? WHERE id = ?', [avatar || '/avatars/cosmic-astronaut.svg', bio || 'Hey there!', req.user.id]);

@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v122-cropper-and-staged-preview';
+const CACHE_NAME = 'schat-v123-dual-context-cropper';
 
 const PRECACHE_URLS = [
   '/',

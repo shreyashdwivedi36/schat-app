@@ -4042,7 +4042,7 @@ hideElement(typingBanner);
     if (lightboxActions) {
       if (isSelf) {
         lightboxActions.innerHTML = `
-          <button type="button" class="cinematic-pill-btn primary" onclick="document.getElementById('profileAvatarInput').click(); window.hideAvatarLightbox();">
+          <button type="button" class="cinematic-pill-btn primary" onclick="window.triggerLightboxPhotoUpload();">
             📷 Change Photo
           </button>
         `;
@@ -4247,9 +4247,17 @@ hideElement(typingBanner);
     window.addEventListener('touchend', handleDragEnd);
   }
 
-  // Apply Crop & Staging Preview
+  // Dual-Context Cropper: Tracks whether cropper was opened from Lightbox or Profile Settings
+  let cropperSourceContext = 'profile'; // 'profile' or 'lightbox'
+
+  window.triggerLightboxPhotoUpload = () => {
+    cropperSourceContext = 'lightbox';
+    if (profileAvatarInput) profileAvatarInput.click();
+  };
+
+  // Apply Crop & Save/Staging Engine
   if (applyCropBtn) {
-    applyCropBtn.addEventListener('click', () => {
+    applyCropBtn.addEventListener('click', async () => {
       if (!cropperCanvas || !cropperImg) return;
 
       // Render circular 256x256 crop
@@ -4287,27 +4295,76 @@ hideElement(typingBanner);
       outCtx.restore();
 
       const croppedDataUrl = cropOutputCanvas.toDataURL('image/webp', 0.88);
-      stagedAvatar = croppedDataUrl;
 
-      // Preview on Hero Card
-      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
-      if (profileAvatarPreview) {
-        profileAvatarPreview.innerHTML = renderAvatarHTML(stagedAvatar, currentUser?.username || 'User', 'no-hover');
-      }
+      if (cropperSourceContext === 'lightbox') {
+        // Direct Save Flow for Lightbox Modal
+        showAlert('Saving profile photo...', 'info');
+        try {
+          const res = await fetch('/api/profile/avatar', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ avatar: croppedDataUrl })
+          });
 
-      // Unselect all preset cards
-      if (presetAvatarsGrid) {
-        presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
+          if (res.ok) {
+            currentUser.avatar = croppedDataUrl;
+            localStorage.setItem('schat_user', JSON.stringify(currentUser));
+            
+            // Update Lightbox image immediately
+            const lightboxAvatarShield = document.getElementById('lightboxAvatarShield');
+            if (lightboxAvatarShield) {
+              lightboxAvatarShield.style.backgroundImage = `url('${croppedDataUrl}')`;
+              lightboxAvatarShield.innerHTML = '';
+            }
+
+            // Update Sidebar avatar
+            const myAvatar = document.getElementById('myAvatar');
+            if (myAvatar) myAvatar.innerHTML = renderAvatarHTML(croppedDataUrl, currentUser.username, 'sidebar');
+
+            showAlert('Profile photo updated successfully!', 'success');
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ type: 'profile_update', avatar: croppedDataUrl }));
+            }
+          } else {
+            const err = await res.json();
+            showAlert(err.error || 'Failed to save photo.', 'error');
+          }
+        } catch (err) {
+          console.error('Lightbox avatar upload error:', err);
+          showAlert('Network error saving photo.', 'error');
+        }
+      } else {
+        // Staged Preview Flow for Profile Settings Modal
+        stagedAvatar = croppedDataUrl;
+
+        // Preview on Hero Card
+        const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+        if (profileAvatarPreview) {
+          profileAvatarPreview.innerHTML = renderAvatarHTML(stagedAvatar, currentUser?.username || 'User', 'no-hover');
+        }
+
+        // Unselect all preset cards
+        if (presetAvatarsGrid) {
+          presetAvatarsGrid.querySelectorAll('.preset-avatar-card').forEach(c => c.classList.remove('active'));
+        }
+
+        showAlert('Photo cropped! Click "Save Changes" to apply.', 'info');
       }
 
       closeCropper();
-      showAlert('Photo cropped! Click "Save Changes" to apply.', 'info');
     });
   }
 
   // Profile Avatar Upload Handler (Triggers interactive cropper)
   if (profileAvatarUploadBtn && profileAvatarInput) {
-    profileAvatarUploadBtn.addEventListener('click', () => profileAvatarInput.click());
+    profileAvatarUploadBtn.addEventListener('click', () => {
+      cropperSourceContext = 'profile';
+      profileAvatarInput.click();
+    });
 
     profileAvatarInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
