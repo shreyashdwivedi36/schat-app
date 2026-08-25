@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v110-live-contact-requests';
+const CACHE_NAME = 'schat-v111-contact-cancel-fix';
 
 const PRECACHE_URLS = [
   '/',

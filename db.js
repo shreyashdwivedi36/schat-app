@@ -353,16 +353,23 @@ if (process.env.DATABASE_URL) {
         return { changes: 0 };
       }
       if (sql.includes('DELETE FROM contacts WHERE')) {
-        if (params.length === 2) {
+        const initLen = data.contacts.length;
+        if (params.length === 3) {
+          const [u1, u2, status] = params;
+          data.contacts = data.contacts.filter(c => !(
+            Number(c.requester_id) === Number(u1) &&
+            Number(c.recipient_id) === Number(u2) &&
+            (!status || c.status === status)
+          ));
+        } else if (params.length === 2) {
           const [u1, u2] = params;
-          const initLen = data.contacts.length;
           data.contacts = data.contacts.filter(c => !(
             (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
             (Number(c.requester_id) === Number(u2) && Number(c.recipient_id) === Number(u1))
           ));
-          saveData();
-          return { changes: initLen - data.contacts.length };
         }
+        saveData();
+        return { changes: initLen - data.contacts.length };
       }
       if (sql.includes('INSERT INTO blocked_users')) {
         const [blocker_id, blocked_id] = params;
