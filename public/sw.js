@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v109-modern-attachment-menu';
+const CACHE_NAME = 'schat-v110-live-contact-requests';
 
 const PRECACHE_URLS = [
   '/',

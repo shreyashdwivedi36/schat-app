@@ -3134,111 +3134,65 @@ const enterChat = async () => {
     }
   };
 
-  if (contactSearchBtn && contactSearchInput) {
-    const handleContactSearch = () => {
-      const q = (contactSearchInput.value || '').trim().toLowerCase();
-      if (!q) return;
-
-      const results = allRegisteredUsers.filter(u => {
-        if (Number(u.id) === Number(currentUser.id)) return false;
-        return u.username.toLowerCase().includes(q) || (u.email && u.email.toLowerCase().includes(q));
-      });
-
-      if (results.length === 0) {
-        contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">No users found matching that username.</div>';
-        return;
-      }
-
-      contactSearchResults.innerHTML = results.map(u => {
-        const isContact = acceptedContacts.some(c => Number(c.id) === Number(u.id));
-        const isOutgoing = outgoingContactRequests.some(r => Number(r.id) === Number(u.id));
-        const isIncoming = incomingContactRequests.some(r => Number(r.id) === Number(u.id));
-
-        let actionBtn = '';
-        if (isContact) {
-          actionBtn = `<button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="startChatWithContact(${u.id}, '${escapeHtml(u.username)}')">Chat</button>`;
-        } else if (isOutgoing) {
-          actionBtn = `<button type="button" class="btn-danger-outline" style="padding: 5px 12px; font-size: 0.78rem; border-radius: 8px; cursor: pointer;" onclick="cancelContactRequest(${u.id}, '${escapeHtml(u.username)}')">Cancel Request</button>`;
-        } else if (isIncoming) {
-          actionBtn = `<button type="button" class="unban-btn" onclick="acceptContactRequest(${u.id}, '${escapeHtml(u.username)}')">Accept Request</button>`;
-        } else {
-          actionBtn = `<button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="sendContactRequest(${u.id}, '${escapeHtml(u.username)}')">Send Request</button>`;
-        }
-
-        return `
-          <div class="contact-item-row">
-            <div class="contact-user-info">
-              <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightboxById(${u.id})`)}</div>
-              <div>
-                <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(u.username)}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.bio || 'SChat User')}</div>
-              </div>
-            </div>
-            <div>
-              ${actionBtn}
-            </div>
-          </div>
-        `;
-      }).join('');
-    };
-
-    function renderContactSearchResults() {
-      if (!contactSearchInput || !contactSearchResults) return;
-      const q = (contactSearchInput.value || '').trim().toLowerCase();
-      if (!q) {
-        contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">Type a username above to search.</div>';
-        return;
-      }
-
-      const results = allRegisteredUsers.filter(u => {
-        if (Number(u.id) === Number(currentUser.id)) return false;
-        return (u.username && u.username.toLowerCase().includes(q)) || (u.email && u.email.toLowerCase().includes(q));
-      });
-
-      if (results.length === 0) {
-        contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">No users found matching that username.</div>';
-        return;
-      }
-
-      contactSearchResults.innerHTML = results.map(u => {
-        const isContact = acceptedContacts.some(c => Number(c.id) === Number(u.id));
-        const isOutgoing = outgoingContactRequests.some(r => Number(r.id) === Number(u.id));
-        const isIncoming = incomingContactRequests.some(r => Number(r.id) === Number(u.id));
-
-        let actionBtn = '';
-        if (isContact) {
-          actionBtn = `
-            <div style="display: flex; gap: 6px;">
-              <button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="startChatWithContact(${u.id}, '${escapeHtml(u.username)}')">Chat</button>
-              <button type="button" class="btn-danger-outline" style="padding: 5px 10px; font-size: 0.78rem; border-radius: 8px; cursor: pointer;" onclick="removeContactPermanently(${u.id}, '${escapeHtml(u.username)}')">Remove</button>
-            </div>
-          `;
-        } else if (isOutgoing) {
-          actionBtn = `<button type="button" class="btn-danger-outline" style="padding: 5px 12px; font-size: 0.78rem; border-radius: 8px; cursor: pointer;" onclick="cancelContactRequest(${u.id}, '${escapeHtml(u.username)}')">Cancel Request</button>`;
-        } else if (isIncoming) {
-          actionBtn = `<button type="button" class="unban-btn" onclick="acceptContactRequest(${u.id}, '${escapeHtml(u.username)}')">Accept Request</button>`;
-        } else {
-          actionBtn = `<button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="sendContactRequest(${u.id}, '${escapeHtml(u.username)}')">Send Request</button>`;
-        }
-
-        return `
-          <div class="contact-item-row">
-            <div class="contact-user-info">
-              <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightboxById(${u.id})`)}</div>
-              <div>
-                <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(u.username)}</div>
-                <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.bio || 'SChat User')}</div>
-              </div>
-            </div>
-            <div>
-              ${actionBtn}
-            </div>
-          </div>
-        `;
-      }).join('');
+  // Hoisted Contact Search Renderer (Zero-Refresh State Toggle)
+  const renderContactSearchResults = () => {
+    if (!contactSearchInput || !contactSearchResults) return;
+    const q = (contactSearchInput.value || '').trim().toLowerCase();
+    if (!q) {
+      contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">Type a username above to search.</div>';
+      return;
     }
-    window.triggerRenderSearchResults = renderContactSearchResults;
 
+    const results = allRegisteredUsers.filter(u => {
+      if (currentUser && Number(u.id) === Number(currentUser.id)) return false;
+      return (u.username && u.username.toLowerCase().includes(q)) || (u.email && u.email.toLowerCase().includes(q));
+    });
+
+    if (results.length === 0) {
+      contactSearchResults.innerHTML = '<div style="text-align:center; padding: 1.5rem; color: var(--text-muted);">No users found matching that username.</div>';
+      return;
+    }
+
+    contactSearchResults.innerHTML = results.map(u => {
+      const isContact = acceptedContacts.some(c => Number(c.id) === Number(u.id));
+      const isOutgoing = outgoingContactRequests.some(r => Number(r.id) === Number(u.id));
+      const isIncoming = incomingContactRequests.some(r => Number(r.id) === Number(u.id));
+
+      let actionBtn = '';
+      if (isContact) {
+        actionBtn = `
+          <div style="display: flex; gap: 6px;">
+            <button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="startChatWithContact(${u.id}, '${escapeHtml(u.username)}')">Chat</button>
+            <button type="button" class="btn-danger-outline" style="padding: 5px 10px; font-size: 0.78rem; border-radius: 8px; cursor: pointer;" onclick="removeContactPermanently(${u.id}, '${escapeHtml(u.username)}')">Remove</button>
+          </div>
+        `;
+      } else if (isOutgoing) {
+        actionBtn = `<button type="button" class="btn-danger-outline" style="padding: 5px 12px; font-size: 0.78rem; border-radius: 8px; cursor: pointer;" onclick="cancelContactRequest(${u.id}, '${escapeHtml(u.username)}')">Cancel Request</button>`;
+      } else if (isIncoming) {
+        actionBtn = `<button type="button" class="unban-btn" onclick="acceptContactRequest(${u.id}, '${escapeHtml(u.username)}')">Accept Request</button>`;
+      } else {
+        actionBtn = `<button type="button" class="btn btn-primary" style="padding: 5px 12px; font-size: 0.78rem;" onclick="sendContactRequest(${u.id}, '${escapeHtml(u.username)}')">Send Request</button>`;
+      }
+
+      return `
+        <div class="contact-item-row">
+          <div class="contact-user-info">
+            <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightboxById(${u.id})`)}</div>
+            <div>
+              <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(u.username)}</div>
+              <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.bio || 'SChat User')}</div>
+            </div>
+          </div>
+          <div>
+            ${actionBtn}
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+  window.triggerRenderSearchResults = renderContactSearchResults;
+
+  if (contactSearchBtn && contactSearchInput) {
     contactSearchInput.addEventListener('input', renderContactSearchResults);
     contactSearchBtn.addEventListener('click', renderContactSearchResults);
     contactSearchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') renderContactSearchResults(); });
