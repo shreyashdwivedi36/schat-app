@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v102-profile-photos-lightbox';
+const CACHE_NAME = 'schat-v103-scope-fix';
 
 const PRECACHE_URLS = [
   '/',

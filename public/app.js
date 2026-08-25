@@ -310,7 +310,7 @@ const startSChat = () => {
       return `
         <div class="admin-user-item ${isBanned ? 'is-banned-card' : ''}">
           <div class="admin-user-info">
-            <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightbox({id:${u.id}, username:\'${escapeHtml(u.username)}\', avatar:\'${escapeHtml(u.avatar || "👤")}\', bio:\'${escapeHtml(u.bio || "")}\'})`)}</div>
+            <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightboxById(${u.id})`)}</div>
             <div>
               <div style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
                 ${escapeHtml(u.username)}
@@ -2619,7 +2619,7 @@ const enterChat = async () => {
 
       li.innerHTML = `
         <div class="u-avatar-wrapper">
-          ${renderAvatarHTML(u.avatar, u.username, "u-avatar", `openAvatarLightbox({id:${u.id}, username:\'${escapeHtml(u.username)}\', avatar:\'${escapeHtml(u.avatar || "👤")}\', bio:\'${escapeHtml(u.bio || "")}\'})`)}
+          ${renderAvatarHTML(u.avatar, u.username, "u-avatar", `openAvatarLightboxById(${u.id})`)}
           ${statusIndicatorHtml}
         </div>
         <span class="u-name">${escapeHtml(u.username)}</span>
@@ -2897,7 +2897,7 @@ const enterChat = async () => {
     sidebarRequestsList.innerHTML = incomingContactRequests.map(req => `
       <div class="sidebar-request-card">
         <div class="sidebar-request-user">
-          <div class="avatar">${renderAvatarHTML(req.avatar, req.username, "", `openAvatarLightbox({id:${req.id}, username:\'${escapeHtml(req.username)}\', avatar:\'${escapeHtml(req.avatar || "👤")}\', bio:\'${escapeHtml(req.bio || "")}\'})`)}</div>
+          <div class="avatar">${renderAvatarHTML(req.avatar, req.username, "", `openAvatarLightboxById(${req.id})`)}</div>
           <div>
             <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">@${escapeHtml(req.username)}</div>
             <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(req.bio || 'Wants to chat')}</div>
@@ -2955,7 +2955,7 @@ const enterChat = async () => {
     pendingRequestsList.innerHTML = incomingContactRequests.map(req => `
       <div class="contact-item-row">
         <div class="contact-user-info">
-          <div class="avatar">${renderAvatarHTML(req.avatar, req.username, "", `openAvatarLightbox({id:${req.id}, username:\'${escapeHtml(req.username)}\', avatar:\'${escapeHtml(req.avatar || "👤")}\', bio:\'${escapeHtml(req.bio || "")}\'})`)}</div>
+          <div class="avatar">${renderAvatarHTML(req.avatar, req.username, "", `openAvatarLightboxById(${req.id})`)}</div>
           <div>
             <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(req.username)}</div>
             <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(req.bio || 'Wants to connect with you')}</div>
@@ -3054,7 +3054,7 @@ const enterChat = async () => {
         return `
           <div class="contact-item-row">
             <div class="contact-user-info">
-              <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightbox({id:${u.id}, username:\'${escapeHtml(u.username)}\', avatar:\'${escapeHtml(u.avatar || "👤")}\', bio:\'${escapeHtml(u.bio || "")}\'})`)}</div>
+              <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightboxById(${u.id})`)}</div>
               <div>
                 <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(u.username)}</div>
                 <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.bio || 'SChat User')}</div>
@@ -3110,7 +3110,7 @@ const enterChat = async () => {
         return `
           <div class="contact-item-row">
             <div class="contact-user-info">
-              <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightbox({id:${u.id}, username:\'${escapeHtml(u.username)}\', avatar:\'${escapeHtml(u.avatar || "👤")}\', bio:\'${escapeHtml(u.bio || "")}\'})`)}</div>
+              <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "", `openAvatarLightboxById(${u.id})`)}</div>
               <div>
                 <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(u.username)}</div>
                 <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(u.bio || 'SChat User')}</div>
@@ -3850,6 +3850,199 @@ hideElement(typingBanner);
     }).catch(() => {});
   }
 
+  
+  // ==========================================
+  // LIGHTBOX & PROFILE AVATAR UPLOAD CONTROLLERS
+  // ==========================================
+  const avatarLightboxModal = document.getElementById('avatarLightboxModal');
+  const closeAvatarLightboxBtn = document.getElementById('closeAvatarLightboxBtn');
+  const closeAvatarLightboxBackdrop = document.getElementById('closeAvatarLightboxBackdrop');
+  const lightboxAvatarShield = document.getElementById('lightboxAvatarShield');
+  const lightboxWatermark = document.getElementById('lightboxWatermark');
+  const lightboxUsername = document.getElementById('lightboxUsername');
+  const lightboxBio = document.getElementById('lightboxBio');
+  const lightboxActions = document.getElementById('lightboxActions');
+
+  window.openAvatarLightbox = (userOrAvatar, username = '', bio = '') => {
+    let avatarUrl = '';
+    let uname = '';
+    let userBio = '';
+    let isSelf = false;
+
+    if (typeof userOrAvatar === 'object' && userOrAvatar !== null) {
+      avatarUrl = userOrAvatar.avatar || '👤';
+      uname = userOrAvatar.username || 'User';
+      userBio = userOrAvatar.bio || 'Hey there! I am using SChat.';
+      isSelf = currentUser && Number(userOrAvatar.id) === Number(currentUser.id);
+    } else {
+      avatarUrl = userOrAvatar || '👤';
+      uname = username || 'User';
+      userBio = bio || 'Hey there! I am using SChat.';
+      isSelf = currentUser && (uname === currentUser.username);
+    }
+
+    if (!avatarLightboxModal) return;
+
+    const isImg = isImageAvatar(avatarUrl);
+    if (isImg) {
+      lightboxAvatarShield.style.backgroundImage = `url('${avatarUrl}')`;
+      lightboxAvatarShield.innerHTML = '';
+    } else {
+      lightboxAvatarShield.style.backgroundImage = 'none';
+      lightboxAvatarShield.innerHTML = `<span style="font-size: 5rem; display: flex; align-items: center; justify-content: center; height: 100%;">${avatarUrl}</span>`;
+    }
+
+    if (lightboxWatermark) {
+      const viewerName = currentUser ? currentUser.username : 'Guest';
+      const today = new Date().toLocaleDateString();
+      lightboxWatermark.textContent = `SChat™ • @${viewerName} • ${today}`;
+    }
+
+    if (lightboxUsername) lightboxUsername.textContent = `@${uname}`;
+    if (lightboxBio) lightboxBio.textContent = userBio || 'Hey there! I am using SChat.';
+
+    if (lightboxActions) {
+      if (isSelf) {
+        lightboxActions.innerHTML = `
+          <button type="button" class="btn btn-primary lightbox-action-btn" onclick="document.getElementById('profileAvatarInput').click(); window.hideAvatarLightbox();">
+            📷 Change Photo
+          </button>
+          <button type="button" class="btn-danger-outline lightbox-action-btn" style="border-radius:12px; padding:8px 16px; font-size:0.84rem; cursor:pointer;" onclick="window.resetAvatarToEmoji(); window.hideAvatarLightbox();">
+            🗑️ Reset Emoji
+          </button>
+        `;
+      } else {
+        lightboxActions.innerHTML = `
+          <button type="button" class="btn btn-primary lightbox-action-btn" onclick="window.hideAvatarLightbox();">
+            Close Preview
+          </button>
+        `;
+      }
+    }
+
+    showElement(avatarLightboxModal);
+  };
+
+  window.openAvatarLightboxById = (userId) => {
+    const numId = Number(userId);
+    const target = (currentUser && Number(currentUser.id) === numId) ? currentUser
+      : (allRegisteredUsers.find(u => Number(u.id) === numId)
+      || acceptedContacts.find(u => Number(u.id) === numId)
+      || incomingContactRequests.find(u => Number(u.id) === numId)
+      || outgoingContactRequests.find(u => Number(u.id) === numId)
+      || { id: numId, username: 'User', avatar: '👤' });
+    
+    window.openAvatarLightbox(target);
+  };
+
+  window.hideAvatarLightbox = () => {
+    if (avatarLightboxModal) hideElement(avatarLightboxModal);
+  };
+
+  if (closeAvatarLightboxBtn) closeAvatarLightboxBtn.addEventListener('click', window.hideAvatarLightbox);
+  if (closeAvatarLightboxBackdrop) closeAvatarLightboxBackdrop.addEventListener('click', window.hideAvatarLightbox);
+
+  // Anti-Screenshot Focus-Loss Blocker
+  window.addEventListener('blur', () => {
+    if (avatarLightboxModal && !avatarLightboxModal.classList.contains('hidden') && lightboxAvatarShield) {
+      lightboxAvatarShield.style.filter = 'blur(30px)';
+    }
+  });
+
+  window.addEventListener('focus', () => {
+    if (lightboxAvatarShield) {
+      lightboxAvatarShield.style.filter = 'none';
+    }
+  });
+
+  // Anti-Screenshot Keydown Warning
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'PrintScreen') {
+      if (avatarLightboxModal && !avatarLightboxModal.classList.contains('hidden')) {
+        window.hideAvatarLightbox();
+        showAlert('⚠️ Screenshots are restricted for profile privacy.', 'info');
+      }
+    }
+  });
+
+  // Profile Avatar Upload & Reset Handlers
+  const profileAvatarUploadBtn = document.getElementById('profileAvatarUploadBtn');
+  const profileAvatarInput = document.getElementById('profileAvatarInput');
+  const profileAvatarResetBtn = document.getElementById('profileAvatarResetBtn');
+
+  if (profileAvatarUploadBtn && profileAvatarInput) {
+    profileAvatarUploadBtn.addEventListener('click', () => profileAvatarInput.click());
+
+    profileAvatarInput.addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        showAlert('Processing & compressing photo...', 'info');
+        const compressedBlob = await compressAndProcessAvatar(file);
+        showAlert('Uploading to secure CDN...', 'info');
+        
+        let cdnUrl = await uploadToCloudinary(compressedBlob, 'image');
+        if (cdnUrl && cdnUrl.includes('cloudinary.com')) {
+          cdnUrl = cdnUrl.replace('/image/upload/', '/image/upload/c_fill,g_face,w_256,h_256,q_auto,f_auto/');
+        }
+
+        const res = await fetch('/api/profile/avatar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ avatar: cdnUrl })
+        });
+
+        if (res.ok) {
+          currentUser.avatar = cdnUrl;
+          localStorage.setItem('schat_user', JSON.stringify(currentUser));
+          showAlert('Profile photo updated successfully!', 'success');
+          updateMyProfileUI();
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'profile_update', avatar: cdnUrl }));
+          }
+        } else {
+          showAlert('Failed to save profile photo.', 'error');
+        }
+      } catch (err) {
+        console.error('Avatar upload error:', err);
+        showAlert('Error processing profile photo.', 'error');
+      } finally {
+        profileAvatarInput.value = '';
+      }
+    });
+  }
+
+  window.resetAvatarToEmoji = async () => {
+    try {
+      const defaultEmoji = '⚡';
+      const res = await fetch('/api/profile/avatar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ avatar: defaultEmoji })
+      });
+
+      if (res.ok) {
+        currentUser.avatar = defaultEmoji;
+        localStorage.setItem('schat_user', JSON.stringify(currentUser));
+        showAlert('Avatar reset to default emoji.', 'info');
+        updateMyProfileUI();
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'profile_update', avatar: defaultEmoji }));
+        }
+      }
+    } catch (e) {
+      showAlert('Failed to reset avatar.', 'error');
+    }
+  };
+
+
   if (authToken && currentUser) {
     initializeChatSession();
   } else {
@@ -4283,184 +4476,3 @@ const initSpatialPhysics = () => {
 
 // Initialize physics engine on load
 window.addEventListener('DOMContentLoaded', initSpatialPhysics);
-
-
-  // ==========================================
-  // LIGHTBOX & PROFILE AVATAR UPLOAD CONTROLLERS
-  // ==========================================
-  const avatarLightboxModal = document.getElementById('avatarLightboxModal');
-  const closeAvatarLightboxBtn = document.getElementById('closeAvatarLightboxBtn');
-  const closeAvatarLightboxBackdrop = document.getElementById('closeAvatarLightboxBackdrop');
-  const lightboxAvatarShield = document.getElementById('lightboxAvatarShield');
-  const lightboxWatermark = document.getElementById('lightboxWatermark');
-  const lightboxUsername = document.getElementById('lightboxUsername');
-  const lightboxBio = document.getElementById('lightboxBio');
-  const lightboxActions = document.getElementById('lightboxActions');
-
-  window.openAvatarLightbox = (userOrAvatar, username = '', bio = '') => {
-    let avatarUrl = '';
-    let uname = '';
-    let userBio = '';
-    let isSelf = false;
-
-    if (typeof userOrAvatar === 'object' && userOrAvatar !== null) {
-      avatarUrl = userOrAvatar.avatar || '👤';
-      uname = userOrAvatar.username || 'User';
-      userBio = userOrAvatar.bio || 'Hey there! I am using SChat.';
-      isSelf = currentUser && Number(userOrAvatar.id) === Number(currentUser.id);
-    } else {
-      avatarUrl = userOrAvatar || '👤';
-      uname = username || 'User';
-      userBio = bio || 'Hey there! I am using SChat.';
-      isSelf = currentUser && (uname === currentUser.username);
-    }
-
-    if (!avatarLightboxModal) return;
-
-    const isImg = isImageAvatar(avatarUrl);
-    if (isImg) {
-      lightboxAvatarShield.style.backgroundImage = `url('${avatarUrl}')`;
-      lightboxAvatarShield.innerHTML = '';
-    } else {
-      lightboxAvatarShield.style.backgroundImage = 'none';
-      lightboxAvatarShield.innerHTML = `<span style="font-size: 5rem; display: flex; align-items: center; justify-content: center; height: 100%;">${avatarUrl}</span>`;
-    }
-
-    if (lightboxWatermark) {
-      const viewerName = currentUser ? currentUser.username : 'Guest';
-      const today = new Date().toLocaleDateString();
-      lightboxWatermark.textContent = `SChat™ • @${viewerName} • ${today}`;
-    }
-
-    if (lightboxUsername) lightboxUsername.textContent = `@${uname}`;
-    if (lightboxBio) lightboxBio.textContent = userBio || 'Hey there! I am using SChat.';
-
-    if (lightboxActions) {
-      if (isSelf) {
-        lightboxActions.innerHTML = `
-          <button type="button" class="btn btn-primary lightbox-action-btn" onclick="document.getElementById('profileAvatarInput').click(); window.hideAvatarLightbox();">
-            📷 Change Photo
-          </button>
-          <button type="button" class="btn-danger-outline lightbox-action-btn" style="border-radius:12px; padding:8px 16px; font-size:0.84rem; cursor:pointer;" onclick="window.resetAvatarToEmoji(); window.hideAvatarLightbox();">
-            🗑️ Reset Emoji
-          </button>
-        `;
-      } else {
-        lightboxActions.innerHTML = `
-          <button type="button" class="btn btn-primary lightbox-action-btn" onclick="window.hideAvatarLightbox();">
-            Close Preview
-          </button>
-        `;
-      }
-    }
-
-    showElement(avatarLightboxModal);
-  };
-
-  window.hideAvatarLightbox = () => {
-    if (avatarLightboxModal) hideElement(avatarLightboxModal);
-  };
-
-  if (closeAvatarLightboxBtn) closeAvatarLightboxBtn.addEventListener('click', window.hideAvatarLightbox);
-  if (closeAvatarLightboxBackdrop) closeAvatarLightboxBackdrop.addEventListener('click', window.hideAvatarLightbox);
-
-  // Anti-Screenshot Focus-Loss Blocker
-  window.addEventListener('blur', () => {
-    if (avatarLightboxModal && !avatarLightboxModal.classList.contains('hidden') && lightboxAvatarShield) {
-      lightboxAvatarShield.style.filter = 'blur(30px)';
-    }
-  });
-
-  window.addEventListener('focus', () => {
-    if (lightboxAvatarShield) {
-      lightboxAvatarShield.style.filter = 'none';
-    }
-  });
-
-  // Anti-Screenshot Keydown Warning
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'PrintScreen') {
-      if (avatarLightboxModal && !avatarLightboxModal.classList.contains('hidden')) {
-        window.hideAvatarLightbox();
-        showAlert('⚠️ Screenshots are restricted for profile privacy.', 'info');
-      }
-    }
-  });
-
-  // Profile Avatar Upload & Reset Handlers
-  const profileAvatarUploadBtn = document.getElementById('profileAvatarUploadBtn');
-  const profileAvatarInput = document.getElementById('profileAvatarInput');
-  const profileAvatarResetBtn = document.getElementById('profileAvatarResetBtn');
-
-  if (profileAvatarUploadBtn && profileAvatarInput) {
-    profileAvatarUploadBtn.addEventListener('click', () => profileAvatarInput.click());
-
-    profileAvatarInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      try {
-        showAlert('Processing & compressing photo...', 'info');
-        const compressedBlob = await compressAndProcessAvatar(file);
-        showAlert('Uploading to secure CDN...', 'info');
-        
-        let cdnUrl = await uploadToCloudinary(compressedBlob, 'image');
-        if (cdnUrl.includes('cloudinary.com')) {
-          cdnUrl = cdnUrl.replace('/image/upload/', '/image/upload/c_fill,g_face,w_256,h_256,q_auto,f_auto/');
-        }
-
-        const res = await fetch('/api/profile/avatar', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({ avatar: cdnUrl })
-        });
-
-        if (res.ok) {
-          currentUser.avatar = cdnUrl;
-          localStorage.setItem('user', JSON.stringify(currentUser));
-          showAlert('Profile photo updated successfully!', 'success');
-          updateMyProfileUI();
-          if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({ type: 'profile_update', avatar: cdnUrl }));
-          }
-        } else {
-          showAlert('Failed to save profile photo.', 'error');
-        }
-      } catch (err) {
-        console.error('Avatar upload error:', err);
-        showAlert('Error processing profile photo.', 'error');
-      } finally {
-        profileAvatarInput.value = '';
-      }
-    });
-  }
-
-  window.resetAvatarToEmoji = async () => {
-    try {
-      const defaultEmoji = '⚡';
-      const res = await fetch('/api/profile/avatar', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ avatar: defaultEmoji })
-      });
-
-      if (res.ok) {
-        currentUser.avatar = defaultEmoji;
-        localStorage.setItem('user', JSON.stringify(currentUser));
-        showAlert('Avatar reset to default emoji.', 'info');
-        updateMyProfileUI();
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'profile_update', avatar: defaultEmoji }));
-        }
-      }
-    } catch (e) {
-      showAlert('Failed to reset avatar.', 'error');
-    }
-  };
-
