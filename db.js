@@ -88,6 +88,8 @@ if (process.env.DATABASE_URL) {
         );
       `);
       try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS bio VARCHAR(255) DEFAULT 'Hey there! I am using SChat.';`); } catch(e){}
+      try { await pool.query(`ALTER TABLE users ALTER COLUMN avatar TYPE TEXT;`); } catch(e){}
+      try { await pool.query(`ALTER TABLE users ALTER COLUMN bio TYPE TEXT;`); } catch(e){}
       try { await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned INTEGER DEFAULT 0;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS recipient_id INTEGER DEFAULT NULL;`); } catch(e){}
       try { await pool.query(`ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel VARCHAR(50) DEFAULT 'global';`); } catch(e){}
