@@ -650,6 +650,8 @@ const startSChat = () => {
     }
   };
   const closeProfileModal = () => { if (profileModal) { profileModal.style.display = 'none'; profileModal.classList.add('hidden'); } };
+  window.openProfileModal = openProfileModal;
+  window.closeProfileModal = closeProfileModal;
 
   if (myProfileCard) myProfileCard.addEventListener('click', (e) => {
     if (e.target.closest('#logoutBtn')) return;
@@ -4042,7 +4044,7 @@ hideElement(typingBanner);
     if (lightboxActions) {
       if (isSelf) {
         lightboxActions.innerHTML = `
-          <button type="button" class="cinematic-pill-btn primary" onclick="window.hideAvatarLightbox(); openProfileModal();">
+          <button type="button" class="cinematic-pill-btn primary" onclick="window.hideAvatarLightbox(); window.openProfileModal();">
             🎨 Change Avatar
           </button>
         `;
