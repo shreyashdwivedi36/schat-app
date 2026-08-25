@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v104-avatar-helpers-restored';
+const CACHE_NAME = 'schat-v105-avatar-and-sessions-fix';
 
 const PRECACHE_URLS = [
   '/',

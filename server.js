@@ -330,6 +330,21 @@ app.get('/api/push-logs', (req, res) => {
 });
 
 // Update Profile Settings
+
+// Update Profile Avatar (Accepts Cloudinary URLs & WebP Data URLs up to 200KB)
+app.post('/api/profile/avatar', authMiddleware, async (req, res) => {
+  try {
+    const avatar = sanitizeString(req.body.avatar, 200000);
+    if (!avatar) return res.status(400).json({ error: 'Avatar is required.' });
+    
+    await db.run('UPDATE users SET avatar = ? WHERE id = ?', [avatar, req.user.id]);
+    res.json({ success: true, avatar, message: 'Profile photo updated successfully!' });
+  } catch (err) {
+    console.error('Update avatar error:', err);
+    res.status(500).json({ error: 'Failed to update profile photo.' });
+  }
+});
+
 app.put('/api/me', authMiddleware, async (req, res) => {
   try {
     const avatar = sanitizeString(req.body.avatar, 500);
@@ -671,9 +686,19 @@ app.get('/api/sessions', authMiddleware, async (req, res) => {
     const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1').split(',')[0].trim();
     const currentSessionId = await upsertUserSession(req.user.id, req.user.sessionId, req.headers['user-agent'], ip);
 
-    const sessions = await db.all('SELECT session_id, device, browser, ip_address, last_active, created_at FROM user_sessions WHERE user_id = ? ORDER BY last_active DESC', [req.user.id]);
+    const allRawSessions = await db.all('SELECT session_id, device, browser, ip_address, last_active, created_at FROM user_sessions WHERE user_id = ? ORDER BY last_active DESC', [req.user.id]);
     
-    const formatted = (sessions || []).map(s => ({
+    // Deduplicate by session_id
+    const seen = new Set();
+    const uniqueSessions = [];
+    (allRawSessions || []).forEach(s => {
+      if (!seen.has(s.session_id)) {
+        seen.add(s.session_id);
+        uniqueSessions.push(s);
+      }
+    });
+
+    const formatted = uniqueSessions.map(s => ({
       ...s,
       is_current: s.session_id === currentSessionId || s.session_id === req.user.sessionId
     }));

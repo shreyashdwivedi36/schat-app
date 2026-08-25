@@ -155,6 +155,14 @@ if (process.env.DATABASE_URL) {
       data.channels = raw.channels || [];
       data.blocked_users = raw.blocked_users || [];
       data.user_sessions = raw.user_sessions || [];
+      // Deduplicate sessions keeping latest per session_id
+      const uniqueSessionsMap = new Map();
+      (data.user_sessions || []).forEach(s => {
+        if (!uniqueSessionsMap.has(s.session_id) || new Date(s.last_active) > new Date(uniqueSessionsMap.get(s.session_id).last_active)) {
+          uniqueSessionsMap.set(s.session_id, s);
+        }
+      });
+      data.user_sessions = Array.from(uniqueSessionsMap.values());
       data.contacts = raw.contacts || [];
       data.lastUserId = raw.lastUserId || data.users.length;
       data.lastMsgId = raw.lastMsgId || data.messages.length;
@@ -264,7 +272,30 @@ if (process.env.DATABASE_URL) {
         }
         return { changes: 0 };
       }
-            if (sql.includes('INSERT INTO user_sessions')) {
+                  if (sql.includes('UPDATE user_sessions SET')) {
+        const [last_active, ip_address, device, browser, id] = params;
+        const sess = (data.user_sessions || []).find(s => Number(s.id) === Number(id));
+        if (sess) {
+          sess.last_active = last_active;
+          sess.ip_address = ip_address;
+          sess.device = device;
+          sess.browser = browser;
+          saveData();
+          return { changes: 1 };
+        }
+        return { changes: 0 };
+      }
+      if (sql.includes('UPDATE users SET avatar = ? WHERE id = ?')) {
+        const [avatar, id] = params;
+        const user = data.users.find(u => Number(u.id) === Number(id));
+        if (user) {
+          user.avatar = avatar;
+          saveData();
+          return { changes: 1 };
+        }
+        return { changes: 0 };
+      }
+      if (sql.includes('INSERT INTO user_sessions')) {
         const [session_id, user_id, device, browser, ip_address] = params;
         data.lastSessionId += 1;
         const newSession = {
@@ -375,6 +406,10 @@ if (process.env.DATABASE_URL) {
       }
     },
     async get(sql, params = []) {
+            if (sql.includes('FROM user_sessions WHERE user_id = ? AND session_id = ?')) {
+        const [userId, sessionId] = params;
+        return (data.user_sessions || []).find(s => Number(s.user_id) === Number(userId) && s.session_id === sessionId) || null;
+      }
       if (sql.includes('FROM users WHERE username = ?')) {
         const query = (params[0] || '').toLowerCase();
         return data.users.find(u => (u.username && u.username.toLowerCase() === query) || (u.email && u.email.toLowerCase() === query)) || null;
