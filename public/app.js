@@ -571,18 +571,67 @@ const startSChat = () => {
   };
   const closeAboutModal = () => { if (aboutModal) { aboutModal.style.display = 'none'; aboutModal.classList.add('hidden'); } };
 
+  
+  // ==========================================
+  // PROFILE SETTINGS TAB CONTROLLER
+  // ==========================================
+  const profileTabBtns = document.querySelectorAll('.settings-tab-btn');
+  const profileTabPanels = {
+    general: document.getElementById('tabGeneralPanel'),
+    security: document.getElementById('tabSecurityPanel'),
+    sessions: document.getElementById('tabSessionsPanel')
+  };
+
+  profileTabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.dataset.tab;
+      profileTabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      Object.keys(profileTabPanels).forEach(key => {
+        if (profileTabPanels[key]) {
+          if (key === targetTab) {
+            profileTabPanels[key].classList.add('active');
+            if (key === 'sessions' && typeof fetchUserSessions === 'function') {
+              fetchUserSessions();
+            }
+          } else {
+            profileTabPanels[key].classList.remove('active');
+          }
+        }
+      });
+    });
+  });
+
   const openProfileModal = () => {
     if (profileModal) {
       if (window.innerWidth <= 768 && typeof closeSidebar === 'function') {
         closeSidebar();
       }
       if (profileBioInput && currentUser) profileBioInput.value = currentUser.bio || '';
+      const profileHeroUsername = document.getElementById('profileHeroUsername');
+      const profileHeroEmail = document.getElementById('profileHeroEmail');
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+      const profileRoleBadge = document.getElementById('profileRoleBadge');
+      
+      if (currentUser) {
+        if (profileHeroUsername) profileHeroUsername.textContent = `@${currentUser.username}`;
+        if (profileHeroEmail) profileHeroEmail.textContent = currentUser.email || 'Verified Account';
+        if (profileAvatarPreview) profileAvatarPreview.innerHTML = renderAvatarHTML(currentUser.avatar, currentUser.username, 'no-hover');
+        if (profileRoleBadge) profileRoleBadge.textContent = currentUser.role === 'super_admin' ? 'Super Admin' : 'Member';
+      }
+
       const pwdAlertEl = document.getElementById('pwdAlert');
       const changeCurrPwdEl = document.getElementById('changeCurrentPwd');
       const changeNewPwdEl = document.getElementById('changeNewPwd');
       if (pwdAlertEl) pwdAlertEl.classList.add('hidden');
       if (changeCurrPwdEl) changeCurrPwdEl.value = '';
       if (changeNewPwdEl) changeNewPwdEl.value = '';
+      
+      // Default to General tab
+      const firstTab = document.querySelector('.settings-tab-btn[data-tab="general"]');
+      if (firstTab) firstTab.click();
+
       profileModal.style.display = '';
       profileModal.classList.remove('hidden');
       const card = profileModal.querySelector('.modal-card');

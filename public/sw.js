@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v107-root-lightbox';
+const CACHE_NAME = 'schat-v108-modern-profile-settings';
 
 const PRECACHE_URLS = [
   '/',
