@@ -746,8 +746,6 @@ const startSChat = () => {
       const newBio = profileBioInput ? profileBioInput.value.trim() : (currentUser?.bio || '');
       const finalAvatar = stagedAvatar || currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
 
-      showAlert('Saving profile changes...', 'info');
-
       try {
         const res = await fetch('/api/me', {
           method: 'PUT',
@@ -768,7 +766,7 @@ const startSChat = () => {
           if (myAvatar) myAvatar.innerHTML = renderAvatarHTML(finalAvatar, currentUser.username, 'no-hover');
 
           closeProfileModal();
-          showAppToast('Profile updated successfully!', 'success');
+          showAppToast('Changes saved successfully!', 'success');
 
           if (ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'profile_update', avatar: finalAvatar, bio: newBio }));
@@ -4363,31 +4361,25 @@ hideElement(typingBanner);
       }
 
       closeCropper();
-      showAlert('Saving profile photo...', 'info');
 
-      // Direct Save to Backend Database
+      // Direct Save to Backend Database in background
       try {
-        const res = await fetch('/api/profile/avatar', {
+        fetch('/api/profile/avatar', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${authToken}`
           },
           body: JSON.stringify({ avatar: croppedDataUrl })
-        });
-
-        if (res.ok) {
-          showAlert('Profile photo updated & saved successfully!', 'success');
-          if (ws && ws.readyState === WebSocket.OPEN) {
+        }).then(res => {
+          if (res.ok && ws && ws.readyState === WebSocket.OPEN) {
             ws.send(JSON.stringify({ type: 'profile_update', avatar: croppedDataUrl }));
           }
-        } else {
-          const err = await res.json();
-          showAlert(err.error || 'Failed to save photo.', 'error');
-        }
+        }).catch(err => {
+          console.error('Avatar background save error:', err);
+        });
       } catch (err) {
         console.error('Avatar save error:', err);
-        showAlert('Network error saving photo.', 'error');
       }
     });
   }
