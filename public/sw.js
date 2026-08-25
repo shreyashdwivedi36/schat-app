@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v114-modern-emoji-picker';
+const CACHE_NAME = 'schat-v115-full-unicode-emoji-suite';
 
 const PRECACHE_URLS = [
   '/',

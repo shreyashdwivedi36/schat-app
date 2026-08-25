@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=114">
+  <link rel="stylesheet" href="style.css?v=115">
 </head>
 <body>
 
@@ -620,62 +620,9 @@
 
         <!-- Message Input Bar -->
         <footer class="chat-footer">
-          <!-- Modern Glassmorphism Categorized Emoji Picker -->
+          <!-- Full Unicode Emoji Picker (1,800+ Emojis, Search, Categories & Skin Tones) -->
           <div id="emojiPicker" class="emoji-picker-container hidden" role="dialog" aria-label="Emoji Picker">
-            <div class="emoji-picker-header">
-              <div class="emoji-tab-bar">
-                <button type="button" class="emoji-tab-btn active" data-cat="smileys" title="Smileys & People">😀</button>
-                <button type="button" class="emoji-tab-btn" data-cat="reactions" title="Reactions & Gestures">🔥</button>
-                <button type="button" class="emoji-tab-btn" data-cat="hearts" title="Hearts & Love">❤️</button>
-                <button type="button" class="emoji-tab-btn" data-cat="fun" title="Tech & Fun">✨</button>
-              </div>
-            </div>
-            
-            <div class="emoji-grid-container">
-              <!-- Category 1: Smileys -->
-              <div class="emoji-grid-panel active" data-cat-panel="smileys">
-                <span class="emoji-item">😀</span><span class="emoji-item">😃</span><span class="emoji-item">😄</span><span class="emoji-item">😁</span>
-                <span class="emoji-item">😆</span><span class="emoji-item">🥹</span><span class="emoji-item">😅</span><span class="emoji-item">😂</span>
-                <span class="emoji-item">🤣</span><span class="emoji-item">🥲</span><span class="emoji-item">☺️</span><span class="emoji-item">😊</span>
-                <span class="emoji-item">😇</span><span class="emoji-item">🙂</span><span class="emoji-item">🙃</span><span class="emoji-item">😉</span>
-                <span class="emoji-item">😌</span><span class="emoji-item">😍</span><span class="emoji-item">🥰</span><span class="emoji-item">😘</span>
-                <span class="emoji-item">😋</span><span class="emoji-item">😛</span><span class="emoji-item">😜</span><span class="emoji-item">🤪</span>
-                <span class="emoji-item">🤨</span><span class="emoji-item">🧐</span><span class="emoji-item">🤓</span><span class="emoji-item">😎</span>
-                <span class="emoji-item">🥳</span><span class="emoji-item">🤩</span><span class="emoji-item">😏</span><span class="emoji-item">😒</span>
-              </div>
-
-              <!-- Category 2: Reactions & Hands -->
-              <div class="emoji-grid-panel" data-cat-panel="reactions">
-                <span class="emoji-item">👍</span><span class="emoji-item">👎</span><span class="emoji-item">👏</span><span class="emoji-item">🙌</span>
-                <span class="emoji-item">🤝</span><span class="emoji-item">👊</span><span class="emoji-item">✊</span><span class="emoji-item">🤛</span>
-                <span class="emoji-item">🤜</span><span class="emoji-item">🤞</span><span class="emoji-item">✌️</span><span class="emoji-item">🫰</span>
-                <span class="emoji-item">🤟</span><span class="emoji-item">🤘</span><span class="emoji-item">👌</span><span class="emoji-item">🤌</span>
-                <span class="emoji-item">🤏</span><span class="emoji-item">👈</span><span class="emoji-item">👉</span><span class="emoji-item">👆</span>
-                <span class="emoji-item">👇</span><span class="emoji-item">☝️</span><span class="emoji-item">✋</span><span class="emoji-item">🤚</span>
-                <span class="emoji-item">🖐️</span><span class="emoji-item">🖖</span><span class="emoji-item">👋</span><span class="emoji-item">🤙</span>
-                <span class="emoji-item">💪</span><span class="emoji-item">🦾</span><span class="emoji-item">🖕</span><span class="emoji-item">✍️</span>
-              </div>
-
-              <!-- Category 3: Hearts & Love -->
-              <div class="emoji-grid-panel" data-cat-panel="hearts">
-                <span class="emoji-item">❤️</span><span class="emoji-item">🧡</span><span class="emoji-item">💛</span><span class="emoji-item">💚</span>
-                <span class="emoji-item">💙</span><span class="emoji-item">💜</span><span class="emoji-item">🖤</span><span class="emoji-item">🤍</span>
-                <span class="emoji-item">🤎</span><span class="emoji-item">💔</span><span class="emoji-item">❣️</span><span class="emoji-item">💕</span>
-                <span class="emoji-item">💞</span><span class="emoji-item">💓</span><span class="emoji-item">💗</span><span class="emoji-item">💖</span>
-                <span class="emoji-item">💘</span><span class="emoji-item">💝</span><span class="emoji-item">💟</span><span class="emoji-item">💌</span>
-                <span class="emoji-item">💋</span><span class="emoji-item">🫶</span><span class="emoji-item">🫂</span><span class="emoji-item">💍</span>
-              </div>
-
-              <!-- Category 4: Tech, Sparkles & Fun -->
-              <div class="emoji-grid-panel" data-cat-panel="fun">
-                <span class="emoji-item">🔥</span><span class="emoji-item">💯</span><span class="emoji-item">⚡</span><span class="emoji-item">🚀</span>
-                <span class="emoji-item">✨</span><span class="emoji-item">🎉</span><span class="emoji-item">👑</span><span class="emoji-item">💎</span>
-                <span class="emoji-item">🌟</span><span class="emoji-item">💥</span><span class="emoji-item">💬</span><span class="emoji-item">🎯</span>
-                <span class="emoji-item">🏆</span><span class="emoji-item">🍿</span><span class="emoji-item">🎈</span><span class="emoji-item">🎁</span>
-                <span class="emoji-item">🤖</span><span class="emoji-item">👾</span><span class="emoji-item">💻</span><span class="emoji-item">📱</span>
-                <span class="emoji-item">💡</span><span class="emoji-item">🔮</span><span class="emoji-item">🎨</span><span class="emoji-item">🎵</span>
-              </div>
-            </div>
+            <emoji-picker class="dark schat-emoji-picker"></emoji-picker>
           </div>
 
           <!-- Reply Quoted Text Preview Bar -->
@@ -858,7 +805,8 @@
         </div>
       </div>
 
-    <script src="motion-fx.js?v=114" type="module"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
+    <script src="motion-fx.js?v=115" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -933,7 +881,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=114" type="module"></script>
+  <script src="/app.js?v=115" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

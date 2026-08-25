@@ -3892,7 +3892,7 @@ hideElement(typingBanner);
   };
 
   // ==========================================
-  // MODERN EMOJI PICKER CONTROLLER
+  // FULL UNICODE EMOJI PICKER CONTROLLER
   // ==========================================
   if (emojiBtn && emojiPicker) {
     emojiBtn.addEventListener('click', (e) => {
@@ -3901,40 +3901,17 @@ hideElement(typingBanner);
       
       if (emojiPicker.classList.contains('hidden')) {
         emojiPicker.classList.remove('hidden');
-        emojiPicker.style.display = 'flex';
+        emojiPicker.style.display = 'block';
       } else {
         emojiPicker.classList.add('hidden');
       }
     });
 
-    // Category Tab Switching
-    const emojiTabs = emojiPicker.querySelectorAll('.emoji-tab-btn');
-    const emojiPanels = emojiPicker.querySelectorAll('.emoji-grid-panel');
-
-    emojiTabs.forEach(tab => {
-      tab.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const targetCat = tab.dataset.cat;
-        emojiTabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-
-        emojiPanels.forEach(panel => {
-          if (panel.dataset.catPanel === targetCat) {
-            panel.classList.add('active');
-          } else {
-            panel.classList.remove('active');
-          }
-        });
-      });
-    });
-
-    // Cursor-Aware Smart Insertion
-    emojiPicker.addEventListener('click', (e) => {
-      const emojiEl = e.target.closest('.emoji-item');
-      if (!emojiEl) return;
-      
-      const emoji = emojiEl.textContent;
-      if (messageInput) {
+    // Handle full unicode emoji selection from <emoji-picker>
+    const pickerComponent = emojiPicker.querySelector('emoji-picker') || emojiPicker;
+    pickerComponent.addEventListener('emoji-click', (event) => {
+      const emoji = event.detail?.unicode || (typeof event.detail === 'string' ? event.detail : '');
+      if (emoji && messageInput) {
         const start = messageInput.selectionStart ?? messageInput.value.length;
         const end = messageInput.selectionEnd ?? messageInput.value.length;
         const text = messageInput.value;
