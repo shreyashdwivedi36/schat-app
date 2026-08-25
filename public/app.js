@@ -2731,11 +2731,11 @@ const enterChat = async () => {
 
     msgCard.addEventListener('touchend', () => {
       if (longPressTimer) clearTimeout(longPressTimer);
-    });
+    }, { passive: true });
 
     msgCard.addEventListener('touchmove', () => {
       if (longPressTimer) clearTimeout(longPressTimer);
-    });
+    }, { passive: true });
 
     messagesFeed.appendChild(msgCard);
     
@@ -2748,13 +2748,7 @@ const enterChat = async () => {
           rect.top + rect.height / 2,
           isOutgoing ? '#6366f1' : '#0ea5e9'
         );
-      } else {
-      // Add motion.dev scroll animation for historical messages
-      scroll(
-        animate(msgCard, { opacity: [0, 1], scale: [0.85, 1], y: [20, 0] }),
-        { target: msgCard, offset: ["start end", "end center"] }
-      );
-    }
+      }
     }
 
     if (msg.reactions) {
