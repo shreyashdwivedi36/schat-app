@@ -3891,16 +3891,73 @@ hideElement(typingBanner);
     }
   };
 
-  emojiBtn.addEventListener('click', () => {
-    emojiPicker.classList.toggle('hidden');
-  });
+  // ==========================================
+  // MODERN EMOJI PICKER CONTROLLER
+  // ==========================================
+  if (emojiBtn && emojiPicker) {
+    emojiBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (attachDropdown) hideElement(attachDropdown);
+      
+      if (emojiPicker.classList.contains('hidden')) {
+        emojiPicker.classList.remove('hidden');
+        emojiPicker.style.display = 'flex';
+      } else {
+        emojiPicker.classList.add('hidden');
+      }
+    });
 
-  emojiPicker.addEventListener('click', (e) => {
-    if (e.target.classList.contains('emoji-item')) {
-      messageInput.value += e.target.textContent;
-      messageInput.focus();
-    }
-  });
+    // Category Tab Switching
+    const emojiTabs = emojiPicker.querySelectorAll('.emoji-tab-btn');
+    const emojiPanels = emojiPicker.querySelectorAll('.emoji-grid-panel');
+
+    emojiTabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const targetCat = tab.dataset.cat;
+        emojiTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        emojiPanels.forEach(panel => {
+          if (panel.dataset.catPanel === targetCat) {
+            panel.classList.add('active');
+          } else {
+            panel.classList.remove('active');
+          }
+        });
+      });
+    });
+
+    // Cursor-Aware Smart Insertion
+    emojiPicker.addEventListener('click', (e) => {
+      const emojiEl = e.target.closest('.emoji-item');
+      if (!emojiEl) return;
+      
+      const emoji = emojiEl.textContent;
+      if (messageInput) {
+        const start = messageInput.selectionStart ?? messageInput.value.length;
+        const end = messageInput.selectionEnd ?? messageInput.value.length;
+        const text = messageInput.value;
+        messageInput.value = text.substring(0, start) + emoji + text.substring(end);
+        messageInput.selectionStart = messageInput.selectionEnd = start + emoji.length;
+        messageInput.focus();
+        messageInput.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+
+    // Outside Click & Escape Key Dismissal
+    document.addEventListener('click', (e) => {
+      if (emojiPicker && !emojiPicker.contains(e.target) && e.target !== emojiBtn && !emojiBtn.contains(e.target)) {
+        emojiPicker.classList.add('hidden');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && emojiPicker && !emojiPicker.classList.contains('hidden')) {
+        emojiPicker.classList.add('hidden');
+      }
+    });
+  }
 
   filterInput.addEventListener('input', (e) => {
     updateOnlineUsers();
