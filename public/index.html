@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=106">
+  <link rel="stylesheet" href="style.css?v=107">
 </head>
 <body>
 
@@ -303,32 +303,7 @@
       </div>
 
       
-      <!-- Avatar Maximize Lightbox Modal (Cinematic Protected Viewer) -->
-      <div id="avatarLightboxModal" class="cinematic-lightbox-modal hidden" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="lightboxUsername">
-        <div class="cinematic-backdrop" id="closeAvatarLightboxBackdrop"></div>
-        <button id="closeAvatarLightboxBtn" class="cinematic-close-btn" aria-label="Close preview" title="Close (Esc)">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-        <div class="cinematic-lightbox-container">
-          <div class="cinematic-avatar-aura"></div>
-          <div class="cinematic-avatar-wrapper">
-            <div id="lightboxAvatarShield" class="cinematic-avatar-shield">
-              <!-- Protected photo background -->
-            </div>
-          </div>
-          <div class="cinematic-info">
-            <div class="cinematic-badge">Profile Preview</div>
-            <h3 id="lightboxUsername" class="cinematic-username">@username</h3>
-            <p id="lightboxBio" class="cinematic-bio">Hey there! I am using SChat.</p>
-          </div>
-          <div id="lightboxActions" class="cinematic-actions">
-            <!-- Injected dynamically: Chat / Change / Remove / Close -->
-          </div>
-        </div>
-      </div>
+
 
       <!-- Profile Settings Modal -->
       <div id="profileModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="profileModalTitle">
@@ -759,7 +734,34 @@
     </div>
   </div>
 
-  <script src="motion-fx.js?v=106" type="module"></script>
+        <!-- Avatar Maximize Lightbox Modal (Cinematic Protected Viewer) -->
+      <div id="avatarLightboxModal" class="cinematic-lightbox-modal hidden" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="lightboxUsername">
+        <div class="cinematic-backdrop" id="closeAvatarLightboxBackdrop"></div>
+        <button id="closeAvatarLightboxBtn" class="cinematic-close-btn" aria-label="Close preview" title="Close (Esc)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <div class="cinematic-lightbox-container">
+          <div class="cinematic-avatar-aura"></div>
+          <div class="cinematic-avatar-wrapper">
+            <div id="lightboxAvatarShield" class="cinematic-avatar-shield">
+              <!-- Protected photo background -->
+            </div>
+          </div>
+          <div class="cinematic-info">
+            <div class="cinematic-badge">Profile Preview</div>
+            <h3 id="lightboxUsername" class="cinematic-username">@username</h3>
+            <p id="lightboxBio" class="cinematic-bio">Hey there! I am using SChat.</p>
+          </div>
+          <div id="lightboxActions" class="cinematic-actions">
+            <!-- Injected dynamically: Chat / Change / Remove / Close -->
+          </div>
+        </div>
+      </div>
+
+    <script src="motion-fx.js?v=107" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -834,7 +836,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=106" type="module"></script>
+  <script src="/app.js?v=107" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

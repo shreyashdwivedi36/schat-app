@@ -8,7 +8,7 @@
  * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v106-cinematic-lightbox';
+const CACHE_NAME = 'schat-v107-root-lightbox';
 
 const PRECACHE_URLS = [
   '/',

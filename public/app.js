@@ -593,6 +593,11 @@ const startSChat = () => {
 
   if (myProfileCard) myProfileCard.addEventListener('click', (e) => {
     if (e.target.closest('#logoutBtn')) return;
+    if (e.target.closest('#myAvatar')) {
+      e.stopPropagation();
+      window.openAvatarLightbox(currentUser);
+      return;
+    }
     openProfileModal();
   });
   if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);

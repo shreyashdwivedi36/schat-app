@@ -4823,7 +4823,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 12000;
+  z-index: 999999;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4846,7 +4846,7 @@ body {
   position: absolute;
   top: 1.75rem;
   right: 1.75rem;
-  z-index: 12010;
+  z-index: 1000005;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -4867,7 +4867,7 @@ body {
 
 .cinematic-lightbox-container {
   position: relative;
-  z-index: 12005;
+  z-index: 1000002;
   width: 100%;
   max-width: 380px;
   display: flex;
