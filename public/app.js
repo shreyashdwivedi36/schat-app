@@ -83,6 +83,25 @@ const startSChat = () => {
     });
   };
 
+  async function uploadToCloudinary(blob, resourceType = 'video') {
+    const formData = new FormData();
+    formData.append('file', blob);
+    formData.append('upload_preset', 'schat_uploads');
+    
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/tigv7xfy/${resourceType}/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      if (!response.ok) throw new Error('Cloudinary upload failed');
+      const data = await response.json();
+      return data.secure_url;
+    } catch (err) {
+      console.error('Upload Error:', err);
+      return null;
+    }
+  }
+
   // Application State
   let authToken = localStorage.getItem('schat_token') || null;
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
@@ -3430,24 +3449,7 @@ const enterChat = async () => {
     animationFrameId = requestAnimationFrame(drawWaveform);
   };
 
-  const uploadToCloudinary = async (blob, resourceType = 'video') => {
-    const formData = new FormData();
-    formData.append('file', blob);
-    formData.append('upload_preset', 'schat_uploads');
-    
-    try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/tigv7xfy/${resourceType}/upload`, {
-        method: 'POST',
-        body: formData
-      });
-      if (!response.ok) throw new Error('Cloudinary upload failed');
-      const data = await response.json();
-      return data.secure_url;
-    } catch (err) {
-      console.error('Upload Error:', err);
-      return null;
-    }
-  };
+
 
   const startRecording = async () => {
     if (isRecording) return;
