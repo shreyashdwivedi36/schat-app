@@ -62,42 +62,42 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'SChat';
   const options = {
     body: data.body || 'New message received',
-    icon: '/badge.png',
+    icon: data.icon || '/logo.png',
     badge: '/badge.png',
-    vibrate: [200, 100, 200, 100, 200],
+    vibrate: [300, 150, 300, 150, 300],
+    silent: false,
+    renotify: true,
     requireInteraction: true,
-    tag: data.message_id ? `message-${data.message_id}` : `msg-${Date.now()}`,
+    tag: data.message_id ? `msg-${data.message_id}` : `msg-${Date.now()}`,
     data: data.url || '/'
   };
 
   const promiseChain = clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-    let isVisible = false;
+    let isFocused = false;
     for (let i = 0; i < windowClients.length; i++) {
-      if (windowClients[i].visibilityState === 'visible') {
-        isVisible = true;
+      if (windowClients[i].focused && windowClients[i].visibilityState === 'visible') {
+        isFocused = true;
         break;
       }
     }
 
-    if (isVisible) {
-      // App is open! Do not show notification, just mark delivered.
+    // If app is currently open and actively focused, mark delivered without popup
+    if (isFocused) {
       return data.message_id ? fetch('/api/messages/mark-delivered', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ message_id: data.message_id })
-      }).catch(e => console.error(e)) : Promise.resolve();
+      }).catch(() => {}) : Promise.resolve();
     }
 
-    // App is in background! Show notification and mark delivered.
+    // Otherwise (locked phone, background, another app open), show high-priority push alert
     return Promise.all([
       self.registration.showNotification(title, options),
       data.message_id ? fetch('/api/messages/mark-delivered', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ message_id: data.message_id })
-      }).catch(e => console.error(e)) : Promise.resolve()
+      }).catch(() => {}) : Promise.resolve()
     ]);
   });
 

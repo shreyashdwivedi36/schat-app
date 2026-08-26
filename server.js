@@ -1115,8 +1115,13 @@ wss.on('connection', (ws, req) => {
         avatar: currentUser.avatar,
         onlineUsers: getOnlineUsersList()
       });
-      db.run('UPDATE messages SET status = ? WHERE recipient_id = ? AND status = ?', ['delivered', currentUser.id, 'sent']).then(() => {
-        broadcast({ type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
+      // Notify distinct senders that their messages were delivered to this user
+      db.all('SELECT DISTINCT user_id FROM messages WHERE recipient_id = ? AND status = ?', [currentUser.id, 'sent']).then(senders => {
+        return db.run('UPDATE messages SET status = ? WHERE recipient_id = ? AND status = ?', ['delivered', currentUser.id, 'sent']).then(() => {
+          (senders || []).forEach(s => {
+            sendToUser(s.user_id, { type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
+          });
+        });
       }).catch(() => {});
     } else {
       ws.send(JSON.stringify({ type: 'auth_error', message: 'Token expired or invalid.' }));
@@ -1159,9 +1164,12 @@ wss.on('connection', (ws, req) => {
           onlineUsers: getOnlineUsersList()
         });
         
-        // Mark pending messages as delivered
+        // Mark pending messages as delivered and notify only relevant senders
+        const pendingSenders = await db.all('SELECT DISTINCT user_id FROM messages WHERE recipient_id = ? AND status = ?', [currentUser.id, 'sent']);
         await db.run('UPDATE messages SET status = ? WHERE recipient_id = ? AND status = ?', ['delivered', currentUser.id, 'sent']);
-        broadcast({ type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
+        (pendingSenders || []).forEach(s => {
+          sendToUser(s.user_id, { type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
+        });
         return;
       }
 
@@ -1239,32 +1247,44 @@ wss.on('connection', (ws, req) => {
           // Always attempt Web Push. The client's Service Worker will drop it if they are actively focused on the app.
           try {
             const recipient = await db.get('SELECT push_subscription, muted_chats FROM users WHERE id = ?', [Number(recipientId)]);
-              if (recipient && recipient.push_subscription) {
-                const mutedChats = JSON.parse(recipient.muted_chats || '[]');
-                const senderStr = currentUser.id.toString();
-                if (!mutedChats.includes(senderStr)) {
-                const subscription = JSON.parse(recipient.push_subscription);
+            if (recipient && recipient.push_subscription) {
+              const mutedChats = JSON.parse(recipient.muted_chats || '[]');
+              const senderStr = currentUser.id.toString();
+              if (!mutedChats.includes(senderStr)) {
+                let subs = [];
+                try {
+                  const parsed = JSON.parse(recipient.push_subscription);
+                  subs = Array.isArray(parsed) ? parsed : (parsed?.endpoint ? [parsed] : []);
+                } catch(e) { subs = []; }
+
                 const payload = JSON.stringify({
                   message_id: insertedId,
                   title: `New message from ${currentUser.username}`,
                   body: content.startsWith('data:audio') ? '🎤 Voice Message' : (isBlurred ? '[Hidden Message]' : content),
                   icon: currentUser.avatar || '/logo.png',
+                  badge: '/badge.png',
                   url: '/'
                 });
-                webpush.sendNotification(subscription, payload, { urgency: 'high', TTL: 86400 }).catch(err => {
-                  global.pushLogs = global.pushLogs || [];
-                  global.pushLogs.push({ status: 'error', user: recipientId, err: err.message, code: err.statusCode, body: err.body, time: new Date() });
-                  if (err.statusCode === 410 || err.statusCode === 404) {
-                    // Subscription expired or invalid, remove it
-                    db.run('UPDATE users SET push_subscription = NULL WHERE id = ?', [recipientId]);
-                  } else {
-                    console.error('Push notification error:', err);
-                  }
+
+                subs.forEach(subscription => {
+                  webpush.sendNotification(subscription, payload, {
+                    urgency: 'high',
+                    TTL: 86400,
+                    headers: { 'Urgency': 'high' }
+                  }).catch(err => {
+                    if (err.statusCode === 410 || err.statusCode === 404) {
+                      // Prune expired device subscription
+                      try {
+                        const remaining = subs.filter(s => s.endpoint !== subscription.endpoint);
+                        db.run('UPDATE users SET push_subscription = ? WHERE id = ?', [JSON.stringify(remaining), recipientId]);
+                      } catch(e) {}
+                    }
+                  });
                 });
-                }
               }
-            } catch (err) {
-              console.error('Error checking push subscription:', err);
+            }
+          } catch (err) {
+            console.error('Error checking push subscription:', err);
           }
         } else {
           broadcast(msgPayload);
