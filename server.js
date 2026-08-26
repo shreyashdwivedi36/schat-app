@@ -1286,37 +1286,47 @@ wss.on('connection', (ws, req) => {
           } catch (err) {
             console.error('Error checking push subscription:', err);
           }
-        } else {
+                } else {
           broadcast(msgPayload);
           
-          if (initialStatus === 'sent' || !isUserActive(recipientId)) {
-            try {
-              const allUsers = await db.all('SELECT id, push_subscription, muted_chats FROM users WHERE push_subscription IS NOT NULL');
+          try {
+            // Dispatch global push strictly via device_tokens table, excluding sender
+            const allDevices = await db.all(
+              'SELECT dt.user_id, dt.endpoint, dt.p256dh, dt.auth, u.muted_chats FROM device_tokens dt JOIN users u ON dt.user_id = u.id WHERE dt.user_id != ?',
+              [currentUser.id]
+            );
+
+            if (allDevices && allDevices.length > 0) {
               const payload = JSON.stringify({
                 message_id: insertedId,
                 title: `Global Chat: ${currentUser.username}`,
                 body: content.startsWith('data:audio') ? '🎤 Voice Message' : (isBlurred ? '[Hidden Message]' : content),
                 icon: currentUser.avatar || '/logo.png',
+                badge: '/badge.png',
                 url: '/'
               });
-              
-              allUsers.forEach(user => {
-                if (user.id === currentUser.id) return;
 
-                
-                const mutedChats = JSON.parse(user.muted_chats || '[]');
+              allDevices.forEach(dev => {
+                const mutedChats = JSON.parse(dev.muted_chats || '[]');
                 if (!mutedChats.includes('global') && !mutedChats.includes(currentUser.id.toString())) {
-                  const subscription = JSON.parse(user.push_subscription);
-                  webpush.sendNotification(subscription, payload, { urgency: 'high', TTL: 86400 }).catch(err => {
+                  const sub = {
+                    endpoint: dev.endpoint,
+                    keys: { p256dh: dev.p256dh, auth: dev.auth }
+                  };
+                  webpush.sendNotification(sub, payload, {
+                    urgency: 'high',
+                    TTL: 86400,
+                    headers: { 'Urgency': 'high' }
+                  }).catch(err => {
                     if (err.statusCode === 410 || err.statusCode === 404) {
-                      db.run('UPDATE users SET push_subscription = NULL WHERE id = ?', [user.id]);
+                      db.run('DELETE FROM device_tokens WHERE endpoint = ?', [dev.endpoint]).catch(() => {});
                     }
                   });
                 }
               });
-            } catch (err) {
-              console.error('Error sending global push:', err);
             }
+          } catch (err) {
+            console.error('Error sending global push:', err);
           }
         }
       } else if (data.type === 'toggle_reaction') {

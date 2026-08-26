@@ -4,7 +4,7 @@
  * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v148-energy-halo-receipts';
+const CACHE_NAME = 'schat-v150-hardened-ack-protocol';
 
 const PRECACHE_URLS = [
   '/',

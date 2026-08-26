@@ -101,6 +101,9 @@ if (process.env.DATABASE_URL) {
           last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         );
+                CREATE INDEX IF NOT EXISTS idx_device_tokens_user ON device_tokens(user_id);
+        CREATE INDEX IF NOT EXISTS idx_device_tokens_endpoint ON device_tokens(endpoint);
+        CREATE INDEX IF NOT EXISTS idx_messages_user_recip_status ON messages(user_id, recipient_id, status);
         CREATE TABLE IF NOT EXISTS blocked_users (
           id SERIAL PRIMARY KEY,
           blocker_id INTEGER NOT NULL,
