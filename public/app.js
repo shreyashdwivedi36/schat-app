@@ -549,6 +549,7 @@ const startSChat = () => {
   const roomSubtitle = document.getElementById('roomSubtitle');
   const welcomeTitle = document.getElementById('welcomeTitle');
   const welcomeSubtitle = document.getElementById('welcomeSubtitle');
+  const headerRemoveContactBtn = document.getElementById('headerRemoveContactBtn');
 
   const messagesFeed = document.getElementById('messagesFeed');
   const typingBanner = document.getElementById('typingBanner');
