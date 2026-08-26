@@ -427,7 +427,7 @@ const startSChat = () => {
 
     adminUserList.innerHTML = filtered.map(u => {
       const isBanned = Boolean(Number(u.is_banned) === 1 || u.is_banned === true || u.is_banned === '1');
-      const isSuperAdmin = (u.username || '').toLowerCase() === 'admin' || (u.username || '').toLowerCase() === 'shreyash36';
+      const isSuperAdmin = (u.username || '').toLowerCase() === 'admin';
 
       const statusBadge = isBanned 
         ? '<span class="admin-status-badge banned">Suspended</span>' 
