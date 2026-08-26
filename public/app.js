@@ -4114,28 +4114,7 @@ hideElement(typingBanner);
   if (closeAvatarLightboxBtn) closeAvatarLightboxBtn.addEventListener('click', window.hideAvatarLightbox);
   if (closeAvatarLightboxBackdrop) closeAvatarLightboxBackdrop.addEventListener('click', window.hideAvatarLightbox);
 
-  // Anti-Screenshot Focus-Loss Blocker
-  window.addEventListener('blur', () => {
-    if (avatarLightboxModal && !avatarLightboxModal.classList.contains('hidden') && lightboxAvatarShield) {
-      lightboxAvatarShield.style.filter = 'blur(30px)';
-    }
-  });
 
-  window.addEventListener('focus', () => {
-    if (lightboxAvatarShield) {
-      lightboxAvatarShield.style.filter = 'none';
-    }
-  });
-
-  // Anti-Screenshot Keydown Warning
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'PrintScreen') {
-      if (avatarLightboxModal && !avatarLightboxModal.classList.contains('hidden')) {
-        window.hideAvatarLightbox();
-        showAlert('⚠️ Screenshots are restricted for profile privacy.', 'info');
-      }
-    }
-  });
 
   // Preset Avatars Gallery Selection (Staging only - previews without auto-saving)
   const presetAvatarsGrid = document.getElementById('presetAvatarsGrid');

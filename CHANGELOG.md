@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
 - **Clean Auth Registration**: Streamlined the **Create Account** form by removing the outdated emoji selector and defaulting new accounts to the Cosmic Astronaut avatar.
 
 ### 🔍 Cinematic Avatar Maximize Lightbox
-- **Fullscreen Glassmorphism Viewer**: 35px backdrop blur, ambient neon back-glow, and anti-inspect watermark protection.
+- **Fullscreen Glassmorphism Viewer**: 35px backdrop blur and ambient neon back-glow.
 - **Root Layering**: Relocated lightbox dialog directly to `<body>` root (`z-index: 999999`) to escape CSS parent stacking contexts.
 - **Precision Click Targets**: Separated avatar click (opens high-res lightbox) from username/bio click (opens Profile Settings).
 

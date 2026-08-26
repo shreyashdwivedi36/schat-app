@@ -104,12 +104,16 @@ export const MotionFX = {
 
   async exit(el, { y = -12 } = {}) {
     if (!el) return;
-    if (reduced) return;
+    if (reduced) {
+      clearMotionStyles(el);
+      return;
+    }
     await animate(
       el,
-      { opacity: 0, y, filter: 'blur(8px)' },
-      { duration: 0.28 }
+      { opacity: 0, y },
+      { duration: 0.24, easing: 'cubic-bezier(0.16, 1, 0.3, 1)' }
     ).finished.catch(() => {});
+    clearMotionStyles(el);
   },
 
   async staggerIn(els, { y = 16, step = 0.05 } = {}) {
