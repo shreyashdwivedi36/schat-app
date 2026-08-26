@@ -12,6 +12,14 @@
 import { MotionFX } from './motion-fx.js';
 
 
+let isRefreshing = false;
+navigator.serviceWorker.addEventListener('controllerchange', () => {
+  if (!isRefreshing) {
+    isRefreshing = true;
+    window.location.reload();
+  }
+});
+
 const startSChat = () => {
   // Dismiss Startup Splash Screen with Smooth Cinematic Dissolve
   const dismissSplashScreen = () => {
