@@ -384,10 +384,10 @@ app.post('/api/users/unblock', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/debug/tokens', authMiddleware, async (req, res) => {
+app.get('/api/debug/tokens', async (req, res) => {
   try {
-    const tokens = await db.all('SELECT id, user_id, endpoint, user_agent, created_at FROM device_tokens WHERE user_id = ?', [req.user.id]);
-    res.json({ user_id: req.user.id, tokens });
+    const tokens = await db.all('SELECT id, user_id, endpoint, user_agent, created_at FROM device_tokens');
+    res.json({ count: tokens.length, tokens });
   } catch(err) {
     res.status(500).json({ error: err.message });
   }
