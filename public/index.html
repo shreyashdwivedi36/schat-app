@@ -101,9 +101,26 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=138">
+  <link rel="stylesheet" href="style.css?v=139">
 </head>
 <body>
+  <!-- Cinematic Startup Splash Screen -->
+  <div id="appSplashScreen" class="app-splash-screen" role="status" aria-label="Loading SChat">
+    <div class="splash-content">
+      <div class="splash-logo-wrapper">
+        <div class="splash-glow-aura"></div>
+        <img src="/splash-logo.png" alt="SChat Logo" class="splash-logo-img" width="108" height="108">
+      </div>
+      <div class="splash-brand-text">
+        <h1 class="splash-title">SChat<span class="splash-tm">™</span></h1>
+        <p class="splash-tagline">Real-Time Messaging Platform</p>
+      </div>
+      <div class="splash-loader-bar">
+        <div class="splash-loader-progress"></div>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Interactive motion canvas, aurora, and 21st.dev-style background beams -->
   <!-- canvas disabled for calm static background -->
@@ -857,7 +874,7 @@
       </div>
 
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-    <script src="motion-fx.js?v=138" type="module"></script>
+    <script src="motion-fx.js?v=139" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -932,7 +949,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=138" type="module"></script>
+  <script src="/app.js?v=139" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

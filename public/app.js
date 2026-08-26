@@ -13,6 +13,18 @@ import { MotionFX } from './motion-fx.js';
 
 
 const startSChat = () => {
+  // Dismiss Startup Splash Screen with Smooth Dissolve
+  const dismissSplashScreen = () => {
+    const splash = document.getElementById('appSplashScreen');
+    if (!splash) return;
+    setTimeout(() => {
+      splash.classList.add('fade-out');
+      setTimeout(() => {
+        if (splash.parentNode) splash.parentNode.removeChild(splash);
+      }, 550);
+    }, 450);
+  };
+
   function escapeHtml(str) {
     if (!str || typeof str !== 'string') return '';
     return str.replace(/[&<>'"]/g, tag => ({
@@ -4399,9 +4411,11 @@ hideElement(typingBanner);
 
   if (authToken && currentUser) {
     initializeChatSession();
+    dismissSplashScreen();
   } else {
     authView.classList.remove('hidden');
     MotionFX.enter(authView, { y: 18 });
+    dismissSplashScreen();
   }
 };
 
