@@ -4,7 +4,7 @@
  * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v150-hardened-ack-protocol';
+const CACHE_NAME = 'schat-v151-outbound-auto-queue';
 
 const PRECACHE_URLS = [
   '/',

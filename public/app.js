@@ -170,6 +170,19 @@ const startSChat = () => {
   let unreadCounts = {};
   let totalUnreadDM = 0;
   let isPrivacyBlurActive = false;
+  const outboundMessageQueue = [];
+
+  const flushOutboundQueue = () => {
+    if (!ws || ws.readyState !== WebSocket.OPEN || outboundMessageQueue.length === 0) return;
+    while (outboundMessageQueue.length > 0) {
+      const item = outboundMessageQueue.shift();
+      try {
+        ws.send(JSON.stringify(item));
+      } catch (e) {
+        console.error('Failed to dispatch queued message:', e);
+      }
+    }
+  };
   let deferredPrompt = null;
   let ws = null;
   let pingInterval = null;
@@ -3610,20 +3623,15 @@ const enterChat = () => {
         }
 const audioPayload = '[AUDIO]' + fileUrl;
         
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-          showAlert('Connecting to server... Please try sending again in a moment.', 'error');
-          return;
-        }
-
         const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
 
         if (activeRecipient) {
-      chattedUserIds.add(Number(activeRecipient.id));
-      // Re-render in case they weren't in the list
-      updateOnlineUsers();
-    }
-    ws.send(JSON.stringify({
-      type: 'chat_message',
+          chattedUserIds.add(Number(activeRecipient.id));
+          updateOnlineUsers();
+        }
+
+        const audioMsgPayload = {
+          type: 'chat_message',
           recipient_id: activeRecipient ? activeRecipient.id : null,
           content: audioPayload,
           is_blurred: isPrivacyBlurActive ? 1 : 0,
@@ -3631,7 +3639,14 @@ const audioPayload = '[AUDIO]' + fileUrl;
           reply_to_id: activeReply ? activeReply.id : null,
           reply_to_user: activeReply ? activeReply.username : null,
           reply_to_text: activeReply ? activeReply.text : null
-        }));
+        };
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(audioMsgPayload));
+        } else {
+          outboundMessageQueue.push(audioMsgPayload);
+          connectWebSocket();
+        }
 
         setReplyState(null);
 hideElement(typingBanner);
@@ -3925,21 +3940,14 @@ if (fileUrl) {
     e.preventDefault();
     const content = messageInput.value.trim();
 
-    if (!ws || ws.readyState !== WebSocket.OPEN) {
-      showAlert('Connecting to server... Please try sending again in a moment.', 'error');
-      connectWebSocket();
-    subscribeToPushNotifications();
-      return;
-    }
-
     const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
 
     if (activeRecipient) {
       chattedUserIds.add(Number(activeRecipient.id));
-      // Re-render in case they weren't in the list
       updateOnlineUsers();
     }
-    ws.send(JSON.stringify({
+
+    const payload = {
       type: 'chat_message',
       recipient_id: activeRecipient ? activeRecipient.id : null,
       content: content,
@@ -3948,7 +3956,14 @@ if (fileUrl) {
       reply_to_id: activeReply ? activeReply.id : null,
       reply_to_user: activeReply ? activeReply.username : null,
       reply_to_text: activeReply ? activeReply.text : null
-    }));
+    };
+
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(payload));
+    } else {
+      outboundMessageQueue.push(payload);
+      connectWebSocket();
+    }
 
     messageInput.value = '';
     setReplyState(null);
