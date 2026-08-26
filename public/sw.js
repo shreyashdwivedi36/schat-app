@@ -4,7 +4,7 @@
  * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v153-isolated-dm-push';
+const CACHE_NAME = 'schat-v155-isolated-dm-push';
 
 const PRECACHE_URLS = [
   '/',

@@ -1832,6 +1832,11 @@ const enterChat = () => {
           document.body.appendChild(overlay);
           if (window.MotionFX) window.MotionFX.popIn(modal);
         } else if (data.type === 'new_message') {
+          // Instantly ACK delivery if this message is for me (prevents Sender from needing refresh)
+          if (data.recipient_id && Number(data.recipient_id) === Number(currentUser.id) && ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'client_ack_delivered', message_ids: [data.id || data.messageId] }));
+          }
+
           if (data.user_id && Number(data.user_id) !== Number(currentUser.id)) {
             if (!chattedUserIds.has(Number(data.user_id))) {
               chattedUserIds.add(Number(data.user_id));
@@ -1902,11 +1907,11 @@ const enterChat = () => {
                   const icon = card.querySelector('.msg-status-icon');
                   if (icon) {
                     if (data.status === 'read') {
-                      icon.textContent = '⬤';
+                      icon.textContent = '●';
                       icon.classList.remove('sent', 'delivered');
                       icon.classList.add('read');
                     } else if (data.status === 'delivered' && !icon.classList.contains('read')) {
-                      icon.textContent = '◎';
+                      icon.textContent = '◑';
                       icon.classList.remove('sent');
                       icon.classList.add('delivered');
                     }
@@ -1918,9 +1923,21 @@ const enterChat = () => {
               document.querySelectorAll('.message-card.outgoing').forEach(card => {
                 const icon = card.querySelector('.msg-status-icon');
                 if (icon) {
-                  icon.textContent = '⬤';
+                  icon.textContent = '●';
                   icon.classList.remove('sent', 'delivered');
                   icon.classList.add('read');
+                }
+              });
+            } else if (data.recipient_id && data.status === 'delivered') {
+              // Bulk update for offline users reconnecting
+              document.querySelectorAll('.message-card.outgoing').forEach(card => {
+                if (card.dataset.recipientId == data.recipient_id) {
+                  const icon = card.querySelector('.msg-status-icon');
+                  if (icon && !icon.classList.contains('read')) {
+                    icon.textContent = '◑';
+                    icon.classList.remove('sent');
+                    icon.classList.add('delivered');
+                  }
                 }
               });
             }
@@ -2562,8 +2579,8 @@ const enterChat = () => {
     if (isOutgoing) {
       const status = msg.status || 'sent';
       let haloSymbol = '○';
-      if (status === 'delivered') haloSymbol = '◎';
-      else if (status === 'read') haloSymbol = '⬤';
+      if (status === 'delivered') haloSymbol = '◑';
+      else if (status === 'read') haloSymbol = '●';
       const isReadClass = status === 'read' ? 'read' : (status === 'delivered' ? 'delivered' : 'sent');
       statusIconHtml = `<span class="msg-status-icon ${isReadClass}" title="${status.toUpperCase()}">${haloSymbol}</span>`;
     }

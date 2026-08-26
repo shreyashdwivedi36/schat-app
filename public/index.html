@@ -16,7 +16,7 @@
   <title>SChat™ — Real-Time Messaging Platform</title>
   
   <!-- PWA Meta Tags & Manifest -->
-  <link rel="manifest" href="manifest.json?v=3">
+  <link rel="manifest" href="manifest.json?v=155">
   <meta name="theme-color" content="#090a12">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -101,7 +101,7 @@
 
   
 
-  <link rel="stylesheet" href="style.css?v=153">
+  <link rel="stylesheet" href="style.css?v=155">
 </head>
 <body>
   <!-- Cinematic Startup Splash Screen -->
@@ -453,7 +453,7 @@
               </button>
             </div>
             
-            <div id="sessionsList" class="sessions-list-container" style="max-height: 240px; overflow-y: auto; margin-top: 12px;">
+            <div class="sessions-list-container" style="max-height: 240px; overflow-y: auto; margin-top: 12px;">
               <!-- Injected dynamically -->
             </div>
           </div>
@@ -874,7 +874,7 @@
       </div>
 
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-    <script src="motion-fx.js?v=153" type="module"></script>
+    <script src="motion-fx.js?v=155" type="module"></script>
 
 
   <!-- Active Devices & Sessions Modal -->
@@ -892,7 +892,7 @@
             Log Out All Other Devices
           </button>
         </div>
-        <div id="sessionsList" class="sessions-list-container">
+        <div class="sessions-list-container">
           <!-- Injected via JavaScript -->
         </div>
       </div>
@@ -949,7 +949,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=153" type="module"></script>
+  <script src="/app.js?v=155" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

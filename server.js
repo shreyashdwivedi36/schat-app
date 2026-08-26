@@ -446,19 +446,7 @@ app.post('/api/users/mute', authMiddleware, async (req, res) => {
   }
 });
 
-  app.post('/api/messages/mark-delivered', async (req, res) => {
-    try {
-      const { message_id } = req.body;
-      const msg = await db.get('SELECT * FROM messages WHERE id = ?', [message_id]);
-      if (msg && msg.status === 'sent') {
-        await db.run('UPDATE messages SET status = ? WHERE id = ?', ['delivered', message_id]);
-        broadcast({ type: 'msg_status_update', recipient_id: msg.user_id, status: 'delivered' });
-      }
-      res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ error: 'Database error.' });
-    }
-  });
+  
 
   app.get('/api/debug/push-status/:username', async (req, res) => {
     try {
@@ -470,18 +458,47 @@ app.post('/api/users/mute', authMiddleware, async (req, res) => {
     }
   });
 
+// Register device push subscription
 app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
   const subscription = req.body;
   if (!subscription || !subscription.endpoint) {
-    return res.status(400).json({ error: 'Invalid subscription object.' });
+    return res.status(400).json({ error: 'Invalid subscription data' });
   }
-  
+
   try {
-    await db.run('UPDATE users SET push_subscription = ? WHERE id = ?', [JSON.stringify(subscription), req.user.id]);
-    res.status(201).json({ message: 'Push subscription saved.' });
+    const keys = subscription.keys || {};
+    const userAgent = req.headers['user-agent'] || 'Unknown';
+    
+    await db.run(`
+      INSERT INTO device_tokens (user_id, endpoint, p256dh, auth, user_agent, last_active)
+      VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT (endpoint) DO UPDATE SET 
+        user_id = EXCLUDED.user_id,
+        p256dh = EXCLUDED.p256dh,
+        auth = EXCLUDED.auth,
+        user_agent = EXCLUDED.user_agent,
+        last_active = CURRENT_TIMESTAMP
+    `, [req.user.id, subscription.endpoint, keys.p256dh || null, keys.auth || null, userAgent]);
+
+    res.json({ message: 'Device token registered successfully', success: true });
   } catch (err) {
-    console.error('Error saving push subscription:', err);
-    res.status(500).json({ error: 'Database error.' });
+    console.error('Push subscribe error:', err);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// Unregister device push subscription on logout
+app.post('/api/push/unsubscribe', authMiddleware, async (req, res) => {
+  const { endpoint } = req.body;
+  try {
+    if (endpoint) {
+      await db.run('DELETE FROM device_tokens WHERE endpoint = ? AND user_id = ?', [endpoint, req.user.id]);
+    } else {
+      await db.run('DELETE FROM device_tokens WHERE user_id = ?', [req.user.id]);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Database error' });
   }
 });
 
