@@ -384,15 +384,6 @@ app.post('/api/users/unblock', authMiddleware, async (req, res) => {
   }
 });
 
-app.get('/api/debug/tokens', async (req, res) => {
-  try {
-    const tokens = await db.all('SELECT id, user_id, endpoint, user_agent, created_at FROM device_tokens');
-    res.json({ count: tokens.length, tokens });
-  } catch(err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // Get Chat Messages (Global or Private 1-on-1 DM)
 app.get('/api/messages', authMiddleware, async (req, res) => {
   try {
