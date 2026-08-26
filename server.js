@@ -488,6 +488,8 @@ app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
 });
 
 // Unregister device push subscription on logout
+app.post('/api/messages/mark-delivered', async (req, res) => { try { const { message_id } = req.body; if (!message_id) return res.json({success: false}); const msg = await db.get('SELECT * FROM messages WHERE id = ?', [message_id]); if (msg && msg.status === 'sent') { await db.run('UPDATE messages SET status = ? WHERE id = ?', ['delivered', message_id]); sendToUser(msg.user_id, { type: 'msg_status_update', message_ids: [message_id], status: 'delivered' }); } res.json({ success: true }); } catch (err) { res.status(500).json({ error: 'Database error.' }); } });
+
 app.post('/api/push/unsubscribe', authMiddleware, async (req, res) => {
   const { endpoint } = req.body;
   try {
@@ -1274,8 +1276,25 @@ wss.on('connection', (ws, req) => {
               const senderEndpointSet = new Set((senderDevices || []).map(d => d.endpoint));
 
               // 2. Get recipient's device tokens from isolated device_tokens table
-              const devices = await db.all('SELECT endpoint, p256dh, auth FROM device_tokens WHERE user_id = ?', [recipientIdNum]);
+              let devices = await db.all('SELECT endpoint, p256dh, auth FROM device_tokens WHERE user_id = ?', [recipientIdNum]);
               
+              if (!devices || devices.length === 0) {
+                // Fallback to legacy subscription!
+                const legacyUser = await db.get('SELECT push_subscription FROM users WHERE id = ?', [recipientIdNum]);
+                if (legacyUser && legacyUser.push_subscription) {
+                  try {
+                    const sub = JSON.parse(legacyUser.push_subscription);
+                    if (sub && sub.endpoint) {
+                      devices = [{
+                        endpoint: sub.endpoint,
+                        p256dh: sub.keys?.p256dh,
+                        auth: sub.keys?.auth
+                      }];
+                    }
+                  } catch(e) {}
+                }
+              }
+
               if (devices && devices.length > 0) {
                 const payload = JSON.stringify({
                   message_id: insertedId,
@@ -1314,10 +1333,29 @@ wss.on('connection', (ws, req) => {
           
           try {
             // Dispatch global push strictly via device_tokens table, excluding sender
-            const allDevices = await db.all(
+            let allDevices = await db.all(
               'SELECT dt.user_id, dt.endpoint, dt.p256dh, dt.auth, u.muted_chats FROM device_tokens dt JOIN users u ON dt.user_id = u.id WHERE dt.user_id != ?',
               [currentUser.id]
             );
+
+            if (!allDevices || allDevices.length === 0) {
+              const legacyUsers = await db.all('SELECT id, push_subscription, muted_chats FROM users WHERE id != ? AND push_subscription IS NOT NULL', [currentUser.id]);
+              allDevices = [];
+              for (const lu of legacyUsers) {
+                try {
+                  const sub = JSON.parse(lu.push_subscription);
+                  if (sub && sub.endpoint) {
+                    allDevices.push({
+                      user_id: lu.id,
+                      endpoint: sub.endpoint,
+                      p256dh: sub.keys?.p256dh,
+                      auth: sub.keys?.auth,
+                      muted_chats: lu.muted_chats
+                    });
+                  }
+                } catch(e) {}
+              }
+            }
 
             if (allDevices && allDevices.length > 0) {
               const payload = JSON.stringify({

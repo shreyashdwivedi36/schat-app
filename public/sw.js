@@ -4,7 +4,7 @@
  * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v155-isolated-dm-push';
+const CACHE_NAME = 'schat-v156-isolated-dm-push';
 
 const PRECACHE_URLS = [
   '/',
@@ -74,9 +74,22 @@ self.addEventListener('push', (event) => {
     data: data.url || '/'
   };
 
-  event.waitUntil(
-    self.registration.showNotification(title, options)
-  );
+  const notificationPromise = self.registration.showNotification(title, options);
+  
+  if (data.message_id) {
+    event.waitUntil(
+      Promise.all([
+        notificationPromise,
+        fetch('/api/messages/mark-delivered', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message_id: data.message_id })
+        }).catch(err => console.error('Delivery ACK failed', err))
+      ])
+    );
+  } else {
+    event.waitUntil(notificationPromise);
+  }
 });
 
 self.addEventListener('notificationclick', (event) => {

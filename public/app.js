@@ -4759,10 +4759,10 @@ async function subscribeToPushNotifications() {
     console.error('DEBUG: Existing sub is: ' + (existingSub ? 'true' : 'false'));
     
     // Force refresh subscription once to ensure it matches the new VAPID keys
-    if (existingSub && !localStorage.getItem('push_key_v3')) {
+    if (existingSub && !localStorage.getItem('push_key_v4')) {
       await existingSub.unsubscribe();
       existingSub = null;
-      localStorage.setItem('push_key_v3', 'true');
+      localStorage.setItem('push_key_v4', 'true');
     }
 
     if (existingSub) {
