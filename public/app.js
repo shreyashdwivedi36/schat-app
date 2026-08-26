@@ -165,7 +165,7 @@ const startSChat = () => {
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let myMutedChats = [];
-  let activeRecipient = null; // 'empty' = Privacy Standby Screen, null = Global Channel, { id, username, avatar } = Direct Message // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
+  let activeRecipient = 'empty'; // 'empty' = Privacy Standby Screen, null = Global Channel, { id, username, avatar } = Direct Message // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
   let activeReply = null; // null or { id, username, text }
   let unreadCounts = {};
   let totalUnreadDM = 0;
