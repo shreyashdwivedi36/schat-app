@@ -153,7 +153,7 @@ const startSChat = () => {
   let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let myMutedChats = [];
-  let activeRecipient = 'empty'; // 'empty' = Privacy Standby Screen, null = Global Channel, { id, username, avatar } = Direct Message // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
+  let activeRecipient = null; // 'empty' = Privacy Standby Screen, null = Global Channel, { id, username, avatar } = Direct Message // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
   let activeReply = null; // null or { id, username, text }
   let unreadCounts = {};
   let totalUnreadDM = 0;
@@ -1470,22 +1470,29 @@ const startSChat = () => {
       }
     } catch(err) {}
 
-    myAvatarEl.innerHTML = renderAvatarHTML(currentUser.avatar, currentUser.username, 'no-hover');
-    myAvatarEl.onclick = () => window.openAvatarLightbox(currentUser);
-    const profileAvatarPreview = document.getElementById('profileAvatarPreview');
-    const profileAvatarResetBtn = document.getElementById('profileAvatarResetBtn');
-    if (profileAvatarPreview) {
-      profileAvatarPreview.innerHTML = renderAvatarHTML(currentUser.avatar, currentUser.username, 'no-hover');
-      if (profileAvatarResetBtn) {
-        if (isImageAvatar(currentUser.avatar)) {
-          profileAvatarResetBtn.classList.remove('hidden');
-        } else {
-          profileAvatarResetBtn.classList.add('hidden');
+    // Immediate fail-safe data dispatch
+    loadAllUsers();
+    loadMessageHistory();
+    connectWebSocket();
+
+    try {
+      myAvatarEl.innerHTML = renderAvatarHTML(currentUser.avatar, currentUser.username, 'no-hover');
+      myAvatarEl.onclick = () => window.openAvatarLightbox(currentUser);
+      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+      const profileAvatarResetBtn = document.getElementById('profileAvatarResetBtn');
+      if (profileAvatarPreview) {
+        profileAvatarPreview.innerHTML = renderAvatarHTML(currentUser.avatar, currentUser.username, 'no-hover');
+        if (profileAvatarResetBtn) {
+          if (isImageAvatar(currentUser.avatar)) {
+            profileAvatarResetBtn.classList.remove('hidden');
+          } else {
+            profileAvatarResetBtn.classList.add('hidden');
+          }
         }
       }
-    }
-    myUsernameEl.textContent = currentUser.username;
-    if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
+      myUsernameEl.textContent = currentUser.username;
+      if (myBioEl) myBioEl.textContent = currentUser.bio || 'Online';
+    } catch(e) { console.error('Avatar init error:', e); }
 
     const adminBtn = document.getElementById('adminBtn');
     if (adminBtn) {
@@ -3369,8 +3376,7 @@ const enterChat = async () => {
     }
   };
 
-  const headerRemoveContactBtn = document.getElementById('headerRemoveContactBtn');
-  if (headerRemoveContactBtn) {
+    if (headerRemoveContactBtn) {
     headerRemoveContactBtn.addEventListener('click', () => {
       if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id) {
         removeContactPermanently(activeRecipient.id, activeRecipient.username);
