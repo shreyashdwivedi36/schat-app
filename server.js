@@ -10,8 +10,8 @@ const webpush = require('web-push');
 if (true) {
   webpush.setVapidDetails(
     'mailto:shreyashdwivedi1626@gmail.com',
-    process.env.PUBLIC_VAPID_KEY || 'BFM7IVc9SVb-cpG8ZrsOc8CaMCNSee-uAsdaEoaJrdjK-_VzOglSKANVq82DZVpwg2PrqNdmvVxiXIW9MWmVZFk',
-    process.env.PRIVATE_VAPID_KEY || 'UdMu8RhJSTY6MdNckm591DXQwWio4m5VkoaRwcEJQRY'
+    'BFM7IVc9SVb-cpG8ZrsOc8CaMCNSee-uAsdaEoaJrdjK-_VzOglSKANVq82DZVpwg2PrqNdmvVxiXIW9MWmVZFk',
+    'UdMu8RhJSTY6MdNckm591DXQwWio4m5VkoaRwcEJQRY'
   );
 } else {
   console.warn('VAPID keys not configured. Web Push API will not work.');
@@ -1318,6 +1318,7 @@ wss.on('connection', (ws, req) => {
                     TTL: 86400,
                     headers: { 'Urgency': 'high' }
                   }).catch(err => {
+                    console.error('Push notification failed for endpoint:', dev.endpoint, 'Status:', err.statusCode, 'Body:', err.body);
                     if (err.statusCode === 410 || err.statusCode === 404) {
                       db.run('DELETE FROM device_tokens WHERE endpoint = ?', [dev.endpoint]).catch(() => {});
                     }
@@ -1379,6 +1380,7 @@ wss.on('connection', (ws, req) => {
                     TTL: 86400,
                     headers: { 'Urgency': 'high' }
                   }).catch(err => {
+                    console.error('Global Push notification failed for endpoint:', dev.endpoint, 'Status:', err.statusCode, 'Body:', err.body);
                     if (err.statusCode === 410 || err.statusCode === 404) {
                       db.run('DELETE FROM device_tokens WHERE endpoint = ?', [dev.endpoint]).catch(() => {});
                     }

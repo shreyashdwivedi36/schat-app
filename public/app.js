@@ -1726,6 +1726,13 @@ const enterChat = () => {
 
 
   document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.update();
+        }).catch(err => console.error('SW update check failed:', err));
+      }
+    }
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify({ type: 'visibility', status: document.hidden ? 'background' : 'foreground' }));
     }
