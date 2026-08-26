@@ -1723,19 +1723,35 @@ const enterChat = () => {
     }
   });
 
+  let wsReconnectTimer = null;
+
   const connectWebSocket = () => {
+    if (!authToken) return;
+    
+    // Single-instance connection guard: never recreate if already open or connecting
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
+
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}?token=${encodeURIComponent(authToken)}`;
 
-    if (ws) {
-      try { ws.close(); } catch(e){}
+    try {
+      ws = new WebSocket(wsUrl);
+    } catch(e) {
+      console.error('WebSocket instantiation error:', e);
+      return;
     }
-
-    ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       console.log('⚡ Connected to SChat WebSocket Server');
+      if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = null;
+      }
       
+      flushOutboundQueue();
+
       if (pingInterval) clearInterval(pingInterval);
       pingInterval = setInterval(() => {
         if (ws && ws.readyState === WebSocket.OPEN) {
@@ -1745,7 +1761,7 @@ const enterChat = () => {
 
       if (activeRecipient) {
         ws.send(JSON.stringify({
-          type: 'mark_read',
+          type: 'client_ack_read',
           sender_id: activeRecipient.id
         }));
       }
@@ -2012,8 +2028,12 @@ const enterChat = () => {
 
     ws.onclose = () => {
       if (pingInterval) clearInterval(pingInterval);
-      setTimeout(() => { if (authToken) connectWebSocket();
-    subscribeToPushNotifications(); }, 3000);
+      if (!wsReconnectTimer && authToken) {
+        wsReconnectTimer = setTimeout(() => {
+          wsReconnectTimer = null;
+          connectWebSocket();
+        }, 3000);
+      }
     };
   };
 

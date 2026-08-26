@@ -4,7 +4,7 @@
  * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v151-outbound-auto-queue';
+const CACHE_NAME = 'schat-v152-single-instance-ws';
 
 const PRECACHE_URLS = [
   '/',
