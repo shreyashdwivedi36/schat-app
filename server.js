@@ -1246,17 +1246,20 @@ wss.on('connection', (ws, req) => {
           
           // Always attempt Web Push. The client's Service Worker will drop it if they are actively focused on the app.
           try {
-            const recipient = await db.get('SELECT push_subscription, muted_chats FROM users WHERE id = ?', [Number(recipientId)]);
-            if (recipient && recipient.push_subscription) {
-              const mutedChats = JSON.parse(recipient.muted_chats || '[]');
-              const senderStr = currentUser.id.toString();
-              if (!mutedChats.includes(senderStr)) {
-                let subs = [];
-                try {
-                  const parsed = JSON.parse(recipient.push_subscription);
-                  subs = Array.isArray(parsed) ? parsed : (parsed?.endpoint ? [parsed] : []);
-                } catch(e) { subs = []; }
+            const recipientIdNum = Number(recipientId);
+            const userMutes = await db.get('SELECT muted_chats FROM users WHERE id = ?', [recipientIdNum]);
+            const mutedChats = JSON.parse(userMutes?.muted_chats || '[]');
+            const senderStr = currentUser.id.toString();
 
+            if (!mutedChats.includes(senderStr)) {
+              // 1. Get sender's current device endpoints to strictly prevent self-notifications
+              const senderDevices = await db.all('SELECT endpoint FROM device_tokens WHERE user_id = ?', [currentUser.id]);
+              const senderEndpointSet = new Set((senderDevices || []).map(d => d.endpoint));
+
+              // 2. Get recipient's device tokens from isolated device_tokens table
+              const devices = await db.all('SELECT endpoint, p256dh, auth FROM device_tokens WHERE user_id = ?', [recipientIdNum]);
+              
+              if (devices && devices.length > 0) {
                 const payload = JSON.stringify({
                   message_id: insertedId,
                   title: `New message from ${currentUser.username}`,
@@ -1266,25 +1269,28 @@ wss.on('connection', (ws, req) => {
                   url: '/'
                 });
 
-                subs.forEach(subscription => {
-                  webpush.sendNotification(subscription, payload, {
+                devices.forEach(dev => {
+                  // Never push to sender's own device!
+                  if (senderEndpointSet.has(dev.endpoint)) return;
+
+                  const sub = {
+                    endpoint: dev.endpoint,
+                    keys: { p256dh: dev.p256dh, auth: dev.auth }
+                  };
+                  webpush.sendNotification(sub, payload, {
                     urgency: 'high',
                     TTL: 86400,
                     headers: { 'Urgency': 'high' }
                   }).catch(err => {
                     if (err.statusCode === 410 || err.statusCode === 404) {
-                      // Prune expired device subscription
-                      try {
-                        const remaining = subs.filter(s => s.endpoint !== subscription.endpoint);
-                        db.run('UPDATE users SET push_subscription = ? WHERE id = ?', [JSON.stringify(remaining), recipientId]);
-                      } catch(e) {}
+                      db.run('DELETE FROM device_tokens WHERE endpoint = ?', [dev.endpoint]).catch(() => {});
                     }
                   });
                 });
               }
             }
           } catch (err) {
-            console.error('Error checking push subscription:', err);
+            console.error('Error dispatching DM push notification:', err);
           }
                 } else {
           broadcast(msgPayload);
