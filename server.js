@@ -1380,19 +1380,109 @@ wss.on('connection', (ws, req) => {
             });
           }
         }
-      } else if (data.type === 'mark_read') {
+      } else if (data.type === 'client_ack_delivered') {
+        // Deterministic Delivery ACK sent by recipient's device
+        const rawIds = Array.isArray(data.message_ids) ? data.message_ids : [data.message_id];
+        const messageIds = rawIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+        
+        if (messageIds.length > 0) {
+          try {
+            const placeholders = messageIds.map(() => '?').join(',');
+            const messages = await db.all(
+              `SELECT id, user_id FROM messages WHERE id IN (${placeholders}) AND recipient_id = ? AND status = 'sent'`,
+              [...messageIds, currentUser.id]
+            );
+
+            if (messages && messages.length > 0) {
+              const idsToUpdate = messages.map(m => m.id);
+              const updatePlaceholders = idsToUpdate.map(() => '?').join(',');
+              await db.run(
+                `UPDATE messages SET status = 'delivered' WHERE id IN (${updatePlaceholders})`,
+                idsToUpdate
+              );
+
+              // Group by sender and notify each sender directly
+              const sendersMap = {};
+              messages.forEach(m => {
+                sendersMap[m.user_id] = sendersMap[m.user_id] || [];
+                sendersMap[m.user_id].push(m.id);
+              });
+
+              Object.keys(sendersMap).forEach(senderId => {
+                sendToUser(parseInt(senderId, 10), {
+                  type: 'msg_status_update',
+                  status: 'delivered',
+                  message_ids: sendersMap[senderId],
+                  recipient_id: currentUser.id
+                });
+              });
+            }
+          } catch(e) {
+            console.error('Error handling client_ack_delivered:', e);
+          }
+        }
+      } else if (data.type === 'client_ack_read' || data.type === 'mark_read') {
+        // Deterministic Read ACK sent when recipient opens conversation tab
         const senderId = (data.sender_id && !isNaN(data.sender_id)) ? parseInt(data.sender_id, 10) : null;
+        const rawIds = Array.isArray(data.message_ids) ? data.message_ids : (data.message_id ? [data.message_id] : []);
+        const messageIds = rawIds.map(id => parseInt(id, 10)).filter(id => !isNaN(id));
+
         try {
           if (senderId) {
-            await db.run('UPDATE messages SET status = ? WHERE user_id = ? AND recipient_id = ? AND status != ?', ['read', senderId, currentUser.id, 'read']);
-            sendToUser(senderId, {
-              type: 'msg_status_update',
-              status: 'read',
-              sender_id: senderId,
-              recipient_id: currentUser.id
-            });
+            const unreadMsgs = await db.all(
+              "SELECT id FROM messages WHERE user_id = ? AND recipient_id = ? AND status != 'read'",
+              [senderId, currentUser.id]
+            );
+
+            if (unreadMsgs && unreadMsgs.length > 0) {
+              const unreadIds = unreadMsgs.map(m => m.id);
+              await db.run(
+                "UPDATE messages SET status = 'read' WHERE user_id = ? AND recipient_id = ? AND status != 'read'",
+                [senderId, currentUser.id]
+              );
+
+              sendToUser(senderId, {
+                type: 'msg_status_update',
+                status: 'read',
+                message_ids: unreadIds,
+                sender_id: senderId,
+                recipient_id: currentUser.id
+              });
+            }
+          } else if (messageIds.length > 0) {
+            const placeholders = messageIds.map(() => '?').join(',');
+            const messages = await db.all(
+              `SELECT id, user_id FROM messages WHERE id IN (${placeholders}) AND recipient_id = ? AND status != 'read'`,
+              [...messageIds, currentUser.id]
+            );
+
+            if (messages && messages.length > 0) {
+              const idsToUpdate = messages.map(m => m.id);
+              const updatePlaceholders = idsToUpdate.map(() => '?').join(',');
+              await db.run(
+                `UPDATE messages SET status = 'read' WHERE id IN (${updatePlaceholders})`,
+                idsToUpdate
+              );
+
+              const sendersMap = {};
+              messages.forEach(m => {
+                sendersMap[m.user_id] = sendersMap[m.user_id] || [];
+                sendersMap[m.user_id].push(m.id);
+              });
+
+              Object.keys(sendersMap).forEach(sId => {
+                sendToUser(parseInt(sId, 10), {
+                  type: 'msg_status_update',
+                  status: 'read',
+                  message_ids: sendersMap[sId],
+                  recipient_id: currentUser.id
+                });
+              });
+            }
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error('Error handling client_ack_read:', e);
+        }
       } else if (data.type === 'delete_message') {
         const messageId = parseInt(data.messageId, 10);
         if (isNaN(messageId)) return;

@@ -1168,7 +1168,24 @@ const startSChat = () => {
     }
   });
 
-  const performLogout = () => {
+  const performLogout = async () => {
+    try {
+      if ('serviceWorker' in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          fetch('/api/push/unsubscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ endpoint: sub.endpoint })
+          }).catch(() => {});
+          await sub.unsubscribe();
+        }
+      }
+    } catch(e) {}
     localStorage.removeItem('schat_token');
     localStorage.removeItem('schat_user');
     authToken = null;
@@ -1661,8 +1678,9 @@ const enterChat = () => {
         scrollToBottom();
 
         if (activeRecipient && ws && ws.readyState === WebSocket.OPEN) {
+          // Explicitly ACK all received messages as read
           ws.send(JSON.stringify({
-            type: 'mark_read',
+            type: 'client_ack_read',
             sender_id: activeRecipient.id
           }));
         }
@@ -1846,36 +1864,37 @@ const enterChat = () => {
           }
         } else if (data.type === 'msg_status_update') {
           if (data.status === 'read' || data.status === 'delivered') {
-            let icons = [];
-            if (data.messageId) {
-              const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
-              if (card) {
-                const icon = card.querySelector('.msg-status-icon');
-                if (icon) icons.push(icon);
-              }
-            } else if (data.recipient_id) {
-              const cards = document.querySelectorAll(`.message-card`);
-              cards.forEach(card => {
-                // If it's a bulk status update for a user reconnecting, 
-                // mark messages SENT TO that user as delivered
-                if (card.dataset.recipientId == data.recipient_id) {
+            const rawIds = Array.isArray(data.message_ids) ? data.message_ids : (data.messageId ? [data.messageId] : []);
+            
+            if (rawIds.length > 0) {
+              rawIds.forEach(id => {
+                const card = document.querySelector(`.message-card[data-msg-id="${id}"]`);
+                if (card && card.classList.contains('outgoing')) {
                   const icon = card.querySelector('.msg-status-icon');
-                  if (icon) icons.push(icon);
+                  if (icon) {
+                    if (data.status === 'read') {
+                      icon.textContent = '✓✓';
+                      icon.classList.remove('sent', 'delivered');
+                      icon.classList.add('read');
+                    } else if (data.status === 'delivered' && !icon.classList.contains('read')) {
+                      icon.textContent = '✓✓';
+                      icon.classList.remove('sent');
+                      icon.classList.add('delivered');
+                    }
+                  }
+                }
+              });
+            } else if (data.sender_id && data.status === 'read') {
+              // Mark all outgoing messages in currently open DM as read
+              document.querySelectorAll('.message-card.outgoing').forEach(card => {
+                const icon = card.querySelector('.msg-status-icon');
+                if (icon) {
+                  icon.textContent = '✓✓';
+                  icon.classList.remove('sent', 'delivered');
+                  icon.classList.add('read');
                 }
               });
             }
-
-            icons.forEach(icon => {
-              if (data.status === 'read') {
-                icon.textContent = '✓✓';
-                icon.classList.remove('sent', 'delivered');
-                icon.classList.add('read');
-              } else if (data.status === 'delivered' && !icon.classList.contains('read')) {
-                icon.textContent = '✓✓';
-                icon.classList.remove('sent');
-                icon.classList.add('delivered');
-              }
-            });
           }
         } else if (data.type === 'edit_message') {
           const card = document.querySelector(`.message-card[data-msg-id="${data.messageId}"]`);
@@ -4721,13 +4740,20 @@ async function subscribeToPushNotifications() {
       applicationServerKey: applicationServerKey
     });
 
+    const subJson = subscription.toJSON();
     const res = await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${localStorage.getItem('schat_token')}`
       },
-      body: JSON.stringify(subscription)
+      body: JSON.stringify({
+        endpoint: subJson.endpoint,
+        keys: {
+          p256dh: subJson.keys?.p256dh,
+          auth: subJson.keys?.auth
+        }
+      })
     });
 
     console.error('DEBUG: Created NEW sub on server. Server responded: ' + res.status);

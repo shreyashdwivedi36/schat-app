@@ -2,13 +2,9 @@
  * ============================================================================
  * SChat - Real-Time Messaging Platform
  * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
- *
- * This software and its associated documentation are the exclusive proprietary
- * property of Shreyash Dwivedi. Unauthorized copying, modification, distribution,
- * sublicensing, or commercial use is strictly prohibited.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v123-dual-context-cropper';
+const CACHE_NAME = 'schat-v147-deterministic-ack-protocol';
 
 const PRECACHE_URLS = [
   '/',
@@ -19,6 +15,7 @@ const PRECACHE_URLS = [
   '/logo.png',
   '/maskable-logo.png',
   '/badge.png',
+  '/favicon.ico',
   '/avatars/cosmic-astronaut.svg',
   '/avatars/cyber-samurai.svg',
   '/avatars/mecha-robot.svg',
@@ -40,7 +37,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
-      return Promise.all(keys.map((key) => caches.delete(key)));
+      return Promise.all(keys.map((key) => key !== CACHE_NAME ? caches.delete(key) : null));
     }).then(() => self.clients.claim())
   );
 });
@@ -50,15 +47,20 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Force network fetch and bypass the stale HTTP cache
   event.respondWith(
     fetch(event.request, { cache: 'no-cache' }).catch(() => caches.match(event.request))
   );
 });
 
-
+// PURE ZERO-NETWORK HIGH-PRIORITY PUSH LISTENER
 self.addEventListener('push', (event) => {
-  const data = event.data ? event.data.json() : {};
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch (e) {
+    data = { body: event.data ? event.data.text() : 'New message received' };
+  }
+
   const title = data.title || 'SChat';
   const options = {
     body: data.body || 'New message received',
@@ -72,36 +74,9 @@ self.addEventListener('push', (event) => {
     data: data.url || '/'
   };
 
-  const promiseChain = clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-    let isFocused = false;
-    for (let i = 0; i < windowClients.length; i++) {
-      if (windowClients[i].focused && windowClients[i].visibilityState === 'visible') {
-        isFocused = true;
-        break;
-      }
-    }
-
-    // If app is currently open and actively focused, mark delivered without popup
-    if (isFocused) {
-      return data.message_id ? fetch('/api/messages/mark-delivered', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message_id: data.message_id })
-      }).catch(() => {}) : Promise.resolve();
-    }
-
-    // Otherwise (locked phone, background, another app open), show high-priority push alert
-    return Promise.all([
-      self.registration.showNotification(title, options),
-      data.message_id ? fetch('/api/messages/mark-delivered', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message_id: data.message_id })
-      }).catch(() => {}) : Promise.resolve()
-    ]);
-  });
-
-  event.waitUntil(promiseChain);
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
 });
 
 self.addEventListener('notificationclick', (event) => {
@@ -110,7 +85,7 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
       for (let i = 0; i < windowClients.length; i++) {
         const client = windowClients[i];
-        if (client.url === '/' && 'focus' in client) {
+        if (client.url.includes('/') && 'focus' in client) {
           return client.focus();
         }
       }

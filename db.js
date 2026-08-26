@@ -79,6 +79,28 @@ if (process.env.DATABASE_URL) {
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           UNIQUE(requester_id, recipient_id)
         );
+                CREATE TABLE IF NOT EXISTS device_tokens (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER NOT NULL,
+          endpoint TEXT NOT NULL UNIQUE,
+          p256dh TEXT,
+          auth TEXT,
+          user_agent TEXT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        );
+                CREATE TABLE IF NOT EXISTS device_tokens (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          endpoint TEXT NOT NULL UNIQUE,
+          p256dh TEXT,
+          auth TEXT,
+          user_agent TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        );
         CREATE TABLE IF NOT EXISTS blocked_users (
           id SERIAL PRIMARY KEY,
           blocker_id INTEGER NOT NULL,
