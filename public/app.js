@@ -13,16 +13,18 @@ import { MotionFX } from './motion-fx.js';
 
 
 const startSChat = () => {
-  // Dismiss Startup Splash Screen with Smooth Dissolve
+  // Dismiss Startup Splash Screen with Smooth Dissolve (Instant in Standalone/TWA mode)
   const dismissSplashScreen = () => {
     const splash = document.getElementById('appSplashScreen');
     if (!splash) return;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+    const delay = isStandalone ? 50 : 450;
     setTimeout(() => {
       splash.classList.add('fade-out');
       setTimeout(() => {
         if (splash.parentNode) splash.parentNode.removeChild(splash);
-      }, 550);
-    }, 450);
+      }, isStandalone ? 250 : 550);
+    }, delay);
   };
 
   function escapeHtml(str) {

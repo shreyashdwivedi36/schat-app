@@ -18,6 +18,7 @@ const PRECACHE_URLS = [
   '/motion-fx.js',
   '/logo.png',
   '/splash-logo.png',
+  '/maskable-logo.png',
   '/badge.png',
   '/avatars/cosmic-astronaut.svg',
   '/avatars/cyber-samurai.svg',
