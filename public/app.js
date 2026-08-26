@@ -1873,11 +1873,11 @@ const enterChat = () => {
                   const icon = card.querySelector('.msg-status-icon');
                   if (icon) {
                     if (data.status === 'read') {
-                      icon.textContent = '✓✓';
+                      icon.textContent = '⬤';
                       icon.classList.remove('sent', 'delivered');
                       icon.classList.add('read');
                     } else if (data.status === 'delivered' && !icon.classList.contains('read')) {
-                      icon.textContent = '✓✓';
+                      icon.textContent = '◎';
                       icon.classList.remove('sent');
                       icon.classList.add('delivered');
                     }
@@ -1889,7 +1889,7 @@ const enterChat = () => {
               document.querySelectorAll('.message-card.outgoing').forEach(card => {
                 const icon = card.querySelector('.msg-status-icon');
                 if (icon) {
-                  icon.textContent = '✓✓';
+                  icon.textContent = '⬤';
                   icon.classList.remove('sent', 'delivered');
                   icon.classList.add('read');
                 }
@@ -2528,9 +2528,11 @@ const enterChat = () => {
     let statusIconHtml = '';
     if (isOutgoing) {
       const status = msg.status || 'sent';
-      const checkSymbol = status === 'sent' ? '✓' : '✓✓';
+      let haloSymbol = '○';
+      if (status === 'delivered') haloSymbol = '◎';
+      else if (status === 'read') haloSymbol = '⬤';
       const isReadClass = status === 'read' ? 'read' : (status === 'delivered' ? 'delivered' : 'sent');
-      statusIconHtml = `<span class="msg-status-icon ${isReadClass}">${checkSymbol}</span>`;
+      statusIconHtml = `<span class="msg-status-icon ${isReadClass}" title="${status.toUpperCase()}">${haloSymbol}</span>`;
     }
 
     let timerBadgeHtml = '';

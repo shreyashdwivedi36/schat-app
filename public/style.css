@@ -5815,3 +5815,61 @@ emoji-picker.schat-emoji-picker {
     transform: translateX(100%);
   }
 }
+
+/* ================= SChat Signature Energy Halo Delivery Indicators ================= */
+.msg-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  line-height: 1;
+  vertical-align: middle;
+  margin-left: 4px;
+  color: rgba(255, 255, 255, 0.4);
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.msg-status-icon.sent {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.msg-status-icon.delivered {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.92rem;
+  opacity: 1;
+}
+
+.msg-status-icon.read {
+  color: #38bdf8 !important;
+  font-size: 0.72rem !important;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.9), 0 0 20px rgba(99, 102, 241, 0.6) !important;
+  transform: scale(1.15);
+  animation: haloReadPulse 2s ease-in-out infinite alternate;
+}
+
+[data-theme="light"] .msg-status-icon.sent {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] .msg-status-icon.delivered {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="light"] .msg-status-icon.read {
+  color: #0284c7 !important;
+  text-shadow: 0 0 8px rgba(2, 132, 199, 0.5) !important;
+}
+
+@keyframes haloReadPulse {
+  0% {
+    filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.6));
+    transform: scale(1.1);
+  }
+  100% {
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 1));
+    transform: scale(1.22);
+  }
+}
