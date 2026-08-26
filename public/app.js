@@ -1544,8 +1544,7 @@ const startSChat = () => {
     });
   }
 
-const enterChat = async () => {
-      await MotionFX.exit(authView, { y: -14 });
+const enterChat = () => {
       authView.classList.add('hidden');
       authView.style.opacity = '';
       authView.style.filter = '';
@@ -1561,12 +1560,18 @@ const enterChat = async () => {
           const greeting = getTimeGreeting();
           welcomeGreeting.innerHTML = `${greeting}, <span style="opacity: 0.9; font-weight: 600;">${currentUser.username}</span>.`;
         }
+      } else {
+        const chatWrapper = document.querySelector('.chat-wrapper');
+        if (chatWrapper) chatWrapper.classList.remove('empty-state');
+        if (globalChannelBtn) globalChannelBtn.classList.add('active');
       }
 
-      await MotionFX.enter(chatView, { y: 22, bounce: 0.08 });
-      MotionFX.staggerIn(chatView.querySelectorAll('.chat-sidebar > *, .chat-header, .welcome-banner, .chat-footer'), { y: 12, step: 0.04 });
+      try {
+        MotionFX.enter(chatView, { y: 16, bounce: 0.08 });
+        MotionFX.staggerIn(chatView.querySelectorAll('.chat-sidebar > *, .chat-header, .welcome-banner, .chat-footer'), { y: 10, step: 0.03 });
+      } catch(e) {}
     };
-    await enterChat();
+    enterChat();
 
     requestNotificationPermission();
     await loadAllUsers();
