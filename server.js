@@ -7,19 +7,20 @@ require('dotenv').config();
 const db = require('./db');
 const webpush = require('web-push');
 
-if (true) {
-  webpush.setVapidDetails(
-    'mailto:shreyashdwivedi1626@gmail.com',
-    'BFM7IVc9SVb-cpG8ZrsOc8CaMCNSee-uAsdaEoaJrdjK-_VzOglSKANVq82DZVpwg2PrqNdmvVxiXIW9MWmVZFk',
-    'UdMu8RhJSTY6MdNckm591DXQwWio4m5VkoaRwcEJQRY'
-  );
-} else {
-  console.warn('VAPID keys not configured. Web Push API will not work.');
-}
-const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware, superAdminMiddleware } = require('./auth');
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:admin@schat-live.onrender.com';
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 
-const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME || 'admin';
-const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD || 'godmode123';
+if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+} else {
+  console.warn('⚠️ VAPID keys not configured in environment. Web Push notifications will be inactive.');
+}
+
+const { hashPassword, comparePassword, generateToken, verifyToken, verifyUserSession, authMiddleware, superAdminMiddleware } = require('./auth');
+
+const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME;
+const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
 
 const WebSocket = require('ws');
 
@@ -38,6 +39,33 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'allow' }));
+
+// Health Check Endpoint for Database & WebSocket Uptime Monitoring
+app.get('/api/health', async (req, res) => {
+  try {
+    let dbStatus = 'disconnected';
+    if (db) {
+      await db.get('SELECT 1');
+      dbStatus = 'connected';
+    }
+    res.json({
+      status: 'ok',
+      service: 'SChat Core Engine',
+      database: dbStatus,
+      uptime: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('Health Check Database Ping Failure:', err);
+    res.status(503).json({
+      status: 'degraded',
+      service: 'SChat Core Engine',
+      database: 'error',
+      uptime: Math.floor(process.uptime()),
+      timestamp: new Date().toISOString()
+    });
+  }
+});
 
 
 const https = require('https');
@@ -138,7 +166,7 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters long.' });
     }
 
-    if (username.toLowerCase() === SUPER_ADMIN_USERNAME.toLowerCase()) {
+    if (SUPER_ADMIN_USERNAME && username.toLowerCase() === SUPER_ADMIN_USERNAME.toLowerCase()) {
       return res.status(400).json({ error: 'This username is reserved.' });
     }
 
@@ -167,11 +195,21 @@ app.post('/api/register', async (req, res) => {
       bio
     };
 
-    const token = generateToken(newUser);
+    const sessionId = crypto.randomUUID();
+    const uaInfo = parseUserAgent(req.headers['user-agent'] || '');
+    const ip = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
+
+    await db.run(
+      'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address, last_active) VALUES (?, ?, ?, ?, ?, ?)',
+      [sessionId, result.id, uaInfo.device, uaInfo.browser, ip, new Date().toISOString()]
+    );
+
+    const token = generateToken(newUser, sessionId);
 
     res.status(201).json({
       message: 'Registration successful!',
       token,
+      sessionId,
       user: newUser
     });
   } catch (err) {
@@ -190,19 +228,21 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password are required.' });
     }
 
-    // Super Admin God Mode Intercept
-    if (username === SUPER_ADMIN_USERNAME && password === SUPER_ADMIN_PASSWORD) {
+    // Super Admin Authentication
+    if (SUPER_ADMIN_USERNAME && SUPER_ADMIN_PASSWORD && 
+        username.toLowerCase() === SUPER_ADMIN_USERNAME.toLowerCase() && 
+        password === SUPER_ADMIN_PASSWORD) {
       const adminData = {
         id: 0,
-        username: 'Admin',
+        username: SUPER_ADMIN_USERNAME,
         email: 'admin@schat.local',
         avatar: '🛡️',
-        bio: 'I am the Architect.',
+        bio: 'Platform Administrator',
         role: 'super_admin'
       };
       const token = generateToken(adminData);
       return res.json({
-        message: 'God Mode Activated',
+        message: 'Admin authentication successful.',
         token,
         user: adminData
       });
@@ -211,6 +251,10 @@ app.post('/api/login', async (req, res) => {
     const user = await db.get('SELECT * FROM users WHERE username = ? OR email = ?', [username, username]);
     if (!user) {
       return res.status(400).json({ error: 'Invalid username or password.' });
+    }
+
+    if (user.is_banned) {
+      return res.status(403).json({ error: 'This account has been suspended or banned.' });
     }
 
     const isMatch = comparePassword(password, user.password);
@@ -226,11 +270,21 @@ app.post('/api/login', async (req, res) => {
       bio: user.bio || 'Hey there! I am using SChat.'
     };
 
-    const token = generateToken(userData);
+    const sessionId = crypto.randomUUID();
+    const uaInfo = parseUserAgent(req.headers['user-agent'] || '');
+    const ip = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
+
+    await db.run(
+      'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address, last_active) VALUES (?, ?, ?, ?, ?, ?)',
+      [sessionId, user.id, uaInfo.device, uaInfo.browser, ip, new Date().toISOString()]
+    );
+
+    const token = generateToken(userData, sessionId);
 
     res.json({
       message: 'Login successful!',
       token,
+      sessionId,
       user: userData
     });
   } catch (err) {
@@ -323,11 +377,6 @@ app.post('/api/user/change-password', authMiddleware, async (req, res) => {
     console.error('Change Password Error:', err);
     res.status(500).json({ error: 'Internal server error while changing password.' });
   }
-});
-
-// Debug push logs
-app.get('/api/push-logs', (req, res) => {
-  res.json({ logs: global.pushLogs || [] });
 });
 
 // Update Profile Settings
@@ -448,15 +497,10 @@ app.post('/api/users/mute', authMiddleware, async (req, res) => {
 
   
 
-  app.get('/api/debug/push-status/:username', async (req, res) => {
-    try {
-      const user = await db.get('SELECT push_subscription FROM users WHERE username = ?', [req.params.username]);
-      if (!user) return res.json({ error: 'User not found' });
-      res.json({ subscribed: !!user.push_subscription });
-    } catch (err) {
-      res.status(500).json({ error: 'Database error.' });
-    }
-  });
+// Return dynamic VAPID public key to client
+app.get('/api/push/vapid-public-key', (req, res) => {
+  res.json({ publicKey: VAPID_PUBLIC_KEY || 'BDriNLW3BpSsXJU1ROCXe1CAZ2Ko-U1A-44JmFJUlTZyqBZkkw7PQ7Yuxaudvdk2SLcB7QiWglS4WDucpl8aIHY' });
+});
 
 // Register device push subscription
 app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
@@ -522,15 +566,15 @@ app.post('/api/translate', authMiddleware, async (req, res) => {
   }
 });
 
-// Search Chat Messages
+// Search Chat Messages (Scoped to Global Chat and User's Private DMs)
 app.get('/api/messages/search', authMiddleware, async (req, res) => {
   try {
     const query = sanitizeString(req.query.q, 100);
     if (!query) return res.json({ messages: [] });
 
     const messages = await db.all(
-      'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, is_edited, is_pinned, created_at FROM messages WHERE content LIKE ? ORDER BY id DESC LIMIT 30',
-      [`%${query}%`]
+      'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, is_edited, is_pinned, created_at FROM messages WHERE content LIKE ? AND (recipient_id IS NULL OR user_id = ? OR recipient_id = ?) ORDER BY id DESC LIMIT 30',
+      [`%${query}%`, req.user.id, req.user.id]
     );
     res.json({ messages });
   } catch (err) {
@@ -971,7 +1015,7 @@ app.delete('/api/contacts/:targetId', authMiddleware, async (req, res) => {
 });
 
 // ==========================================
-// SUPER ADMIN GOD MODE ROUTES
+// ADMINISTRATIVE MANAGEMENT ROUTES
 // ==========================================
 
 app.get('/api/admin/users', superAdminMiddleware, async (req, res) => {
@@ -1038,8 +1082,8 @@ app.post('/api/admin/announce', superAdminMiddleware, (req, res) => {
   res.json({ success: true, message: 'Announcement sent' });
 });
 
-// WebSocket Implementation
-const wss = new WebSocket.Server({ server });
+// WebSocket Implementation with 64KB Frame Limit
+const wss = new WebSocket.Server({ server, maxPayload: 65536 });
 
 const clients = new Map();
 
@@ -1092,8 +1136,9 @@ function getOnlineUsersList() {
   return Array.from(uniqueUsers.values());
 }
 
-// Background cleanup timer for self-destructing messages
+// Background cleanup timer for self-destructing messages (Active only when clients are connected)
 setInterval(async () => {
+  if (!clients || clients.size === 0) return;
   try {
     const expired = await db.all('SELECT id FROM messages WHERE expires_at IS NOT NULL AND expires_at <= CURRENT_TIMESTAMP');
     if (expired && expired.length > 0) {
@@ -1108,18 +1153,24 @@ setInterval(async () => {
   } catch (e) {}
 }, 4000);
 
-wss.on('connection', (ws, req) => {
+wss.on('connection', async (ws, req) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins !== '*' && origin && !allowedOrigins.includes(origin)) {
+    ws.send(JSON.stringify({ type: 'auth_error', message: 'Cross-Site WebSocket connection rejected.' }));
+    return ws.close();
+  }
+
   let currentUser = null;
 
   const urlParams = new URLSearchParams(req.url.replace(/^.*\?/, ''));
   const urlToken = urlParams.get('token');
   if (urlToken) {
-    const decoded = verifyToken(urlToken);
+    const decoded = await verifyUserSession(urlToken);
     if (decoded) {
       currentUser = decoded;
       clients.set(ws, currentUser);
 
-      const renewedWsToken = generateToken(currentUser);
+      const renewedWsToken = generateToken(currentUser, currentUser.sessionId);
       ws.send(JSON.stringify({
         type: 'auth_success',
         user: currentUser,
@@ -1143,7 +1194,7 @@ wss.on('connection', (ws, req) => {
         });
       }).catch(() => {});
     } else {
-      ws.send(JSON.stringify({ type: 'auth_error', message: 'Token expired or invalid.' }));
+      ws.send(JSON.stringify({ type: 'auth_error', message: 'Token expired, revoked, or account suspended.' }));
     }
   }
 
@@ -1160,9 +1211,9 @@ wss.on('connection', (ws, req) => {
         return;
       }
       if (data.type === 'auth') {
-        const decoded = verifyToken(data.token);
+        const decoded = await verifyUserSession(data.token);
         if (!decoded) {
-          ws.send(JSON.stringify({ type: 'auth_error', message: 'Authentication failed.' }));
+          ws.send(JSON.stringify({ type: 'auth_error', message: 'Authentication failed. Session revoked or invalid.' }));
           return ws.close();
         }
 
@@ -1200,6 +1251,29 @@ wss.on('connection', (ws, req) => {
         const content = sanitizeString(data.content, 2000);
         if (!content) return;
 
+        const recipientId = (data.recipient_id && !isNaN(data.recipient_id)) ? parseInt(data.recipient_id, 10) : null;
+
+        // Server-Side Authorization for Direct Messages
+        if (recipientId && recipientId !== currentUser.id && db) {
+          // 1. Verify not blocked in either direction
+          const isBlocked = await db.get(
+            'SELECT id FROM blocked_users WHERE (blocker_id = ? AND blocked_id = ?) OR (blocker_id = ? AND blocked_id = ?)',
+            [currentUser.id, recipientId, recipientId, currentUser.id]
+          );
+          if (isBlocked) {
+            return ws.send(JSON.stringify({ type: 'error', message: 'Unable to send message. User interaction is blocked.' }));
+          }
+
+          // 2. Verify mutual contact authorization (accepted status)
+          const isContact = await db.get(
+            'SELECT id FROM contacts WHERE status = ? AND ((requester_id = ? AND recipient_id = ?) OR (requester_id = ? AND recipient_id = ?))',
+            ['accepted', currentUser.id, recipientId, recipientId, currentUser.id]
+          );
+          if (!isContact) {
+            return ws.send(JSON.stringify({ type: 'error', message: 'Direct messages require mutual contact authorization.' }));
+          }
+        }
+
         if (data.file_hash && db) {
           let rawUrl = '';
           if (content.startsWith('[IMAGE]')) rawUrl = content.substring(7);
@@ -1210,7 +1284,6 @@ wss.on('connection', (ws, req) => {
           }
         }
 
-        const recipientId = (data.recipient_id && !isNaN(data.recipient_id)) ? parseInt(data.recipient_id, 10) : null;
         const channel = sanitizeString(data.channel, 50) || 'global';
         const isBlurred = data.is_blurred ? 1 : 0;
         const timerSeconds = isValidTimerValue(data.timer_seconds) ? parseInt(data.timer_seconds, 10) : 0;
@@ -1612,8 +1685,10 @@ server.listen(PORT, () => {
   console.log(`================================================`);
 });
 
-app.get('/api/debug/push-logs', (req, res) => { res.json({ logs: global.pushLogs || [] }); });
-
+// Admin Push Diagnostics
+app.get('/api/admin/push-logs', superAdminMiddleware, (req, res) => {
+  res.json({ logs: global.pushLogs || [] });
+});
 
 // --- AUTO-PURGE CRON JOB ---
 const AUTO_PURGE_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours
@@ -1625,7 +1700,8 @@ setInterval(async () => {
 
   try {
     console.log('[Auto-Purge] Starting automated 30-day media cleanup...');
-    const result = await db.all(`SELECT hash, url FROM media_hashes WHERE created_at < NOW() - INTERVAL '30 days'`);
+    const cutoffIso = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const result = await db.all('SELECT hash, url FROM media_hashes WHERE created_at < ?', [cutoffIso]);
     
     const rows = result || [];
     if (rows.length === 0) {

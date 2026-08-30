@@ -1,90 +1,97 @@
-# SChat™ — Real-Time Spatial Messaging & Privacy Communication Platform
+# SChat™ — Real-Time Messaging & Spatial Communication Platform
 
 > **Proprietary Owner & Lead Engineer**: [Shreyash Dwivedi](https://github.com/shreyashdwivedi36)  
 > **Live Production Platform**: [https://schat-live.onrender.com](https://schat-live.onrender.com/)  
-> **Intellectual Property**: SChat™ is a proprietary trademark of Shreyash Dwivedi. All Rights Reserved.
+> **Repository**: [shreyashdwivedi36/schat-app](https://github.com/shreyashdwivedi36/schat-app)
 
-[![License](https://img.shields.io/badge/Trademark-SChat%E2%84%A2-6366f1.svg)](https://schat-live.onrender.com)
-[![Node](https://img.shields.io/badge/Node.js-v18%2B-339933.svg?logo=node.js)](https://nodejs.org)
-[![WebSocket](https://img.shields.io/badge/WebSocket-Live%20Sync-010101.svg?logo=socket.io)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
+[![Node](https://img.shields.io/badge/Node.js-v20%2B%20%7C%20v24%20LTS-339933.svg?logo=node.js)](https://nodejs.org)
+[![WebSocket](https://img.shields.io/badge/WebSocket-Native%20ws-010101.svg?logo=socket.io)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 [![PWA](https://img.shields.io/badge/PWA-Installable-5A0FC8.svg?logo=pwa)](https://web.dev/progressive-web-apps/)
-[![Security](https://img.shields.io/badge/Auth-JWT%20Sliding%20Session-green.svg)](https://jwt.io)
+[![Database](https://img.shields.io/badge/Database-Turso%20libSQL%20%7C%20PostgreSQL-blue.svg)](https://turso.tech)
+[![Security](https://img.shields.io/badge/Auth-JWT%20Session%20Binding-green.svg)](https://jwt.io)
 
 ---
 
 ## 🌟 Overview
 
-**SChat™** is a next-generation real-time messaging platform combining high-grade **Spatial UI Physics**, enterprise-grade **Multi-Device Session Security**, and a **Privacy-First Mutual Contact Request Model**. 
-
-Engineered with Node.js, Express, native WebSockets (`ws`), PostgreSQL / SQLite, and a custom CSS spring-physics engine, SChat™ delivers desktop-class performance and liquid responsiveness across web, tablet, and mobile PWA environments.
+**SChat™** is a full-stack real-time messaging platform engineered with Node.js (Active LTS), Express, native WebSockets (`ws`), and Turso libSQL edge persistence. It features an explicit **Message Delivery & Read ACK Protocol**, **Server-Side Session Binding & Remote Revocation**, a **Mutual Contact Authorization Model**, and a responsive **Spatial UI Physics Engine** optimized for web, tablet, and mobile PWA environments.
 
 ---
 
-## ✨ Flagship Capabilities
+## 🛠️ Core Engineering & Architecture
 
-### 🎨 1. Real Profile Photos & 8 Handcrafted Graphic Avatars
-- **Real Photo Upload Engine**: Client-side 256x256 HTML5 Canvas WebP compression (~20KB) with Cloudinary CDN offload and instant live previews.
-- **8 Handcrafted Graphic SVG Artworks (Zero Emojis)**: Standalone vector illustrations (*Cosmic Astronaut*, *Cyber Samurai*, *Mecha Robot*, *Neon Wolf*, *Liquid Chrome*, *Phantom Ninja*, *Synthwave Sun*, *Phoenix Flame*).
-- **Preset Avatar Gallery**: 1-tap preset avatar equipping in Profile Settings with automatic checkmark tracking.
-- **Cinematic Avatar Maximize Lightbox**: Fullscreen 35px glassmorphism modal with ambient neon back-glow and anti-download protection.
+### 1. 🔄 Real-Time Delivery & Read ACK Protocol
+SChat implements an explicit multi-stage message lifecycle rather than fire-and-forget broadcasting:
+* **Sent (`○`)**: Message is received by the server and persisted to the database.
+* **Delivered (`◑`)**: Recipient's active WebSocket or background Web Push Service Worker transmits an explicit delivery receipt back to the server.
+* **Read (`●`)**: Sender UI transitions immediately upon the recipient focusing or viewing the message conversation.
 
-### 🌟 2. Full 1,800+ Unicode Emoji Suite & Search
-- **Complete Unicode Library**: Integrated all 1,800+ official emojis across 9 categories.
-- **Instant Keyword Search**: Live fuzzy search bar finding any emoji in milliseconds.
-- **Skin Tone Modifiers & Recents**: Fast access to favorite skin tones and pinned recently used emojis.
-- **Smart Cursor Insertion**: Inserts emojis at your exact typing cursor position in the message bar.
+### 2. 📱 Multi-Device Session Management
+* **Device Telemetry**: Fingerprints platform (💻 Desktop / 📱 Mobile), OS, Browser engine, and IP address.
+* **Active Session Registry**: Tracks active tokens in `user_sessions` with live heartbeats.
+* **Remote Session Revocation**: Terminate individual unrecognized logins or broadcast a WebSocket session invalidation event across all other devices.
 
-### 📱 3. Active Multi-Device Session Management
-- **Device & Browser Fingerprinting**: Live telemetry tracking device type (💻 Desktop / 📱 Mobile), OS (Windows, macOS, iOS, Android, Linux), Browser engine, and IP address.
-- **Current Device Protection**: Highlights the active viewing device as `This Device (Active Now)` to prevent accidental self-disconnection.
-- **Remote Session Revocation**: Terminate individual unrecognized logins or use **"Log Out All Other Devices"** to instantly broadcast WebSocket session termination and invalidate tokens remotely.
+### 3. 🤝 Mutual Contact Authorization Model
+* **Unsolicited Message Shield**: Direct messaging requires mutual acceptance (`pending` $\rightarrow$ `accepted` $\rightarrow$ `blocked`).
+* **Instant Relationship Toggles**: Live state transitions for contact requests (**Send Request** ➔ **Cancel Request** ➔ **Chat** / **Remove**).
+* **Scoped Search & Data Isolation**: Scoped database queries ensure private conversations and searches are accessible only to participating users.
 
-### 🤝 4. Privacy-First Contact Request System
-- **Clean Direct Messages**: Unsolicited direct messages are blocked by default. Only **Mutual Accepted Contacts** appear in the Direct Messages sidebar.
-- **Search & Connect**: Discover other users by `@username` and send private chat requests with instant zero-refresh button toggles (**Send Request** ➔ **Cancel Request** ➔ **Chat** / **Remove**).
-- **Pending Requests Inbox**: Incoming requests trigger real-time notifications with instant **Accept** or **Decline** actions.
+### 4. 🎨 Spatial UI Physics & Vector System
+* **1:1 Interactive Cursor Spotlight**: Hardware-accelerated radial spotlight tracking pointer coordinates in real-time.
+* **Spring Elasticity & Parallax**: Magnetic button attraction and 3D card tilt angles driven by CSS spring mathematics.
+* **Canvas Avatar WebP Compression**: Client-side image optimization (~20KB) with Cloudinary CDN offload.
 
-### 🎨 5. Spatial UI Physics & Vector Iconography
-- **1:1 Interactive Cursor Spotlight**: Hardware-accelerated dynamic radial spotlight tracking mouse coordinates in real time with 0% idle CPU overhead.
-- **Magnetic Snap Hover**: Buttons and channels feature magnetic attraction with mathematical CSS `linear()` spring elasticity.
-- **3D Parallax Tilt**: Interactive card tilt angles responding directly to pointer coordinates.
-- **Crisp SVG Vector System**: Unified, pixel-perfect 1.85px stroke SVG line vector icons.
-
-### 🎙️ 6. Voice Notes & Waveform Engine
-- Native `MediaRecorder` audio recording with 16kbps Opus compression.
-- Live canvas audio waveform visualizer during recording and playback.
-- Cloudinary media offloading with optimistic UI delivery and sweeping progress animations.
-
-### 🌐 7. Live Multilingual Translation
-- Instant inline message translation powered by Google Translate API for seamless cross-language communication.
-
-### ⏱️ 8. Ephemeral Privacy Messages
-- Toggleable Gaussian privacy blur (`👁️`) to prevent shoulder surfing.
-- Configurable self-destruct timers (`⏱️ 10s`, `1m`, `5m`, `1h`) with synchronized countdown badges.
+### 5. 🎙️ Media & Communication Suite
+* **Voice Notes**: Native `MediaRecorder` audio recording with canvas waveform visualizer.
+* **Translation**: Inline message translation across multiple languages.
+* **Ephemeral Privacy**: Gaussian privacy blur (`👁️`) and configurable self-destruct timers (`⏱️ 10s`, `1m`, `5m`, `1h`).
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## 🏗️ System Architecture
 
 ```
-   ┌────────────────────────────────────────────────────────┐
-   │                     Client Tier                        │
-   │  Vanilla ES6+ • MotionFX Engine • Web Audio Synthesizer│
-   │       Progressive Web App (PWA) • Service Worker       │
-   └───────────────────────────┬────────────────────────────┘
-                               │ HTTPS / WSS
-   ┌───────────────────────────▼────────────────────────────┐
-   │                     Server Tier                        │
-   │      Node.js & Express.js • Native WebSockets (ws)     │
-   │     JWT Sliding Auth • User-Agent Device Parser        │
-   └───────────────────────────┬────────────────────────────┘
-                               │
-   ┌───────────────────────────▼────────────────────────────┐
-   │                   Persistence Tier                     │
-   │    PostgreSQL (Production) / Local Fallback Store      │
-   │  Tables: users, user_sessions, contacts, messages...   │
-   └────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────┐
+│                      Client Tier                       │
+│     Vanilla ES6+ • MotionFX Engine • Web Audio API     │
+│       Progressive Web App (PWA) • Service Worker       │
+└───────────────────────────┬────────────────────────────┘
+                            │ HTTPS / WSS
+┌───────────────────────────▼────────────────────────────┐
+│                      Server Tier                       │
+│     Node.js & Express.js • Native WebSockets (ws)      │
+│    JWT Sliding Sessions • Device Telemetry Parser      │
+└───────────────────────────┬────────────────────────────┘
+                            │
+┌───────────────────────────▼────────────────────────────┐
+│                   Persistence Tier                     │
+│        PostgreSQL / Turso / Local Storage Engine       │
+│   Entities: users, messages, sessions, contacts...     │
+└────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🧪 Automated Regression Test Suite
+
+SChat includes an automated functional regression suite validating core security and data consistency boundaries:
+
+```bash
+node test.js
+```
+
+**Verified Test Coverage:**
+1. Password Hashing & Verification (`bcryptjs`)
+2. JWT Token Issuance & Payload Structure
+3. User Registration & Profile Bio Updates
+4. Message Editing & Pinning Integrity
+5. Message Reactions & Quoted Reply Relationships
+6. User Blocking & Unblocking Boundaries
+7. Password Lifecycle Updates
+8. Translation Payload & Fallback Verification
+9. Message Search Privacy & Scoped Authorization Boundaries
+10. Server-Side Session Revocation Guard & Database Validation
+11. Server-Side Direct Message Authorization & Block Verification
 
 ---
 
@@ -101,7 +108,17 @@ Engineered with Node.js, Express, native WebSockets (`ws`), PostgreSQL / SQLite,
    npm install
    ```
 
-3. **Start the local server**:
+3. **Configure Environment Variables**:
+   Create a `.env` file in the root directory:
+   ```env
+   PORT=3000
+   JWT_SECRET=your_super_secret_jwt_key
+   DATABASE_URL=your_postgres_or_turso_url
+   SUPER_ADMIN_USERNAME=admin
+   SUPER_ADMIN_PASSWORD=your_secure_password
+   ```
+
+4. **Start the local server**:
    ```bash
    npm start
    ```
@@ -112,5 +129,3 @@ Engineered with Node.js, Express, native WebSockets (`ws`), PostgreSQL / SQLite,
 ## 📄 License & Intellectual Property
 
 **Copyright © 2026 Shreyash Dwivedi. All Rights Reserved.**
-
-SChat™ and all associated source code, design assets, and documentation are proprietary works. Unauthorized copying, distribution, or reproduction is strictly prohibited.

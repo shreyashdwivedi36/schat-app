@@ -1,41 +1,11 @@
-const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const db = require('./db');
 
-let bcrypt;
-try {
-  bcrypt = require('bcryptjs');
-} catch (e) {
-  bcrypt = {
-    hashSync: (pwd) => crypto.createHash('sha256').update(pwd + 'salt_key_123').digest('hex'),
-    compareSync: (pwd, hash) => crypto.createHash('sha256').update(pwd + 'salt_key_123').digest('hex') === hash
-  };
-}
-
-let jwt;
-try {
-  jwt = require('jsonwebtoken');
-} catch (e) {
-  jwt = {
-    sign: (payload, secret, opts = {}) => {
-      const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
-      const body = Buffer.from(JSON.stringify({ ...payload, exp: Math.floor(Date.now() / 1000) + 86400 })).toString('base64url');
-      const signature = crypto.createHmac('sha256', secret).update(`${header}.${body}`).digest('base64url');
-      return `${header}.${body}.${signature}`;
-    },
-    verify: (token, secret) => {
-      const [header, body, signature] = token.split('.');
-      if (!header || !body || !signature) throw new Error('Invalid token');
-      const expectedSig = crypto.createHmac('sha256', secret).update(`${header}.${body}`).digest('base64url');
-      if (signature !== expectedSig) throw new Error('Signature mismatch');
-      const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
-      if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) throw new Error('Token expired');
-      return payload;
-    }
-  };
-}
-
-// Require or generate strong JWT Secret
-// Persistent JWT Secret across server deployments to prevent user logouts
-const JWT_SECRET = process.env.JWT_SECRET || 'schat_persistent_jwt_secret_key_v1_2026';
+// Require or validate strong JWT Secret
+const JWT_SECRET = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' 
+  ? (() => { throw new Error('FATAL: JWT_SECRET environment variable must be set in production.'); })() 
+  : 'schat_dev_local_secret_key_change_in_production_2026');
 
 function hashPassword(password) {
   return bcrypt.hashSync(password, 10);
@@ -70,23 +40,57 @@ function verifyToken(token) {
   }
 }
 
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Access denied. No token provided.' });
-  }
-
-  const token = authHeader.split(' ')[1];
+async function verifyUserSession(token) {
+  if (!token) return null;
   const decoded = verifyToken(token);
-  if (!decoded) {
-    return res.status(401).json({ error: 'Invalid or expired token.' });
-  }
+  if (!decoded) return null;
+  if (decoded.role === 'super_admin') return decoded;
 
-  req.user = decoded;
-  // Sliding Session: issue a renewed token on every authenticated request
-  const renewedToken = generateToken(decoded, decoded.sessionId);
-  res.setHeader('X-Renewed-Token', renewedToken);
-  next();
+  // Enforce session ID presence for all standard users
+  if (!decoded.sessionId) return null;
+
+  if (db) {
+    try {
+      // 1. Verify user exists and is not banned
+      const user = await db.get('SELECT id, is_banned FROM users WHERE id = ?', [decoded.id]);
+      if (!user || user.is_banned) return null;
+
+      // 2. Verify session is still active in user_sessions
+      const activeSession = await db.get(
+        'SELECT id FROM user_sessions WHERE user_id = ? AND session_id = ?',
+        [decoded.id, decoded.sessionId]
+      );
+      if (!activeSession) return null;
+    } catch (err) {
+      console.error('Fail-closed: User session verification database error:', err);
+      return null;
+    }
+  }
+  return decoded;
+}
+
+async function authMiddleware(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Access denied. No token provided.' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = await verifyUserSession(token);
+    if (!decoded) {
+      return res.status(401).json({ error: 'Session has been revoked or expired. Please log in again.' });
+    }
+
+    req.user = decoded;
+    // Sliding Session: issue a renewed token on every authenticated request
+    const renewedToken = generateToken(decoded, decoded.sessionId);
+    res.setHeader('X-Renewed-Token', renewedToken);
+    next();
+  } catch (err) {
+    console.error('Auth middleware error:', err);
+    return res.status(500).json({ error: 'Internal authentication verification error.' });
+  }
 }
 
 function superAdminMiddleware(req, res, next) {
@@ -104,6 +108,7 @@ module.exports = {
   comparePassword,
   generateToken,
   verifyToken,
+  verifyUserSession,
   authMiddleware,
   superAdminMiddleware,
   JWT_SECRET

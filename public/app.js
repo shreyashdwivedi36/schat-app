@@ -4793,7 +4793,14 @@ async function subscribeToPushNotifications() {
       return; // Already subscribed
     }
 
-    const PUBLIC_VAPID_KEY = 'BFM7IVc9SVb-cpG8ZrsOc8CaMCNSee-uAsdaEoaJrdjK-_VzOglSKANVq82DZVpwg2PrqNdmvVxiXIW9MWmVZFk';
+    let PUBLIC_VAPID_KEY = 'BDriNLW3BpSsXJU1ROCXe1CAZ2Ko-U1A-44JmFJUlTZyqBZkkw7PQ7Yuxaudvdk2SLcB7QiWglS4WDucpl8aIHY';
+    try {
+      const pkRes = await fetch('/api/push/vapid-public-key');
+      if (pkRes.ok) {
+        const pkData = await pkRes.json();
+        if (pkData.publicKey) PUBLIC_VAPID_KEY = pkData.publicKey;
+      }
+    } catch (e) {}
     
     // Convert base64 url safe string to Uint8Array
     const padding = '='.repeat((4 - PUBLIC_VAPID_KEY.length % 4) % 4);

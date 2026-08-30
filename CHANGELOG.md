@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.7.0] - 2026-08-30
+
+### 🚀 Turso Cloud Database Integration & Edge Scaling
+- **Turso libSQL Engine**: Integrated `@libsql/client` into `db.js`, establishing a high-performance distributed edge persistence tier with multi-gigabyte storage capacity and low-latency query performance.
+
+### 🔒 Production Security & Fail-Closed Boundaries
+- **Fail-Closed Authentication Engine**: Re-engineered `verifyUserSession` to fail closed (`return null`) on database connection or query failures, preventing unauthenticated access during transient database outages.
+- **Strict Session ID Requirement**: Mandated `sessionId` validation for all standard user JWTs, blocking legacy or sessionless tokens.
+- **Atomic Session Binding on Login & Registration**: Enforced mandatory session persistence prior to JWT issuance in `/api/login` and `/api/register`.
+- **WebSocket Origin Validation**: Added `req.headers.origin` verification against `ALLOWED_ORIGINS` during WebSocket handshakes to prevent Cross-Site WebSocket Hijacking (CSWSH).
+- **API Hygiene**: Removed deprecated unauthenticated `/api/push-logs` route.
+- **Sanitized Health Telemetry**: Removed internal database error messages from public `GET /api/health` 503 response.
+
+### 🐳 Infrastructure Modernization
+- **Node.js 24 LTS Upgrade**: Upgraded Docker base image to `node:24-alpine` (Active LTS).
+
+### 🧪 11-Suite Automated Regression Coverage
+- **100% Pass Rate**: Validated all 11 test suites covering fail-closed boundaries, password hashing, session tokens, DM authorization, blocklist isolation, and search scoping.
+
+---
+
 ## [v1.6.0] - 2026-08-25
 
 ### 🎨 Real Profile Photos & Handcrafted Vector Graphic Avatars
