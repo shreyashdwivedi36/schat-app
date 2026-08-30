@@ -3,11 +3,152 @@ const path = require('path');
 
 let dbInstance = null;
 
-if (process.env.DATABASE_URL) {
+if (process.env.TURSO_DATABASE_URL) {
+  const { createClient } = require('@libsql/client');
+  const client = createClient({
+    url: process.env.TURSO_DATABASE_URL,
+    authToken: process.env.TURSO_AUTH_TOKEN
+  });
+
+  async function initTurso() {
+    try {
+      await client.execute(`PRAGMA foreign_keys = ON;`);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT UNIQUE NOT NULL,
+          email TEXT UNIQUE NOT NULL,
+          password TEXT NOT NULL,
+          avatar TEXT DEFAULT '⚡',
+          bio TEXT DEFAULT 'Hey there! I am using SChat.',
+          push_subscription TEXT DEFAULT NULL,
+          muted_chats TEXT DEFAULT '[]',
+          is_banned INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS media_hashes (
+          hash TEXT PRIMARY KEY,
+          url TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS channels (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT UNIQUE NOT NULL,
+          description TEXT DEFAULT '',
+          created_by INTEGER DEFAULT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS messages (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          recipient_id INTEGER DEFAULT NULL,
+          channel TEXT DEFAULT 'global',
+          username TEXT NOT NULL,
+          avatar TEXT DEFAULT '⚡',
+          content TEXT NOT NULL,
+          is_blurred INTEGER DEFAULT 0,
+          is_edited INTEGER DEFAULT 0,
+          is_pinned INTEGER DEFAULT 0,
+          reactions TEXT DEFAULT '{}',
+          expires_at DATETIME DEFAULT NULL,
+          status TEXT DEFAULT 'sent',
+          reply_to_id INTEGER DEFAULT NULL,
+          reply_to_user TEXT DEFAULT NULL,
+          reply_to_text TEXT DEFAULT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id)
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS user_sessions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          session_id TEXT UNIQUE NOT NULL,
+          user_id INTEGER NOT NULL,
+          device TEXT DEFAULT 'Unknown Device',
+          browser TEXT DEFAULT 'Unknown Browser',
+          ip_address TEXT DEFAULT '127.0.0.1',
+          last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id)
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS contacts (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          requester_id INTEGER NOT NULL,
+          recipient_id INTEGER NOT NULL,
+          status TEXT DEFAULT 'pending',
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(requester_id, recipient_id),
+          FOREIGN KEY (requester_id) REFERENCES users (id) ON DELETE CASCADE,
+          FOREIGN KEY (recipient_id) REFERENCES users (id) ON DELETE CASCADE
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS device_tokens (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL,
+          endpoint TEXT NOT NULL UNIQUE,
+          p256dh TEXT,
+          auth TEXT,
+          user_agent TEXT,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          last_active DATETIME DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+        );
+      `);
+      await client.execute(`
+        CREATE TABLE IF NOT EXISTS blocked_users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          blocker_id INTEGER NOT NULL,
+          blocked_id INTEGER NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(blocker_id, blocked_id),
+          FOREIGN KEY (blocker_id) REFERENCES users (id) ON DELETE CASCADE,
+          FOREIGN KEY (blocked_id) REFERENCES users (id) ON DELETE CASCADE
+        );
+      `);
+      await client.execute(`CREATE INDEX IF NOT EXISTS idx_device_tokens_user ON device_tokens(user_id);`);
+      await client.execute(`CREATE INDEX IF NOT EXISTS idx_device_tokens_endpoint ON device_tokens(endpoint);`);
+      await client.execute(`CREATE INDEX IF NOT EXISTS idx_messages_user_recip ON messages(user_id, recipient_id, status);`);
+      console.log('⚡ Connected to Turso (libSQL) Cloud Database successfully.');
+    } catch (err) {
+      console.error('Turso Database Init Error:', err);
+    }
+  }
+  initTurso();
+
+  dbInstance = {
+    async run(sql, params = []) {
+      const res = await client.execute({ sql, args: params });
+      return { 
+        id: res.lastInsertRowid !== undefined ? Number(res.lastInsertRowid) : null, 
+        changes: res.rowsAffected 
+      };
+    },
+    async get(sql, params = []) {
+      const res = await client.execute({ sql, args: params });
+      return res.rows[0] ? { ...res.rows[0] } : null;
+    },
+    async all(sql, params = []) {
+      const res = await client.execute({ sql, args: params });
+      return res.rows.map(row => ({ ...row }));
+    }
+  };
+} else if (process.env.DATABASE_URL) {
   const { Pool } = require('pg');
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+    ssl: { rejectUnauthorized: false },
+    idleTimeoutMillis: 10000,
+    max: 10
   });
 
   async function initPg() {
@@ -22,7 +163,6 @@ if (process.env.DATABASE_URL) {
           avatar TEXT DEFAULT '⚡',
           bio VARCHAR(255) DEFAULT 'Hey there! I am using SChat.',
           push_subscription TEXT DEFAULT NULL,
-          muted_chats TEXT DEFAULT '[]',
           muted_chats TEXT DEFAULT '[]',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -232,34 +372,58 @@ if (process.env.DATABASE_URL) {
         return { id: newUser.id, changes: 1 };
       }
       if (sql.includes('INSERT INTO messages')) {
-        const [user_id, recipient_id, channel, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text] = params;
+        const colMatch = sql.match(/INSERT INTO messages\s*\(([^)]+)\)/i);
         data.lastMsgId += 1;
         const newMsg = {
           id: data.lastMsgId,
-          user_id,
-          recipient_id: recipient_id || null,
-          channel: channel || 'global',
-          username,
-          avatar: avatar || '⚡',
-          content,
-          is_blurred: is_blurred || 0,
+          user_id: null,
+          recipient_id: null,
+          channel: 'global',
+          username: '',
+          avatar: '⚡',
+          content: '',
+          is_blurred: 0,
           is_edited: 0,
           is_pinned: 0,
           reactions: '{}',
-          expires_at: expires_at || null,
-          status: status || 'sent',
-          reply_to_id: reply_to_id || null,
-          reply_to_user: reply_to_user || null,
-          reply_to_text: reply_to_text || null,
+          expires_at: null,
+          status: 'sent',
+          reply_to_id: null,
+          reply_to_user: null,
+          reply_to_text: null,
           created_at: new Date().toISOString()
         };
+
+        if (colMatch && colMatch[1]) {
+          const cols = colMatch[1].split(',').map(c => c.trim());
+          cols.forEach((col, idx) => {
+            if (params[idx] !== undefined) {
+              newMsg[col] = params[idx];
+            }
+          });
+        } else {
+          const [user_id, recipient_id, channel, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text] = params;
+          if (user_id !== undefined) newMsg.user_id = user_id;
+          if (recipient_id !== undefined) newMsg.recipient_id = recipient_id;
+          if (channel !== undefined) newMsg.channel = channel;
+          if (username !== undefined) newMsg.username = username;
+          if (avatar !== undefined) newMsg.avatar = avatar;
+          if (content !== undefined) newMsg.content = content;
+          if (is_blurred !== undefined) newMsg.is_blurred = is_blurred;
+          if (expires_at !== undefined) newMsg.expires_at = expires_at;
+          if (status !== undefined) newMsg.status = status;
+          if (reply_to_id !== undefined) newMsg.reply_to_id = reply_to_id;
+          if (reply_to_user !== undefined) newMsg.reply_to_user = reply_to_user;
+          if (reply_to_text !== undefined) newMsg.reply_to_text = reply_to_text;
+        }
+
         data.messages.push(newMsg);
         saveData();
         return { id: newMsg.id, changes: 1 };
       }
       if (sql.includes('UPDATE messages SET content = ?')) {
         const [content, id, user_id] = params;
-        const msg = data.messages.find(m => m.id === id && m.user_id === user_id);
+        const msg = data.messages.find(m => Number(m.id) === Number(id) && (user_id === undefined || Number(m.user_id) === Number(user_id)));
         if (msg) {
           msg.content = content;
           msg.is_edited = 1;
@@ -270,7 +434,7 @@ if (process.env.DATABASE_URL) {
       }
       if (sql.includes('UPDATE messages SET reactions = ?')) {
         const [reactions, id] = params;
-        const msg = data.messages.find(m => m.id === id);
+        const msg = data.messages.find(m => Number(m.id) === Number(id));
         if (msg) {
           msg.reactions = reactions;
           saveData();
@@ -278,11 +442,12 @@ if (process.env.DATABASE_URL) {
         }
         return { changes: 0 };
       }
-      if (sql.includes('UPDATE messages SET is_pinned = ?')) {
-        const [is_pinned, id] = params;
-        const msg = data.messages.find(m => m.id === id);
+      if (sql.includes('UPDATE messages SET is_pinned')) {
+        const id = params[params.length - 1];
+        const isPinned = sql.includes('is_pinned = 1') ? 1 : (sql.includes('is_pinned = 0') ? 0 : Number(params[0]));
+        const msg = data.messages.find(m => Number(m.id) === Number(id));
         if (msg) {
-          msg.is_pinned = is_pinned;
+          msg.is_pinned = isPinned;
           saveData();
           return { changes: 1 };
         }
@@ -411,11 +576,22 @@ if (process.env.DATABASE_URL) {
         return { changes: 0 };
       }
       if (sql.includes('UPDATE users SET')) {
-        const [avatar, bio, id] = params;
-        const u = data.users.find(user => user.id === id);
+        const id = params[params.length - 1];
+        const u = data.users.find(user => Number(user.id) === Number(id));
         if (u) {
-          if (avatar) u.avatar = avatar;
-          if (bio) u.bio = bio;
+          if (sql.includes('avatar = ?') && sql.includes('bio = ?')) {
+            const [avatar, bio] = params;
+            if (avatar) u.avatar = avatar;
+            if (bio) u.bio = bio;
+          } else if (sql.includes('bio = ?')) {
+            u.bio = params[0];
+          } else if (sql.includes('avatar = ?')) {
+            u.avatar = params[0];
+          } else if (sql.includes('password = ?')) {
+            u.password = params[0];
+          } else if (sql.includes('push_subscription = ?')) {
+            u.push_subscription = params[0];
+          }
           saveData();
           return { changes: 1 };
         }
@@ -448,8 +624,28 @@ if (process.env.DATABASE_URL) {
       if (sql.includes('FROM messages WHERE id = ?')) {
         return data.messages.find(m => Number(m.id) === Number(params[0])) || null;
       }
-      if (sql.includes('FROM contacts WHERE')) {
+      if (sql.includes('FROM blocked_users WHERE')) {
         if (params.length === 4) {
+          const [b1, b2, b3, b4] = params;
+          return (data.blocked_users || []).find(b => (
+            (Number(b.blocker_id) === Number(b1) && Number(b.blocked_id) === Number(b2)) ||
+            (Number(b.blocker_id) === Number(b3) && Number(b.blocked_id) === Number(b4))
+          )) || null;
+        } else if (params.length === 2) {
+          const [b1, b2] = params;
+          return (data.blocked_users || []).find(b => Number(b.blocker_id) === Number(b1) && Number(b.blocked_id) === Number(b2)) || null;
+        }
+      }
+      if (sql.includes('FROM contacts WHERE')) {
+        if (params.length === 5) {
+          const [status, u1, u2, u3, u4] = params;
+          return data.contacts.find(c => (
+            c.status === status && (
+              (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
+              (Number(c.requester_id) === Number(u3) && Number(c.recipient_id) === Number(u4))
+            )
+          )) || null;
+        } else if (params.length === 4) {
           const [u1, u2, u3, u4] = params;
           return data.contacts.find(c => (
             (Number(c.requester_id) === Number(u1) && Number(c.recipient_id) === Number(u2)) ||
@@ -504,6 +700,15 @@ if (process.env.DATABASE_URL) {
       if (sql.includes('FROM messages')) {
         const nowIso = new Date().toISOString();
         let validMsgs = data.messages.filter(m => !m.expires_at || m.expires_at > nowIso);
+        if (sql.includes('content LIKE ?')) {
+          const queryStr = (params[0] || '').replace(/%/g, '').toLowerCase();
+          validMsgs = validMsgs.filter(m => m.content && m.content.toLowerCase().includes(queryStr));
+          if (sql.includes('recipient_id IS NULL OR user_id = ? OR recipient_id = ?')) {
+            const uId = Number(params[1]);
+            validMsgs = validMsgs.filter(m => !m.recipient_id || Number(m.user_id) === uId || Number(m.recipient_id) === uId);
+          }
+          return validMsgs.slice(-30);
+        }
         if (sql.includes('is_pinned = 1')) {
           return validMsgs.filter(m => m.is_pinned === 1);
         }
