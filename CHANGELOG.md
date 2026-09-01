@@ -7,21 +7,20 @@ All notable changes to this project will be documented in this file.
 ### 🚀 Turso Cloud Database Integration & Edge Scaling
 - **Turso libSQL Engine**: Integrated `@libsql/client` into `db.js`, establishing a high-performance distributed edge persistence tier with multi-gigabyte storage capacity and low-latency query performance.
 
-### 🔒 Production Security & Fail-Closed Boundaries
-- **Super-Admin Session Binding**: Bound Super-Admin authentication to `user_sessions`, eliminating sessionless administrative JWT tokens and enabling instant remote revocation.
-- **Brute-Force Authentication Rate Limiting**: Implemented an in-memory sliding window rate limiter on `/api/login` and `/api/register` to block credential stuffing.
-- **WebSocket Traffic & Abuse Controls**: Added per-socket rate limiting for message dispatch (max 45/min) and typing events (max 10/5s) to eliminate spam.
-- **Fail-Closed Authentication Engine**: Re-engineered `verifyUserSession` to fail closed (`return null`) on database connection or query failures.
-- **Strict Session ID Requirement**: Mandated `sessionId` validation for all JWTs, blocking legacy or sessionless tokens.
-- **Media Privacy & API Semantics**: Protected `GET /api/media/check/:hash` with `authMiddleware`, and enforced `409 Conflict` / `404 Not Found` REST semantics across contact and block endpoints.
-- **100KB Global Request Limit**: Reduced global Express body size limit from 10MB to 100KB.
+### 🔒 Enterprise Security & Relational Integrity
+- **Super-Admin Relational Principal**: Re-architected Super-Admin authentication to operate as a first-class user row within the relational `users` table, eliminating synthetic `user_id = 0` and resolving foreign-key constraint violations on Turso libSQL and PostgreSQL.
+- **Strict Message Persistence Guard**: Enforced strict abort-on-error message processing in WebSocket handlers to ensure unpersisted messages are never broadcast to recipients if database writes fail.
+- **Authenticated Message Delivery ACK Route**: Protected `/api/messages/mark-delivered` with `authMiddleware` and strict `msg.recipient_id === req.user.id` verification.
+- **Proxy-Aware Rate Limiting**: Enabled `trust proxy` in Express and mapped `authRateLimiter` directly to `req.ip` to prevent header spoofing.
+- **Fail-Closed Authentication Engine**: Unified `verifyUserSession` to enforce session validation across all user roles.
+- **WebSocket Traffic & Abuse Controls**: Added per-socket rate limiting for message dispatch (max 45/min) and typing events (max 10/5s).
 
 ### 🐳 Infrastructure Modernization & CI/CD
-- **GitHub Actions CI Pipeline**: Added automated test workflow (`.github/workflows/test.yml`) running on Node 24 Active LTS.
-- **Node.js 24 LTS Upgrade**: Upgraded Docker base image to `node:24-alpine` (Active LTS).
+- **Node.js 24 Active LTS Standard**: Standardized Node 24 across Docker (`node:24-alpine`), package engines (`"engines": { "node": ">=24" }`), CI workflow, and documentation.
+- **Deterministic Lockfile Builds**: Updated Docker build to use `npm ci --omit=dev`.
 
-### 🧪 12-Suite Automated Regression & Integration Coverage
-- **100% Pass Rate**: Added Test 12 featuring a live end-to-end WebSocket integration suite validating multi-client handshakes, real-time message delivery ACKs, and live server-side DM authorization rejections.
+### 🧪 12-Suite True Server Integration Coverage
+- **Production Server & WebSocket Integration Test**: Re-architected Test 12 to import and execute against the real production `server.js` and native WebSocket server instance, validating multi-client handshakes, real-time message delivery ACKs, and live server-side DM authorization rejections with 100% pass rate.
 
 ---
 

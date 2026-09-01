@@ -1,5 +1,5 @@
-# Use official Node.js LTS lightweight image
-FROM node:20-alpine
+# Use official Node.js Active LTS lightweight image
+FROM node:24-alpine
 
 # Set working directory
 WORKDIR /app
@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy dependency manifests
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --production
+# Install dependencies deterministically
+RUN npm ci --omit=dev
 
 # Copy application code
 COPY . .

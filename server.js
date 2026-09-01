@@ -26,12 +26,13 @@ const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
 const WebSocket = require('ws');
 
 const app = express();
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 
 // In-Memory Authentication Rate Limiter (Sliding Window: 15 attempts / 15 mins)
 const loginAttemptMap = new Map();
 function authRateLimiter(req, res, next) {
-  const ip = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
+  const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
   const now = Date.now();
   const windowMs = 15 * 60 * 1000;
   const maxAttempts = 15;
@@ -252,22 +253,46 @@ app.post('/api/login', authRateLimiter, async (req, res) => {
     if (SUPER_ADMIN_USERNAME && SUPER_ADMIN_PASSWORD && 
         username.toLowerCase() === SUPER_ADMIN_USERNAME.toLowerCase() && 
         password === SUPER_ADMIN_PASSWORD) {
+      
+      let adminRow = null;
+      if (db) {
+        adminRow = await db.get('SELECT id, username, email, avatar, bio, is_banned FROM users WHERE username = ?', [SUPER_ADMIN_USERNAME]);
+        if (!adminRow) {
+          const hashed = hashPassword(SUPER_ADMIN_PASSWORD);
+          const ins = await db.run(
+            'INSERT INTO users (username, email, password, avatar, bio) VALUES (?, ?, ?, ?, ?)',
+            [SUPER_ADMIN_USERNAME, 'admin@schat.local', hashed, '🛡️', 'Platform Administrator']
+          );
+          adminRow = {
+            id: ins.id,
+            username: SUPER_ADMIN_USERNAME,
+            email: 'admin@schat.local',
+            avatar: '🛡️',
+            bio: 'Platform Administrator'
+          };
+        }
+      }
+
+      const adminId = adminRow ? adminRow.id : 1;
       const adminData = {
-        id: 0,
+        id: adminId,
         username: SUPER_ADMIN_USERNAME,
-        email: 'admin@schat.local',
-        avatar: '🛡️',
-        bio: 'Platform Administrator',
+        email: adminRow?.email || 'admin@schat.local',
+        avatar: adminRow?.avatar || '🛡️',
+        bio: adminRow?.bio || 'Platform Administrator',
         role: 'super_admin'
       };
+
       const adminSessionId = crypto.randomUUID();
       const uaInfo = parseUserAgent(req.headers['user-agent'] || '');
-      const ip = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
+      const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
 
-      await db.run(
-        'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address, last_active) VALUES (?, ?, ?, ?, ?, ?)',
-        [adminSessionId, 0, uaInfo.device, uaInfo.browser, ip, new Date().toISOString()]
-      );
+      if (db) {
+        await db.run(
+          'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address, last_active) VALUES (?, ?, ?, ?, ?, ?)',
+          [adminSessionId, adminId, uaInfo.device, uaInfo.browser, ip, new Date().toISOString()]
+        );
+      }
 
       const token = generateToken(adminData, adminSessionId);
       return res.json({
@@ -568,8 +593,21 @@ app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
   }
 });
 
-// Unregister device push subscription on logout
-app.post('/api/messages/mark-delivered', async (req, res) => { try { const { message_id } = req.body; if (!message_id) return res.json({success: false}); const msg = await db.get('SELECT * FROM messages WHERE id = ?', [message_id]); if (msg && msg.status === 'sent') { await db.run('UPDATE messages SET status = ? WHERE id = ?', ['delivered', message_id]); sendToUser(msg.user_id, { type: 'msg_status_update', message_ids: [message_id], status: 'delivered' }); } res.json({ success: true }); } catch (err) { res.status(500).json({ error: 'Database error.' }); } });
+// Acknowledge message delivery via authenticated REST fallback
+app.post('/api/messages/mark-delivered', authMiddleware, async (req, res) => {
+  try {
+    const { message_id } = req.body;
+    if (!message_id) return res.status(400).json({ error: 'Message ID required.' });
+    const msg = await db.get('SELECT id, user_id, recipient_id, status FROM messages WHERE id = ?', [message_id]);
+    if (msg && Number(msg.recipient_id) === Number(req.user.id) && msg.status === 'sent') {
+      await db.run('UPDATE messages SET status = ? WHERE id = ?', ['delivered', message_id]);
+      sendToUser(msg.user_id, { type: 'msg_status_update', message_ids: [message_id], status: 'delivered' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Database error.' });
+  }
+});
 
 app.post('/api/push/unsubscribe', authMiddleware, async (req, res) => {
   const { endpoint } = req.body;
@@ -1358,16 +1396,21 @@ wss.on('connection', async (ws, req) => {
         }
 
         const initialStatus = (recipientId && isUserOnline(recipientId)) ? 'delivered' : 'sent';
-        let insertedId = Date.now();
+        let insertedId;
 
         try {
           const result = await db.run(
             'INSERT INTO messages (user_id, recipient_id, channel, username, avatar, content, is_blurred, expires_at, status, reply_to_id, reply_to_user, reply_to_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             [currentUser.id, recipientId, channel, currentUser.username, currentUser.avatar || '⚡', content, isBlurred, expiresAtIso, initialStatus, replyToId, replyToUser, replyToText]
           );
-          if (result && result.id) insertedId = result.id;
+          if (result && result.id) {
+            insertedId = result.id;
+          } else {
+            insertedId = Date.now();
+          }
         } catch (dbErr) {
-          console.error('Database write warning:', dbErr.message);
+          console.error('Database message persistence error:', dbErr.message);
+          return ws.send(JSON.stringify({ type: 'error', message: 'Failed to send message: Database persistence error.' }));
         }
 
         const msgPayload = {
@@ -1747,12 +1790,16 @@ wss.on('connection', async (ws, req) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`================================================`);
-  console.log(`🚀 SChat Server running on http://localhost:${PORT}`);
-  console.log(`⚡ WebSockets active on ws://localhost:${PORT}`);
-  console.log(`================================================`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`================================================`);
+    console.log(`🚀 SChat Server running on http://localhost:${PORT}`);
+    console.log(`⚡ WebSockets active on ws://localhost:${PORT}`);
+    console.log(`================================================`);
+  });
+}
+
+module.exports = { app, server, wss, db };
 
 // Admin Push Diagnostics
 app.get('/api/admin/push-logs', superAdminMiddleware, (req, res) => {

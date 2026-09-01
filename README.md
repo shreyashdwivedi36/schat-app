@@ -4,7 +4,7 @@
 > **Live Production Platform**: [https://schat-live.onrender.com](https://schat-live.onrender.com/)  
 > **Repository**: [shreyashdwivedi36/schat-app](https://github.com/shreyashdwivedi36/schat-app)
 
-[![Node](https://img.shields.io/badge/Node.js-v20%2B%20%7C%20v24%20LTS-339933.svg?logo=node.js)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/Node.js-v24%20Active%20LTS-339933.svg?logo=node.js)](https://nodejs.org)
 [![CI](https://github.com/shreyashdwivedi36/schat-app/actions/workflows/test.yml/badge.svg)](https://github.com/shreyashdwivedi36/schat-app/actions/workflows/test.yml)
 [![WebSocket](https://img.shields.io/badge/WebSocket-Native%20ws-010101.svg?logo=socket.io)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 [![PWA](https://img.shields.io/badge/PWA-Installable-5A0FC8.svg?logo=pwa)](https://web.dev/progressive-web-apps/)

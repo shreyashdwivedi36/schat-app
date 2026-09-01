@@ -19,6 +19,9 @@
   ],
   "author": "Shreyash Dwivedi",
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24"
+  },
   "dependencies": {
     "@libsql/client": "^0.17.4",
     "bcryptjs": "^2.4.3",
