@@ -5,6 +5,7 @@
 > **Repository**: [shreyashdwivedi36/schat-app](https://github.com/shreyashdwivedi36/schat-app)
 
 [![Node](https://img.shields.io/badge/Node.js-v20%2B%20%7C%20v24%20LTS-339933.svg?logo=node.js)](https://nodejs.org)
+[![CI](https://github.com/shreyashdwivedi36/schat-app/actions/workflows/test.yml/badge.svg)](https://github.com/shreyashdwivedi36/schat-app/actions/workflows/test.yml)
 [![WebSocket](https://img.shields.io/badge/WebSocket-Native%20ws-010101.svg?logo=socket.io)](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 [![PWA](https://img.shields.io/badge/PWA-Installable-5A0FC8.svg?logo=pwa)](https://web.dev/progressive-web-apps/)
 [![Database](https://img.shields.io/badge/Database-Turso%20libSQL%20%7C%20PostgreSQL-blue.svg)](https://turso.tech)
@@ -82,7 +83,7 @@ node test.js
 
 **Verified Test Coverage:**
 1. Password Hashing & Verification (`bcryptjs`)
-2. JWT Token Issuance & Payload Structure
+2. JWT Token Issuance & Session Binding Verification
 3. User Registration & Profile Bio Updates
 4. Message Editing & Pinning Integrity
 5. Message Reactions & Quoted Reply Relationships
@@ -92,6 +93,7 @@ node test.js
 9. Message Search Privacy & Scoped Authorization Boundaries
 10. Server-Side Session Revocation Guard & Database Validation
 11. Server-Side Direct Message Authorization & Block Verification
+12. Live WebSocket End-to-End Realtime Messaging & Authorization Integration Suite
 
 ---
 

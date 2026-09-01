@@ -1,5 +1,5 @@
-# Use official Node.js Active LTS lightweight image
-FROM node:24-alpine
+# Use official Node.js LTS lightweight image
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
@@ -14,10 +14,10 @@ RUN npm install --production
 COPY . .
 
 # Expose port
-EXPOSE 7860
+EXPOSE 10000
 
 # Set environment variable
-ENV PORT=7860
+ENV PORT=10000
 
 # Start server
 CMD ["node", "server.js"]

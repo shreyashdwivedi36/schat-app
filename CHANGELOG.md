@@ -8,18 +8,20 @@ All notable changes to this project will be documented in this file.
 - **Turso libSQL Engine**: Integrated `@libsql/client` into `db.js`, establishing a high-performance distributed edge persistence tier with multi-gigabyte storage capacity and low-latency query performance.
 
 ### 🔒 Production Security & Fail-Closed Boundaries
-- **Fail-Closed Authentication Engine**: Re-engineered `verifyUserSession` to fail closed (`return null`) on database connection or query failures, preventing unauthenticated access during transient database outages.
-- **Strict Session ID Requirement**: Mandated `sessionId` validation for all standard user JWTs, blocking legacy or sessionless tokens.
-- **Atomic Session Binding on Login & Registration**: Enforced mandatory session persistence prior to JWT issuance in `/api/login` and `/api/register`.
-- **WebSocket Origin Validation**: Added `req.headers.origin` verification against `ALLOWED_ORIGINS` during WebSocket handshakes to prevent Cross-Site WebSocket Hijacking (CSWSH).
-- **API Hygiene**: Removed deprecated unauthenticated `/api/push-logs` route.
-- **Sanitized Health Telemetry**: Removed internal database error messages from public `GET /api/health` 503 response.
+- **Super-Admin Session Binding**: Bound Super-Admin authentication to `user_sessions`, eliminating sessionless administrative JWT tokens and enabling instant remote revocation.
+- **Brute-Force Authentication Rate Limiting**: Implemented an in-memory sliding window rate limiter on `/api/login` and `/api/register` to block credential stuffing.
+- **WebSocket Traffic & Abuse Controls**: Added per-socket rate limiting for message dispatch (max 45/min) and typing events (max 10/5s) to eliminate spam.
+- **Fail-Closed Authentication Engine**: Re-engineered `verifyUserSession` to fail closed (`return null`) on database connection or query failures.
+- **Strict Session ID Requirement**: Mandated `sessionId` validation for all JWTs, blocking legacy or sessionless tokens.
+- **Media Privacy & API Semantics**: Protected `GET /api/media/check/:hash` with `authMiddleware`, and enforced `409 Conflict` / `404 Not Found` REST semantics across contact and block endpoints.
+- **100KB Global Request Limit**: Reduced global Express body size limit from 10MB to 100KB.
 
-### 🐳 Infrastructure Modernization
+### 🐳 Infrastructure Modernization & CI/CD
+- **GitHub Actions CI Pipeline**: Added automated test workflow (`.github/workflows/test.yml`) running on Node 24 Active LTS.
 - **Node.js 24 LTS Upgrade**: Upgraded Docker base image to `node:24-alpine` (Active LTS).
 
-### 🧪 11-Suite Automated Regression Coverage
-- **100% Pass Rate**: Validated all 11 test suites covering fail-closed boundaries, password hashing, session tokens, DM authorization, blocklist isolation, and search scoping.
+### 🧪 12-Suite Automated Regression & Integration Coverage
+- **100% Pass Rate**: Added Test 12 featuring a live end-to-end WebSocket integration suite validating multi-client handshakes, real-time message delivery ACKs, and live server-side DM authorization rejections.
 
 ---
 

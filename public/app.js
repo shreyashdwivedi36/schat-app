@@ -4793,7 +4793,7 @@ async function subscribeToPushNotifications() {
       return; // Already subscribed
     }
 
-    let PUBLIC_VAPID_KEY = 'BDriNLW3BpSsXJU1ROCXe1CAZ2Ko-U1A-44JmFJUlTZyqBZkkw7PQ7Yuxaudvdk2SLcB7QiWglS4WDucpl8aIHY';
+    let PUBLIC_VAPID_KEY = null;
     try {
       const pkRes = await fetch('/api/push/vapid-public-key');
       if (pkRes.ok) {
@@ -4801,6 +4801,11 @@ async function subscribeToPushNotifications() {
         if (pkData.publicKey) PUBLIC_VAPID_KEY = pkData.publicKey;
       }
     } catch (e) {}
+
+    if (!PUBLIC_VAPID_KEY) {
+      console.warn('Push notifications disabled: VAPID public key not available.');
+      return;
+    }
     
     // Convert base64 url safe string to Uint8Array
     const padding = '='.repeat((4 - PUBLIC_VAPID_KEY.length % 4) % 4);

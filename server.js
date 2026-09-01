@@ -1,5 +1,6 @@
 const http = require('http');
 const path = require('path');
+const crypto = require('crypto');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
@@ -27,6 +28,28 @@ const WebSocket = require('ws');
 const app = express();
 const server = http.createServer(app);
 
+// In-Memory Authentication Rate Limiter (Sliding Window: 15 attempts / 15 mins)
+const loginAttemptMap = new Map();
+function authRateLimiter(req, res, next) {
+  const ip = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  const maxAttempts = 15;
+
+  let record = loginAttemptMap.get(ip);
+  if (!record || (now - record.firstAttempt > windowMs)) {
+    record = { count: 1, firstAttempt: now };
+    loginAttemptMap.set(ip, record);
+  } else {
+    record.count += 1;
+  }
+
+  if (record.count > maxAttempts) {
+    return res.status(429).json({ error: 'Too many authentication attempts from this IP. Please try again after 15 minutes.' });
+  }
+  next();
+}
+
 // CORS Policy Configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
 app.use(cors({
@@ -36,8 +59,8 @@ app.use(cors({
   exposedHeaders: ['X-Renewed-Token']
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ limit: '10mb', extended: true }));
+app.use(express.json({ limit: '100kb' }));
+app.use(express.urlencoded({ limit: '100kb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'allow' }));
 
 // Health Check Endpoint for Database & WebSocket Uptime Monitoring
@@ -106,9 +129,6 @@ function translateText(text, targetLang = 'en', sourceLang = 'auto') {
   });
 }
 
-
-const crypto = require('crypto');
-
 function parseUserAgent(ua) {
   if (!ua) return { device: 'Web (Desktop)', browser: 'Browser' };
   let device = 'Desktop';
@@ -146,13 +166,13 @@ function isValidTimerValue(seconds) {
 // REST Endpoints
 
 // Register User
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', authRateLimiter, async (req, res) => {
   try {
-    const username = sanitizeString(req.body.username, 50);
+    const username = sanitizeString(req.body.username, 255);
     const email = sanitizeString(req.body.email, 255);
     const password = req.body.password;
-    const avatar = sanitizeString(req.body.avatar, 500) || '/avatars/cosmic-astronaut.svg';
-    const bio = sanitizeString(req.body.bio, 255) || 'Hey there! I am using SChat.';
+    const avatar = sanitizeString(req.body.avatar, 500000) || '⚡';
+    const bio = sanitizeString(req.body.bio, 500) || 'Hey there! I am using SChat.';
 
     if (!username || !email || !password) {
       return res.status(400).json({ error: 'Username, email, and password are required.' });
@@ -219,7 +239,7 @@ app.post('/api/register', async (req, res) => {
 });
 
 // Login User
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', authRateLimiter, async (req, res) => {
   try {
     const username = sanitizeString(req.body.username, 255);
     const password = req.body.password;
@@ -240,10 +260,20 @@ app.post('/api/login', async (req, res) => {
         bio: 'Platform Administrator',
         role: 'super_admin'
       };
-      const token = generateToken(adminData);
+      const adminSessionId = crypto.randomUUID();
+      const uaInfo = parseUserAgent(req.headers['user-agent'] || '');
+      const ip = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
+
+      await db.run(
+        'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address, last_active) VALUES (?, ?, ?, ?, ?, ?)',
+        [adminSessionId, 0, uaInfo.device, uaInfo.browser, ip, new Date().toISOString()]
+      );
+
+      const token = generateToken(adminData, adminSessionId);
       return res.json({
         message: 'Admin authentication successful.',
         token,
+        sessionId: adminSessionId,
         user: adminData
       });
     }
@@ -307,7 +337,7 @@ app.get('/api/me', authMiddleware, async (req, res) => {
 });
 
 // Get all users (for persistent sidebar)
-app.get('/api/media/check/:hash', async (req, res) => {
+app.get('/api/media/check/:hash', authMiddleware, async (req, res) => {
   if (!db) return res.status(500).json({ error: 'DB not connected' });
   try {
     const hash = req.params.hash;
@@ -415,6 +445,10 @@ app.post('/api/users/block', authMiddleware, async (req, res) => {
     if (isNaN(targetId) || targetId === req.user.id) {
       return res.status(400).json({ error: 'Invalid user to block.' });
     }
+    const alreadyBlocked = await db.get('SELECT id FROM blocked_users WHERE blocker_id = ? AND blocked_id = ?', [req.user.id, targetId]);
+    if (alreadyBlocked) {
+      return res.status(409).json({ error: 'User is already blocked.' });
+    }
     await db.run('INSERT INTO blocked_users (blocker_id, blocked_id) VALUES (?, ?)', [req.user.id, targetId]);
     res.json({ message: 'User blocked successfully.' });
   } catch (err) {
@@ -499,7 +533,10 @@ app.post('/api/users/mute', authMiddleware, async (req, res) => {
 
 // Return dynamic VAPID public key to client
 app.get('/api/push/vapid-public-key', (req, res) => {
-  res.json({ publicKey: VAPID_PUBLIC_KEY || 'BDriNLW3BpSsXJU1ROCXe1CAZ2Ko-U1A-44JmFJUlTZyqBZkkw7PQ7Yuxaudvdk2SLcB7QiWglS4WDucpl8aIHY' });
+  if (!VAPID_PUBLIC_KEY) {
+    return res.status(503).json({ error: 'Push notification service is not configured in environment.' });
+  }
+  res.json({ publicKey: VAPID_PUBLIC_KEY });
 });
 
 // Register device push subscription
@@ -888,11 +925,11 @@ app.post('/api/contacts/request', authMiddleware, async (req, res) => {
 
     if (existing) {
       if (existing.status === 'accepted') {
-        return res.status(400).json({ error: 'You are already contacts with @' + targetUser.username });
+        return res.status(409).json({ error: 'You are already contacts with @' + targetUser.username });
       }
       if (existing.status === 'pending') {
         if (Number(existing.requester_id) === Number(req.user.id)) {
-          return res.status(400).json({ error: 'Contact request already pending.' });
+          return res.status(409).json({ error: 'Contact request already pending.' });
         } else {
           // If the other user already sent a request, auto-accept it!
           await db.run('UPDATE contacts SET status = ? WHERE id = ?', ['accepted', existing.id]);
@@ -931,7 +968,15 @@ app.post('/api/contacts/accept', authMiddleware, async (req, res) => {
   if (!requester_id) return res.status(400).json({ error: 'Requester ID required.' });
 
   try {
-    await db.run('UPDATE contacts SET status = ? WHERE requester_id = ? AND recipient_id = ?', ['accepted', requester_id, req.user.id]);
+    const existingReq = await db.get(
+      'SELECT id FROM contacts WHERE requester_id = ? AND recipient_id = ? AND status = ?',
+      [requester_id, req.user.id, 'pending']
+    );
+    if (!existingReq) {
+      return res.status(404).json({ error: 'No pending contact request found from this user.' });
+    }
+
+    await db.run('UPDATE contacts SET status = ? WHERE id = ?', ['accepted', existingReq.id]);
     
     broadcast({
       type: 'contact_request_accepted',
@@ -1161,6 +1206,8 @@ wss.on('connection', async (ws, req) => {
   }
 
   let currentUser = null;
+  const msgRate = { count: 0, resetAt: Date.now() + 60000 };
+  const typingRate = { count: 0, resetAt: Date.now() + 5000 };
 
   const urlParams = new URLSearchParams(req.url.replace(/^.*\?/, ''));
   const urlToken = urlParams.get('token');
@@ -1248,6 +1295,20 @@ wss.on('connection', async (ws, req) => {
       }
 
       if (data.type === 'chat_message') {
+        // Enforce per-connection message rate limit (max 45 messages / min)
+        const now = Date.now();
+        if (now > msgRate.resetAt) {
+          msgRate.count = 1;
+          msgRate.resetAt = now + 60000;
+        } else {
+          msgRate.count += 1;
+          if (msgRate.count > 45) {
+            return ws.send(JSON.stringify({
+              type: 'rate_limit_exceeded',
+              message: 'Rate limit exceeded: Please slow down message sending.'
+            }));
+          }
+        }
         const content = sanitizeString(data.content, 2000);
         if (!content) return;
 
@@ -1644,6 +1705,14 @@ wss.on('connection', async (ws, req) => {
           console.error('WS Delete Authorization Error:', e);
         }
       } else if (data.type === 'typing') {
+        const now = Date.now();
+        if (now > typingRate.resetAt) {
+          typingRate.count = 1;
+          typingRate.resetAt = now + 5000;
+        } else {
+          typingRate.count += 1;
+          if (typingRate.count > 10) return; // Drop spam typing events
+        }
         const recipientId = (data.recipient_id && !isNaN(data.recipient_id)) ? parseInt(data.recipient_id, 10) : null;
         const typingPayload = {
           type: 'typing',

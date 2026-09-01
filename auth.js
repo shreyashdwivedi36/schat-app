@@ -44,18 +44,19 @@ async function verifyUserSession(token) {
   if (!token) return null;
   const decoded = verifyToken(token);
   if (!decoded) return null;
-  if (decoded.role === 'super_admin') return decoded;
 
-  // Enforce session ID presence for all standard users
+  // Enforce session ID presence for all tokens
   if (!decoded.sessionId) return null;
 
   if (db) {
     try {
-      // 1. Verify user exists and is not banned
-      const user = await db.get('SELECT id, is_banned FROM users WHERE id = ?', [decoded.id]);
-      if (!user || user.is_banned) return null;
+      if (decoded.role !== 'super_admin') {
+        // 1. Verify user exists and is not banned
+        const user = await db.get('SELECT id, is_banned FROM users WHERE id = ?', [decoded.id]);
+        if (!user || user.is_banned) return null;
+      }
 
-      // 2. Verify session is still active in user_sessions
+      // 2. Verify session is still active in user_sessions (both normal users & admin)
       const activeSession = await db.get(
         'SELECT id FROM user_sessions WHERE user_id = ? AND session_id = ?',
         [decoded.id, decoded.sessionId]
