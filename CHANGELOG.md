@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.8.0] - 2026-09-04
+
+### ⚡ True Delivery ACK Protocol & Real-Time Lifecycle
+- **Deterministic Delivery Lifecycle**: Standardized initial message persistence strictly to `'sent'`. The status transitions to `'delivered'` only after the recipient client explicitly transmits a validated `client_ack_delivered` receipt.
+- **Live WebSocket Session Termination**: Integrated instant remote session disconnection into `/api/sessions/:sessionId` and `/api/sessions`—revoking a session now actively closes corresponding TCP WebSocket connections with close code `4401 ('Session revoked')`.
+
+### 🛡️ Non-Blocking Asynchronous Cryptography & Security Headers
+- **Async Non-Blocking Password Hashing**: Converted password hashing (`hashPassword`) and verification (`comparePassword`) to `async/await` using `bcrypt.hash` and `bcrypt.compare`, eliminating event-loop stalls under concurrent authentication traffic.
+- **In-Band WebSocket Authentication**: Removed sensitive JWT tokens from WebSocket URL query parameters (`ws://...?token=`), standardizing exclusively on secure in-band `{ type: 'auth', token }` message handshakes to prevent tokens from appearing in reverse-proxy access logs.
+- **Dotfile & Header Hardening**: Disabled global dotfile serving in `express.static` (explicitly mounting `/.well-known`), and disabled `x-powered-by` header.
+- **Graceful Process Shutdown**: Added `SIGTERM` and `SIGINT` handlers to gracefully terminate active WebSocket connections and close HTTP/DB listeners on deployment rollouts.
+
+---
+
 ## [v1.7.0] - 2026-08-30
 
 ### 🚀 Turso Cloud Database Integration & Edge Scaling

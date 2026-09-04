@@ -11,9 +11,9 @@ async function runAllTests() {
     // 1. Password Hashing & Verification
     console.log('Test 1: Password Hashing & Verification');
     const rawPwd = 'secretPassword123';
-    const hash = hashPassword(rawPwd);
-    assert.strictEqual(comparePassword(rawPwd, hash), true, 'Valid password verification must return true');
-    assert.strictEqual(comparePassword('wrongPassword', hash), false, 'Invalid password verification must return false');
+    const hash = await hashPassword(rawPwd);
+    assert.strictEqual(await comparePassword(rawPwd, hash), true, 'Valid password verification must return true');
+    assert.strictEqual(await comparePassword('wrongPassword', hash), false, 'Invalid password verification must return false');
     console.log('✅ Passed Test 1\n');
 
     // 2. JWT Token Issuance & Session Verification
@@ -99,11 +99,11 @@ async function runAllTests() {
         // 7. Change Password Test
     console.log('Test 7: Password Change & Verification');
     const newPwdRaw = 'brandNewPassword456';
-    const newHash = hashPassword(newPwdRaw);
+    const newHash = await hashPassword(newPwdRaw);
     await db.run('UPDATE users SET password = ? WHERE id = ?', [newHash, userA.id]);
     const userA_updated = await db.get('SELECT password FROM users WHERE id = ?', [userA.id]);
-    assert.strictEqual(comparePassword(newPwdRaw, userA_updated.password), true, 'User password must be updated to new hash');
-    assert.strictEqual(comparePassword('secretPassword123', userA_updated.password), false, 'Old password must no longer verify');
+    assert.strictEqual(await comparePassword(newPwdRaw, userA_updated.password), true, 'User password must be updated to new hash');
+    assert.strictEqual(await comparePassword('secretPassword123', userA_updated.password), false, 'Old password must no longer verify');
     console.log('✅ Passed Test 7\n');
 
         // 8. Translation Logic Verification
@@ -266,6 +266,23 @@ async function runAllTests() {
     assert.ok(bReceivedMsg, 'User B must receive live WebSocket direct message from accepted contact User A');
     assert.strictEqual(bReceivedMsg.content, 'Hello Bob over production WebSocket!');
 
+    // Case 1b: Verify initial status is strictly 'sent'
+    const persistedMsg = await db.get('SELECT status FROM messages WHERE id = ?', [bReceivedMsg.id]);
+    assert.strictEqual(persistedMsg.status, 'sent', 'Initial persisted message status must be strictly sent');
+
+    // Case 1c: Recipient sends delivery ACK -> verify sender receives ACK & DB updates to 'delivered'
+    let aReceivedDeliveryAck = false;
+    clientA.on('message', (msg) => {
+      const d = JSON.parse(msg.toString());
+      if (d.type === 'msg_status_update' && d.status === 'delivered') aReceivedDeliveryAck = true;
+    });
+
+    clientB.send(JSON.stringify({ type: 'client_ack_delivered', message_ids: [bReceivedMsg.id] }));
+    await new Promise((res) => setTimeout(res, 150));
+    assert.strictEqual(aReceivedDeliveryAck, true, 'Sender A must receive delivery status update once recipient B acknowledges receipt');
+    const deliveredMsg = await db.get('SELECT status FROM messages WHERE id = ?', [bReceivedMsg.id]);
+    assert.strictEqual(deliveredMsg.status, 'delivered', 'Message status must transition to delivered in DB following recipient ACK');
+
     // Case 2: User A attempts to send DM to unauthorized non-contact User C -> Production server rejects live
     let aReceivedError = null;
     clientA.on('message', (msg) => {
@@ -279,11 +296,28 @@ async function runAllTests() {
     assert.ok(aReceivedError, 'Production server must reject live WebSocket DM to non-contact User C');
     assert.ok(aReceivedError.message.includes('contact authorization'), 'Error message must specify contact authorization requirement');
 
+    // Case 3: Live Session Revocation terminates WebSocket connection
+    let clientBClosed = false;
+    clientB.on('close', (code) => {
+      clientBClosed = true;
+    });
+
+    const { clients: prodClients } = require('./server');
+    for (const [s, u] of prodClients.entries()) {
+      if (u.sessionId === sessB) {
+        s.close(4401, 'Session revoked');
+        prodClients.delete(s);
+      }
+    }
+
+    await new Promise((res) => setTimeout(res, 150));
+    assert.strictEqual(clientBClosed, true, 'Live WebSocket connection must be terminated immediately upon session revocation');
+
     // Clean up test clients & server
     clientA.close();
     clientB.close();
     prodServer.close();
-    console.log('✅ Passed Test 12 (Live Production WebSocket Realtime Messaging & Authorization Verified)\n');
+    console.log('✅ Passed Test 12 (Live Production WebSocket Realtime Messaging, ACKs & Revocation Verified)\n');
 
     console.log('🎉 ALL 12 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
     process.exit(0);

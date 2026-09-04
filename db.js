@@ -453,6 +453,52 @@ if (process.env.TURSO_DATABASE_URL) {
         }
         return { changes: 0 };
       }
+      if (sql.includes('UPDATE messages SET status')) {
+        let status = 'delivered';
+        if (sql.includes("status = 'delivered'")) {
+          status = 'delivered';
+        } else if (sql.includes("status = 'read'")) {
+          status = 'read';
+        } else if (params && typeof params[0] === 'string') {
+          status = params[0];
+        }
+
+        let changes = 0;
+        if (sql.includes('WHERE id IN')) {
+          const ids = (params || []).map(Number);
+          data.messages.forEach(m => {
+            if (ids.includes(Number(m.id))) {
+              m.status = status;
+              changes++;
+            }
+          });
+        } else if (sql.includes('recipient_id = ? AND status = ?')) {
+          const [newStatus, recipientId, oldStatus] = params;
+          data.messages.forEach(m => {
+            if (Number(m.recipient_id) === Number(recipientId) && m.status === oldStatus) {
+              m.status = newStatus;
+              changes++;
+            }
+          });
+        } else if (sql.includes('user_id = ? AND recipient_id = ? AND status != ?')) {
+          const [newStatus, userId, recipientId, diffStatus] = params;
+          data.messages.forEach(m => {
+            if (Number(m.user_id) === Number(userId) && Number(m.recipient_id) === Number(recipientId) && m.status !== diffStatus) {
+              m.status = newStatus;
+              changes++;
+            }
+          });
+        } else if (sql.includes('WHERE id = ?')) {
+          const id = Number(params[params.length - 1]);
+          const msg = data.messages.find(m => Number(m.id) === id);
+          if (msg) {
+            msg.status = status;
+            changes++;
+          }
+        }
+        if (changes > 0) saveData();
+        return { changes };
+      }
                   if (sql.includes('UPDATE user_sessions SET')) {
         const [last_active, ip_address, device, browser, id] = params;
         const sess = (data.user_sessions || []).find(s => Number(s.id) === Number(id));
@@ -700,6 +746,17 @@ if (process.env.TURSO_DATABASE_URL) {
       if (sql.includes('FROM messages')) {
         const nowIso = new Date().toISOString();
         let validMsgs = data.messages.filter(m => !m.expires_at || m.expires_at > nowIso);
+        if (sql.includes('WHERE id IN')) {
+          const recipientId = sql.includes('recipient_id = ?') ? Number(params[params.length - 1]) : null;
+          const ids = params.map(Number);
+          return validMsgs.filter(m => ids.includes(Number(m.id)) && (!recipientId || Number(m.recipient_id) === recipientId));
+        }
+        if (sql.includes('SELECT DISTINCT user_id FROM messages WHERE recipient_id = ?')) {
+          const recipientId = Number(params[0]);
+          const status = params[1] || 'sent';
+          const userIds = [...new Set(validMsgs.filter(m => Number(m.recipient_id) === recipientId && m.status === status).map(m => m.user_id))];
+          return userIds.map(uid => ({ user_id: uid }));
+        }
         if (sql.includes('content LIKE ?')) {
           const queryStr = (params[0] || '').replace(/%/g, '').toLowerCase();
           validMsgs = validMsgs.filter(m => m.content && m.content.toLowerCase().includes(queryStr));

@@ -1749,7 +1749,7 @@ const enterChat = () => {
     }
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}?token=${encodeURIComponent(authToken)}`;
+    const wsUrl = `${protocol}//${window.location.host}`;
 
     try {
       ws = new WebSocket(wsUrl);
@@ -1760,6 +1760,8 @@ const enterChat = () => {
 
     ws.onopen = () => {
       console.log('⚡ Connected to SChat WebSocket Server');
+      ws.send(JSON.stringify({ type: 'auth', token: authToken }));
+
       if (wsReconnectTimer) {
         clearTimeout(wsReconnectTimer);
         wsReconnectTimer = null;

@@ -26,6 +26,7 @@ const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
 const WebSocket = require('ws');
 
 const app = express();
+app.disable('x-powered-by');
 app.set('trust proxy', 1);
 const server = http.createServer(app);
 
@@ -62,7 +63,8 @@ app.use(cors({
 
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ limit: '100kb', extended: true }));
-app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'allow' }));
+app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'ignore' }));
+app.use('/.well-known', express.static(path.join(__dirname, 'public', '.well-known'), { dotfiles: 'allow' }));
 
 // Health Check Endpoint for Database & WebSocket Uptime Monitoring
 app.get('/api/health', async (req, res) => {
@@ -201,7 +203,7 @@ app.post('/api/register', authRateLimiter, async (req, res) => {
       return res.status(400).json({ error: 'Email is already registered.' });
     }
 
-    const hashedPassword = hashPassword(password);
+    const hashedPassword = await hashPassword(password);
 
     const result = await db.run(
       'INSERT INTO users (username, email, password, avatar, bio) VALUES (?, ?, ?, ?, ?)',
@@ -258,7 +260,7 @@ app.post('/api/login', authRateLimiter, async (req, res) => {
       if (db) {
         adminRow = await db.get('SELECT id, username, email, avatar, bio, is_banned FROM users WHERE username = ?', [SUPER_ADMIN_USERNAME]);
         if (!adminRow) {
-          const hashed = hashPassword(SUPER_ADMIN_PASSWORD);
+          const hashed = await hashPassword(SUPER_ADMIN_PASSWORD);
           const ins = await db.run(
             'INSERT INTO users (username, email, password, avatar, bio) VALUES (?, ?, ?, ?, ?)',
             [SUPER_ADMIN_USERNAME, 'admin@schat.local', hashed, '🛡️', 'Platform Administrator']
@@ -312,7 +314,7 @@ app.post('/api/login', authRateLimiter, async (req, res) => {
       return res.status(403).json({ error: 'This account has been suspended or banned.' });
     }
 
-    const isMatch = comparePassword(password, user.password);
+    const isMatch = await comparePassword(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: 'Invalid username or password.' });
     }
@@ -327,7 +329,7 @@ app.post('/api/login', authRateLimiter, async (req, res) => {
 
     const sessionId = crypto.randomUUID();
     const uaInfo = parseUserAgent(req.headers['user-agent'] || '');
-    const ip = req.headers['x-forwarded-for'] ? req.headers['x-forwarded-for'].split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
+    const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
 
     await db.run(
       'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address, last_active) VALUES (?, ?, ?, ?, ?, ?)',
@@ -419,12 +421,12 @@ app.post('/api/user/change-password', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found.' });
     }
 
-    const isMatch = comparePassword(currentPassword, user.password);
+    const isMatch = await comparePassword(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: 'Incorrect current password.' });
     }
 
-    const newHashedPassword = hashPassword(newPassword);
+    const newHashedPassword = await hashPassword(newPassword);
     await db.run('UPDATE users SET password = ? WHERE id = ?', [newHashedPassword, req.user.id]);
 
     res.json({ message: 'Password changed successfully!' });
@@ -864,6 +866,13 @@ app.delete('/api/sessions/:sessionId', authMiddleware, async (req, res) => {
     await db.run('DELETE FROM user_sessions WHERE session_id = ? AND user_id = ?', [sessionId, req.user.id]);
     // Force disconnect revoked session via WebSocket
     broadcast({ type: 'session_revoked', sessionId, userId: req.user.id });
+    for (const [clientSocket, clientUser] of clients.entries()) {
+      if (clientUser.id === req.user.id && clientUser.sessionId === sessionId) {
+        clientSocket.send(JSON.stringify({ type: 'auth_error', message: 'Session has been revoked remotely.' }));
+        clientSocket.close(4401, 'Session revoked');
+        clients.delete(clientSocket);
+      }
+    }
     res.json({ message: 'Session revoked successfully.' });
   } catch (err) {
     console.error('Revoke session error:', err);
@@ -878,6 +887,13 @@ app.delete('/api/sessions', authMiddleware, async (req, res) => {
   try {
     await db.run('DELETE FROM user_sessions WHERE user_id = ? AND session_id != ?', [req.user.id, currentSessionId]);
     broadcast({ type: 'all_other_sessions_terminated', userId: req.user.id, keepSessionId: currentSessionId });
+    for (const [clientSocket, clientUser] of clients.entries()) {
+      if (clientUser.id === req.user.id && clientUser.sessionId !== currentSessionId) {
+        clientSocket.send(JSON.stringify({ type: 'auth_error', message: 'Session has been revoked remotely.' }));
+        clientSocket.close(4401, 'Session revoked');
+        clients.delete(clientSocket);
+      }
+    }
     res.json({ message: 'All other sessions have been logged out.' });
   } catch (err) {
     console.error('Revoke all sessions error:', err);
@@ -1247,42 +1263,6 @@ wss.on('connection', async (ws, req) => {
   const msgRate = { count: 0, resetAt: Date.now() + 60000 };
   const typingRate = { count: 0, resetAt: Date.now() + 5000 };
 
-  const urlParams = new URLSearchParams(req.url.replace(/^.*\?/, ''));
-  const urlToken = urlParams.get('token');
-  if (urlToken) {
-    const decoded = await verifyUserSession(urlToken);
-    if (decoded) {
-      currentUser = decoded;
-      clients.set(ws, currentUser);
-
-      const renewedWsToken = generateToken(currentUser, currentUser.sessionId);
-      ws.send(JSON.stringify({
-        type: 'auth_success',
-        user: currentUser,
-        token: renewedWsToken,
-        onlineUsers: getOnlineUsersList()
-      }));
-
-      broadcast({
-        type: 'presence',
-        action: 'join',
-        username: currentUser.username,
-        avatar: currentUser.avatar,
-        onlineUsers: getOnlineUsersList()
-      });
-      // Notify distinct senders that their messages were delivered to this user
-      db.all('SELECT DISTINCT user_id FROM messages WHERE recipient_id = ? AND status = ?', [currentUser.id, 'sent']).then(senders => {
-        return db.run('UPDATE messages SET status = ? WHERE recipient_id = ? AND status = ?', ['delivered', currentUser.id, 'sent']).then(() => {
-          (senders || []).forEach(s => {
-            sendToUser(s.user_id, { type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
-          });
-        });
-      }).catch(() => {});
-    } else {
-      ws.send(JSON.stringify({ type: 'auth_error', message: 'Token expired, revoked, or account suspended.' }));
-    }
-  }
-
   ws.on('message', async (messageBuffer) => {
     try {
       const data = JSON.parse(messageBuffer.toString());
@@ -1299,15 +1279,17 @@ wss.on('connection', async (ws, req) => {
         const decoded = await verifyUserSession(data.token);
         if (!decoded) {
           ws.send(JSON.stringify({ type: 'auth_error', message: 'Authentication failed. Session revoked or invalid.' }));
-          return ws.close();
+          return ws.close(4401, 'Auth failed');
         }
 
         currentUser = decoded;
         clients.set(ws, currentUser);
 
+        const renewedWsToken = generateToken(currentUser, currentUser.sessionId);
         ws.send(JSON.stringify({
           type: 'auth_success',
           user: currentUser,
+          token: renewedWsToken,
           onlineUsers: getOnlineUsersList()
         }));
 
@@ -1395,7 +1377,7 @@ wss.on('connection', async (ws, req) => {
           expiresAtIso = new Date(Date.now() + timerSeconds * 1000).toISOString();
         }
 
-        const initialStatus = (recipientId && isUserOnline(recipientId)) ? 'delivered' : 'sent';
+        const initialStatus = 'sent';
         let insertedId;
 
         try {
@@ -1799,7 +1781,30 @@ if (require.main === module) {
   });
 }
 
-module.exports = { app, server, wss, db };
+function gracefulShutdown(signal) {
+  console.log(`\nReceived ${signal}. Gracefully shutting down SChat...`);
+  for (const [socket] of clients.entries()) {
+    try {
+      socket.close(1001, 'Server shutting down');
+    } catch (e) {}
+  }
+  clients.clear();
+
+  server.close(() => {
+    console.log('HTTP and WebSocket servers closed.');
+    process.exit(0);
+  });
+
+  setTimeout(() => {
+    console.error('Could not close connections in time, forcefully shutting down');
+    process.exit(1);
+  }, 5000).unref();
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+module.exports = { app, server, wss, db, clients };
 
 // Admin Push Diagnostics
 app.get('/api/admin/push-logs', superAdminMiddleware, (req, res) => {
