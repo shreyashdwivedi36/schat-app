@@ -18,7 +18,7 @@ if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {
   console.warn('⚠️ VAPID keys not configured in environment. Web Push notifications will be inactive.');
 }
 
-const { hashPassword, comparePassword, generateToken, verifyToken, verifyUserSession, authMiddleware, superAdminMiddleware } = require('./auth');
+const { hashPassword, comparePassword, generateToken, verifyToken, verifyUserSession, authMiddleware, superAdminMiddleware, JWT_SECRET } = require('./auth');
 
 const SUPER_ADMIN_USERNAME = process.env.SUPER_ADMIN_USERNAME;
 const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
@@ -501,15 +501,15 @@ app.get('/api/messages', authMiddleware, async (req, res) => {
 
     if (recipientId) {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, is_edited, is_pinned, reactions, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100',
+        'SELECT id, user_id, recipient_id, channel, username, avatar, content, is_blurred, is_edited, is_pinned, reactions, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE ((user_id = ? AND recipient_id = ?) OR (user_id = ? AND recipient_id = ?)) AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id DESC LIMIT 100',
         [req.user.id, recipientId, recipientId, req.user.id]
       );
-      return res.json({ messages });
+      return res.json({ messages: (messages || []).reverse() });
     } else {
       const messages = await db.all(
-        'SELECT id, user_id, recipient_id, username, avatar, content, is_blurred, is_edited, is_pinned, reactions, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id ASC LIMIT 100'
+        'SELECT id, user_id, recipient_id, channel, username, avatar, content, is_blurred, is_edited, is_pinned, reactions, expires_at, status, reply_to_id, reply_to_user, reply_to_text, created_at FROM messages WHERE recipient_id IS NULL AND (expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP) ORDER BY id DESC LIMIT 100'
       );
-      return res.json({ messages });
+      return res.json({ messages: (messages || []).reverse() });
     }
   } catch (err) {
     console.error('Fetch Messages Error:', err);
@@ -595,18 +595,54 @@ app.post('/api/push/subscribe', authMiddleware, async (req, res) => {
   }
 });
 
-// Acknowledge message delivery via authenticated REST fallback
-app.post('/api/messages/mark-delivered', authMiddleware, async (req, res) => {
+// Acknowledge message delivery via authenticated REST or stateless HMAC delivery token
+app.post('/api/messages/mark-delivered', async (req, res) => {
   try {
-    const { message_id } = req.body;
+    const { message_id, delivery_token } = req.body;
     if (!message_id) return res.status(400).json({ error: 'Message ID required.' });
+
     const msg = await db.get('SELECT id, user_id, recipient_id, status FROM messages WHERE id = ?', [message_id]);
-    if (msg && Number(msg.recipient_id) === Number(req.user.id) && msg.status === 'sent') {
-      await db.run('UPDATE messages SET status = ? WHERE id = ?', ['delivered', message_id]);
-      sendToUser(msg.user_id, { type: 'msg_status_update', message_ids: [message_id], status: 'delivered' });
+    if (!msg) return res.status(404).json({ error: 'Message not found.' });
+
+    let isAuthorized = false;
+
+    // Check 1: In-band session authorization via Bearer JWT header
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const decoded = await verifyUserSession(token);
+      if (decoded && Number(msg.recipient_id) === Number(decoded.id)) {
+        isAuthorized = true;
+      }
     }
+
+    // Check 2: Background service worker stateless HMAC delivery token
+    if (!isAuthorized && delivery_token && msg.recipient_id) {
+      const expectedToken = crypto.createHmac('sha256', JWT_SECRET).update(`${msg.id}:${msg.recipient_id}`).digest('hex');
+      if (typeof delivery_token === 'string' && delivery_token.length === expectedToken.length) {
+        try {
+          isAuthorized = crypto.timingSafeEqual(
+            Buffer.from(delivery_token, 'hex'),
+            Buffer.from(expectedToken, 'hex')
+          );
+        } catch (e) {
+          isAuthorized = false;
+        }
+      }
+    }
+
+    if (!isAuthorized) {
+      return res.status(401).json({ error: 'Access denied: Valid session or delivery token required.' });
+    }
+
+    if (msg.status === 'sent') {
+      await db.run('UPDATE messages SET status = ? WHERE id = ?', ['delivered', message_id]);
+      sendToUser(msg.user_id, { type: 'msg_status_update', message_ids: [message_id], status: 'delivered', recipient_id: msg.recipient_id });
+    }
+
     res.json({ success: true });
   } catch (err) {
+    console.error('Error marking delivered:', err);
     res.status(500).json({ error: 'Database error.' });
   }
 });
@@ -674,13 +710,18 @@ app.put('/api/messages/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Forbidden: You can only edit your own messages.' });
     }
 
-    await db.run('UPDATE messages SET content = ?, is_edited = 1 WHERE id = ? AND user_id = ?', [newContent, messageId, req.user.id]);
-
-    broadcast({
+    const editPayload = {
       type: 'edit_message',
       messageId: messageId,
       newContent: newContent
-    });
+    };
+
+    if (msg.recipient_id) {
+      sendToUser(msg.user_id, editPayload);
+      sendToUser(msg.recipient_id, editPayload);
+    } else {
+      broadcast(editPayload);
+    }
 
     res.json({ message: 'Message updated successfully.' });
   } catch (err) {
@@ -693,10 +734,17 @@ app.put('/api/messages/:id', authMiddleware, async (req, res) => {
 async function handleMessageDeletion(msg, messageId) {
   await db.run('DELETE FROM messages WHERE id = ?', [messageId]);
 
-  broadcast({
+  const deletePayload = {
     type: 'delete_message',
     messageId: messageId
-  });
+  };
+
+  if (msg && msg.recipient_id) {
+    sendToUser(msg.user_id, deletePayload);
+    sendToUser(msg.recipient_id, deletePayload);
+  } else {
+    broadcast(deletePayload);
+  }
 
   if (msg && msg.is_pinned === 1) {
     try {
@@ -713,19 +761,24 @@ async function handleMessageDeletion(msg, messageId) {
         );
       }
 
-      if (nextPinned) {
-        broadcast({
-          type: 'update_pinned',
-          messageId: nextPinned.id,
-          is_pinned: 1,
-          content: nextPinned.content
-        });
+      const pinPayload = nextPinned
+        ? {
+            type: 'update_pinned',
+            messageId: nextPinned.id,
+            is_pinned: 1,
+            content: nextPinned.content
+          }
+        : {
+            type: 'update_pinned',
+            messageId: messageId,
+            is_pinned: 0
+          };
+
+      if (msg.recipient_id) {
+        sendToUser(msg.user_id, pinPayload);
+        sendToUser(msg.recipient_id, pinPayload);
       } else {
-        broadcast({
-          type: 'update_pinned',
-          messageId: messageId,
-          is_pinned: 0
-        });
+        broadcast(pinPayload);
       }
     } catch (e) {
       console.error('Error syncing pinned message deletion:', e);
@@ -1455,8 +1508,10 @@ wss.on('connection', async (ws, req) => {
               }
 
               if (devices && devices.length > 0) {
+                const deliveryToken = crypto.createHmac('sha256', JWT_SECRET).update(`${insertedId}:${recipientIdNum}`).digest('hex');
                 const payload = JSON.stringify({
                   message_id: insertedId,
+                  delivery_token: deliveryToken,
                   title: `New message from ${currentUser.username}`,
                   body: content.startsWith('data:audio') ? '🎤 Voice Message' : (isBlurred ? '[Hidden Message]' : content),
                   icon: currentUser.avatar || '/logo.png',
@@ -1557,8 +1612,13 @@ wss.on('connection', async (ws, req) => {
 
         if (isNaN(messageId) || !emoji) return;
 
-        const msg = await db.get('SELECT reactions FROM messages WHERE id = ?', [messageId]);
+        const msg = await db.get('SELECT user_id, recipient_id, reactions FROM messages WHERE id = ?', [messageId]);
         if (msg) {
+          if (msg.recipient_id && currentUser.id !== msg.user_id && currentUser.id !== msg.recipient_id) {
+            ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: You cannot react to this private message.' }));
+            return;
+          }
+
           let rx = {};
           try { rx = JSON.parse(msg.reactions || '{}'); } catch(e){}
           if (!rx[emoji]) rx[emoji] = [];
@@ -1573,43 +1633,67 @@ wss.on('connection', async (ws, req) => {
           const rxJson = JSON.stringify(rx);
           await db.run('UPDATE messages SET reactions = ? WHERE id = ?', [rxJson, messageId]);
 
-          broadcast({
+          const rxPayload = {
             type: 'update_reactions',
             messageId: messageId,
             reactions: rx
-          });
+          };
+
+          if (msg.recipient_id) {
+            sendToUser(msg.user_id, rxPayload);
+            sendToUser(msg.recipient_id, rxPayload);
+          } else {
+            broadcast(rxPayload);
+          }
         }
       } else if (data.type === 'edit_message') {
         const messageId = parseInt(data.messageId, 10);
         const newContent = sanitizeString(data.newContent, 2000);
 
         if (!isNaN(messageId) && newContent) {
-          const msg = await db.get('SELECT user_id FROM messages WHERE id = ?', [messageId]);
+          const msg = await db.get('SELECT user_id, recipient_id FROM messages WHERE id = ?', [messageId]);
           if (msg && msg.user_id === currentUser.id) {
             await db.run('UPDATE messages SET content = ?, is_edited = 1 WHERE id = ? AND user_id = ?', [newContent, messageId, currentUser.id]);
-            broadcast({
+            const editPayload = {
               type: 'edit_message',
               messageId: messageId,
               newContent: newContent
-            });
+            };
+            if (msg.recipient_id) {
+              sendToUser(msg.user_id, editPayload);
+              sendToUser(msg.recipient_id, editPayload);
+            } else {
+              broadcast(editPayload);
+            }
           }
         }
       } else if (data.type === 'toggle_pin') {
         const messageId = parseInt(data.messageId, 10);
         if (!isNaN(messageId)) {
-          const msg = await db.get('SELECT user_id, is_pinned FROM messages WHERE id = ?', [messageId]);
+          const msg = await db.get('SELECT user_id, recipient_id, is_pinned FROM messages WHERE id = ?', [messageId]);
           if (msg) {
-            if (msg.user_id !== currentUser.id) {
+            if (msg.recipient_id) {
+              if (currentUser.id !== msg.user_id && currentUser.id !== msg.recipient_id) {
+                ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: You cannot pin or unpin this private message.' }));
+                return;
+              }
+            } else if (msg.user_id !== currentUser.id && currentUser.role !== 'super_admin') {
               ws.send(JSON.stringify({ type: 'error', message: 'Forbidden: Only the message sender can pin or unpin this message.' }));
               return;
             }
             const newPinState = msg.is_pinned ? 0 : 1;
             await db.run('UPDATE messages SET is_pinned = ? WHERE id = ?', [newPinState, messageId]);
-            broadcast({
+            const pinPayload = {
               type: 'update_pinned',
               messageId: messageId,
               is_pinned: newPinState
-            });
+            };
+            if (msg.recipient_id) {
+              sendToUser(msg.user_id, pinPayload);
+              sendToUser(msg.recipient_id, pinPayload);
+            } else {
+              broadcast(pinPayload);
+            }
           }
         }
       } else if (data.type === 'client_ack_delivered') {

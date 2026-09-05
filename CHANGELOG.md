@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.9.0] - 2026-09-05
+
+### 🛡️ Private Messaging Isolation & Privacy Boundary Enforcement
+- **Scoped DM Edits & Deletions**: Restricted real-time `edit_message` and `delete_message` WebSocket notifications strictly to sender and recipient for 1-on-1 private chats, eliminating unintended global platform-wide broadcasts.
+- **Reaction Authorization & Scoping**: Enforced strict authorization on `toggle_reaction`—preventing unauthorized third parties from reacting to private direct messages, and scoping reaction updates exclusively to message participants.
+- **Direct Message Pin Scoping**: Scoped `update_pinned` events to DM participants, preventing private pinned message contents from being broadcast to non-participating clients.
+
+### 🔔 Stateless HMAC Push Delivery ACK Protocol
+- **Service Worker Background Delivery ACKs**: Resolved background Service Worker HTTP 401 Unauthorized failures by introducing a cryptographically signed HMAC delivery token in the Web Push payload. The `/api/messages/mark-delivered` endpoint verifies either Bearer JWT sessions or valid HMAC delivery tokens statelessly.
+
+### 🗄️ Database Dialect Alignment & History Retrieval
+- **Latest 100 Message Query**: Updated `GET /api/messages` to query `ORDER BY id DESC LIMIT 100` and reverse to ascending order before sending, ensuring that chats with over 100 messages return the 100 most recent messages instead of the oldest historical messages.
+- **Engine Parity**: Aligned SQLite/Turso, PostgreSQL, and local in-memory fallback to identical pagination and ordering semantics.
+
+### 🌐 Frontend Security & HTML5 DOM Standardization
+- **Eliminated Stored XSS**: Replaced inline `onclick` string interpolation for media cards and lightbox image triggers in `renderMessage` with safe DOM event listeners and strict URL protocol validation (`https://`, `http://`, `data:`).
+- **HTML5 `<head>` Normalization**: Relocated context menus (`#msgContextMenu`, `#channelContextMenu`) from `<head>` into `<body>` to conform strictly to the HTML5 specification and prevent premature head termination.
+- **Asset Cache Busting Normalization**: Standardized query strings across `manifest.json`, `style.css`, and `app.js` (`?v=159`).
+
+### 🧪 Expanded 15-Suite Automated Regression & Integration Test Suite
+- **Privacy Boundary Verification**: Added Test 13 (REST DM edit/delete authorization), Test 14 (Stateless HMAC delivery ACK verification), and Test 15 (Message history ordering and pagination verification).
+
+---
+
 ## [v1.8.0] - 2026-09-04
 
 ### ⚡ True Delivery ACK Protocol & Real-Time Lifecycle

@@ -774,12 +774,20 @@ if (process.env.TURSO_DATABASE_URL) {
         }
         if (params.length === 4) {
           const [u1, u2] = params;
-          return validMsgs.filter(m => (m.user_id === u1 && m.recipient_id === u2) || (m.user_id === u2 && m.recipient_id === u1));
+          const matched = validMsgs.filter(m => (Number(m.user_id) === Number(u1) && Number(m.recipient_id) === Number(u2)) || (Number(m.user_id) === Number(u2) && Number(m.recipient_id) === Number(u1)));
+          if (sql.includes('ORDER BY id DESC')) {
+            return [...matched].slice(-100).reverse();
+          }
+          return matched.slice(-100);
         } else if (sql.includes('user_id = ? OR recipient_id = ?')) {
           const [uId] = params;
-          return validMsgs.filter(m => m.user_id === uId || m.recipient_id === uId);
+          return validMsgs.filter(m => Number(m.user_id) === Number(uId) || Number(m.recipient_id) === Number(uId));
         } else {
-          return validMsgs.filter(m => !m.recipient_id).slice(-100);
+          const matched = validMsgs.filter(m => !m.recipient_id);
+          if (sql.includes('ORDER BY id DESC')) {
+            return [...matched].slice(-100).reverse();
+          }
+          return matched.slice(-100);
         }
       }
       return [];

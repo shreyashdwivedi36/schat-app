@@ -16,7 +16,7 @@
   <title>SChat™ — Real-Time Messaging Platform</title>
   
   <!-- PWA Meta Tags & Manifest -->
-  <link rel="manifest" href="manifest.json????v=158">
+  <link rel="manifest" href="manifest.json?v=159">
   <meta name="theme-color" content="#090a12">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -28,80 +28,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   
-  <!-- Three.js 3D WebGL Motion Engine CDN -->
-    <!-- Liquid Glass Translucent Context Menu Popup -->
-  <div id="msgContextMenu" class="msg-context-menu hidden" style="display: none;" role="menu">
-    <div id="msgContextMenuOverlay" class="msg-context-overlay"></div>
-    <div id="msgContextMenuCard" class="msg-context-card">
-      <!-- Quick Reaction Bar -->
-      <div class="quick-reactions-bar">
-        <button class="quick-rx-btn" data-emoji="👍" title="React 👍">👍</button>
-        <button class="quick-rx-btn" data-emoji="❤️" title="React ❤️">❤️</button>
-        <button class="quick-rx-btn" data-emoji="😂" title="React 😂">😂</button>
-        <button class="quick-rx-btn" data-emoji="🔥" title="React 🔥">🔥</button>
-        <button class="quick-rx-btn" data-emoji="😮" title="React 😮">😮</button>
-        <button class="quick-rx-btn" data-emoji="🎉" title="React 🎉">🎉</button>
-      </div>
-
-      <!-- Actions List -->
-      <div class="context-actions-list">
-        <div class="context-item" id="ctxReplyBtn" role="menuitem">
-          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg></span>
-          <span class="context-label">Reply</span>
-        </div>
-        <div class="context-item" id="ctxTranslateBtn" role="menuitem">
-          <span class="context-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>
-          <span class="context-label">Translate Message</span>
-        </div>
-        <div class="context-item" id="ctxCopyBtn" role="menuitem">
-          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></span>
-          <span class="context-label">Copy Text</span>
-        </div>
-        <div class="context-item" id="ctxDownloadBtn" role="menuitem" style="display: none;">
-          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
-          <span class="context-label">Download Media</span>
-        </div>
-        <div class="context-item owner-only" id="ctxPinBtn" role="menuitem">
-          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24V17z"></path></svg></span>
-          <span class="context-label" id="ctxPinLabel">Pin Message</span>
-        </div>
-        <div class="context-item owner-only" id="ctxEditBtn" role="menuitem">
-          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></span>
-          <span class="context-label">Edit Message</span>
-        </div>
-        <div class="context-item owner-only" id="ctxDeleteBtn" role="menuitem">
-          <span class="context-icon delete-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span>
-          <span class="context-label delete-label">Delete</span>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Channel Context Menu Popup -->
-  <div id="channelContextMenu" class="msg-context-menu hidden" style="display: none;" role="menu">
-    <div id="channelContextMenuOverlay" class="msg-context-overlay"></div>
-    <div id="channelContextMenuCard" class="msg-context-card">
-      <div class="context-actions-list">
-                <div class="context-item" id="ctxCloseChatBtn" role="menuitem">
-          <span class="context-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>
-          <span class="context-label">Close Chat</span>
-        </div>
-        <div class="context-item" id="ctxTogglePushBtn" role="menuitem" style="display: none; justify-content: space-between; align-items: center; padding-right: 12px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span class="context-icon" id="ctxTogglePushIcon">🔔</span>
-            <span class="context-label" id="ctxTogglePushLabel">Notifications</span>
-          </div>
-          <div class="toggle-switch-ui" id="ctxTogglePushSwitch">
-            <div class="toggle-switch-knob"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  
-
-  <link rel="stylesheet" href="style.css????v=158">
+  <link rel="stylesheet" href="style.css?v=159">
 </head>
 <body>
   <!-- Cinematic Startup Splash Screen -->
@@ -949,7 +876,77 @@
     </div>
   </div>
 
-  <script src="/app.js????v=158" type="module"></script>
+  <!-- Liquid Glass Translucent Context Menu Popup -->
+  <div id="msgContextMenu" class="msg-context-menu hidden" style="display: none;" role="menu">
+    <div id="msgContextMenuOverlay" class="msg-context-overlay"></div>
+    <div id="msgContextMenuCard" class="msg-context-card">
+      <!-- Quick Reaction Bar -->
+      <div class="quick-reactions-bar">
+        <button class="quick-rx-btn" data-emoji="👍" title="React 👍">👍</button>
+        <button class="quick-rx-btn" data-emoji="❤️" title="React ❤️">❤️</button>
+        <button class="quick-rx-btn" data-emoji="😂" title="React 😂">😂</button>
+        <button class="quick-rx-btn" data-emoji="🔥" title="React 🔥">🔥</button>
+        <button class="quick-rx-btn" data-emoji="😮" title="React 😮">😮</button>
+        <button class="quick-rx-btn" data-emoji="🎉" title="React 🎉">🎉</button>
+      </div>
+
+      <!-- Actions List -->
+      <div class="context-actions-list">
+        <div class="context-item" id="ctxReplyBtn" role="menuitem">
+          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg></span>
+          <span class="context-label">Reply</span>
+        </div>
+        <div class="context-item" id="ctxTranslateBtn" role="menuitem">
+          <span class="context-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></span>
+          <span class="context-label">Translate Message</span>
+        </div>
+        <div class="context-item" id="ctxCopyBtn" role="menuitem">
+          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></span>
+          <span class="context-label">Copy Text</span>
+        </div>
+        <div class="context-item" id="ctxDownloadBtn" role="menuitem" style="display: none;">
+          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></span>
+          <span class="context-label">Download Media</span>
+        </div>
+        <div class="context-item owner-only" id="ctxPinBtn" role="menuitem">
+          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24V17z"></path></svg></span>
+          <span class="context-label" id="ctxPinLabel">Pin Message</span>
+        </div>
+        <div class="context-item owner-only" id="ctxEditBtn" role="menuitem">
+          <span class="context-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></span>
+          <span class="context-label">Edit Message</span>
+        </div>
+        <div class="context-item owner-only" id="ctxDeleteBtn" role="menuitem">
+          <span class="context-icon delete-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span>
+          <span class="context-label delete-label">Delete</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channel Context Menu Popup -->
+  <div id="channelContextMenu" class="msg-context-menu hidden" style="display: none;" role="menu">
+    <div id="channelContextMenuOverlay" class="msg-context-overlay"></div>
+    <div id="channelContextMenuCard" class="msg-context-card">
+      <div class="context-actions-list">
+        <div class="context-item" id="ctxCloseChatBtn" role="menuitem">
+          <span class="context-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></span>
+          <span class="context-label">Close Chat</span>
+        </div>
+        <div class="context-item" id="ctxTogglePushBtn" role="menuitem" style="display: none; justify-content: space-between; align-items: center; padding-right: 12px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="context-icon" id="ctxTogglePushIcon">🔔</span>
+            <span class="context-label" id="ctxTogglePushLabel">Notifications</span>
+          </div>
+          <div class="toggle-switch-ui" id="ctxTogglePushSwitch">
+            <div class="toggle-switch-knob"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js?v=159" type="module"></script>
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js');

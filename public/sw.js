@@ -4,7 +4,7 @@
  * Copyright (c) 2026 Shreyash Dwivedi (@shreyashdwivedi36). All Rights Reserved.
  * ============================================================================
  */
-const CACHE_NAME = 'schat-v158-isolated-dm-push';
+const CACHE_NAME = 'schat-v159-hardened-privacy';
 
 const PRECACHE_URLS = [
   '/',
@@ -83,7 +83,10 @@ self.addEventListener('push', (event) => {
         fetch('/api/messages/mark-delivered', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message_id: data.message_id })
+          body: JSON.stringify({
+            message_id: data.message_id,
+            delivery_token: data.delivery_token || null
+          })
         }).catch(err => console.error('Delivery ACK failed', err))
       ])
     );

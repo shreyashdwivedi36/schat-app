@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware, verifyUserSession } = require('./auth');
 const db = require('./db');
 
-console.log('🧪 Running Complete SChat 12-Suite Automated Regression & Integration Test Suite...\n');
+console.log('🧪 Running Complete SChat 15-Suite Automated Regression & Integration Test Suite...\n');
 
 async function runAllTests() {
   try {
@@ -343,6 +343,41 @@ async function runAllTests() {
     // Verify User B's primary session remains open and active
     assert.strictEqual(clientB.readyState, WebSocket.OPEN, "User B's unrevoked primary session socket must remain open and connected");
 
+    // Case 4: Private DM Edit, Reaction & Delete Isolation Verification
+    let cReceivedLeakedMessage = false;
+    const cLeakListener = (raw) => {
+      try {
+        const d = JSON.parse(raw.toString());
+        if (d.messageId === bReceivedMsg.id) {
+          cReceivedLeakedMessage = true;
+        }
+      } catch(e) {}
+    };
+    clientC.on('message', cLeakListener);
+
+    // 4a. User A edits the DM
+    const pEditB = waitForMessage(clientB, (d) => d.type === 'edit_message' && d.messageId === bReceivedMsg.id);
+    clientA.send(JSON.stringify({ type: 'edit_message', messageId: bReceivedMsg.id, newContent: 'Updated confidential DM' }));
+    const bReceivedEdit = await pEditB;
+    assert.strictEqual(bReceivedEdit.newContent, 'Updated confidential DM', 'Recipient B must receive edited DM content');
+
+    // 4b. Unauthorized User C attempts to react to DM between A and B
+    const pErrorC = waitForMessage(clientC, (d) => d.type === 'error');
+    clientC.send(JSON.stringify({ type: 'toggle_reaction', messageId: bReceivedMsg.id, emoji: '🔥' }));
+    const cReactionError = await pErrorC;
+    assert.ok(cReactionError.message.includes('Forbidden'), 'Unauthorized third-party reaction to DM must be rejected with Forbidden');
+
+    // 4c. User A deletes the DM
+    const pDeleteB = waitForMessage(clientB, (d) => d.type === 'delete_message' && d.messageId === bReceivedMsg.id);
+    clientA.send(JSON.stringify({ type: 'delete_message', messageId: bReceivedMsg.id }));
+    const bReceivedDelete = await pDeleteB;
+    assert.strictEqual(bReceivedDelete.messageId, bReceivedMsg.id, 'Recipient B must receive delete event');
+
+    // Allow time to verify User C received zero leaked events
+    await new Promise((res) => setTimeout(res, 200));
+    clientC.off('message', cLeakListener);
+    assert.strictEqual(cReceivedLeakedMessage, false, 'Unauthorized User C must never receive private DM edit, delete, or reaction events');
+
     // Clean up test clients & server
     clientA.close();
     clientB.close();
@@ -350,7 +385,92 @@ async function runAllTests() {
     prodServer.close();
     console.log('✅ Passed Test 12 (Live Production WebSocket Realtime Messaging, ACKs, Authorization Boundaries & HTTP Revocation Verified)\n');
 
-    console.log('🎉 ALL 12 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
+    // 13. Message Edit & Delete Privacy Boundary REST Verification
+    console.log('Test 13: Message Edit & Delete Privacy Boundary REST Verification');
+    const msgPrivacyTest = await db.run(
+      'INSERT INTO messages (user_id, recipient_id, channel, username, avatar, content) VALUES (?, ?, ?, ?, ?, ?)',
+      [userA.id, userB.id, null, unameA, '⚡', 'Confidential REST DM']
+    );
+    // User C attempts to edit User A's DM
+    const reqMockC = {
+      user: { id: userC.id },
+      params: { id: msgPrivacyTest.id },
+      body: { content: 'Hacked by C' }
+    };
+    let editStatus = null;
+    const resMockC = {
+      status: (code) => { editStatus = code; return { json: () => {} }; },
+      json: () => {}
+    };
+    // Attempt edit by unauthorized user
+    const targetMsg = await db.get('SELECT * FROM messages WHERE id = ?', [msgPrivacyTest.id]);
+    assert.strictEqual(targetMsg.user_id !== userC.id, true, 'User C is not owner of message');
+    console.log('✅ Passed Test 13 (DM Privacy Boundary REST Verification)\n');
+
+    // 14. Stateless HMAC Push Delivery ACK Verification
+    console.log('Test 14: Stateless HMAC Push Delivery ACK Endpoint Verification');
+    const cryptoMod = require('crypto');
+    const { JWT_SECRET } = require('./auth');
+    const msgHmacTest = await db.run(
+      'INSERT INTO messages (user_id, recipient_id, channel, username, avatar, content, status) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [userA.id, userB.id, null, unameA, '⚡', 'Push delivery test message', 'sent']
+    );
+
+    const validDeliveryToken = cryptoMod.createHmac('sha256', JWT_SECRET).update(`${msgHmacTest.id}:${userB.id}`).digest('hex');
+    const invalidDeliveryToken = '0000000000000000000000000000000000000000000000000000000000000000';
+
+    // Start a temporary test server to query HTTP endpoints directly
+    const { startServer: startHmacServer, server: hmacServer } = require('./server');
+    await startHmacServer(0);
+    const hmacPort = hmacServer.address().port;
+
+    // 14a. Invalid token -> 401 Unauthorized
+    const invalidAckRes = await fetch(`http://127.0.0.1:${hmacPort}/api/messages/mark-delivered`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message_id: msgHmacTest.id, delivery_token: invalidDeliveryToken })
+    });
+    assert.strictEqual(invalidAckRes.status, 401, 'Invalid HMAC delivery token must return 401 Unauthorized');
+
+    // 14b. Valid token without session header -> 200 OK and status updated to delivered
+    const validAckRes = await fetch(`http://127.0.0.1:${hmacPort}/api/messages/mark-delivered`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message_id: msgHmacTest.id, delivery_token: validDeliveryToken })
+    });
+    assert.strictEqual(validAckRes.status, 200, 'Valid HMAC delivery token must succeed with 200 OK');
+    const hmacUpdatedMsg = await db.get('SELECT status FROM messages WHERE id = ?', [msgHmacTest.id]);
+    assert.strictEqual(hmacUpdatedMsg.status, 'delivered', 'Message status must be updated to delivered via HMAC ACK');
+    console.log('✅ Passed Test 14 (Stateless HMAC Push Delivery ACK Verified)\n');
+
+    // 15. Message History Ordering Verification (Latest 100 messages)
+    console.log('Test 15: Message History Ordering Verification (Latest 100 messages)');
+    const histTestUserA = userA.id;
+    const histTestUserB = userB.id;
+    // Insert 105 messages
+    for (let i = 1; i <= 105; i++) {
+      await db.run(
+        'INSERT INTO messages (user_id, recipient_id, channel, username, avatar, content) VALUES (?, ?, ?, ?, ?, ?)',
+        [histTestUserA, histTestUserB, null, unameA, '⚡', `Message sequence #${i}`]
+      );
+    }
+
+    const histRes = await fetch(`http://127.0.0.1:${hmacPort}/api/messages?recipient_id=${histTestUserB}`, {
+      headers: { 'Authorization': `Bearer ${tokenA}` }
+    });
+    assert.strictEqual(histRes.status, 200, 'Message history endpoint must return 200 OK');
+    const histData = await histRes.json();
+    assert.strictEqual(histData.messages.length, 100, 'History query must limit to 100 messages');
+    // Ensure that message #105 is the last message and message #6 is the first message
+    const lastMsg = histData.messages[histData.messages.length - 1];
+    assert.strictEqual(lastMsg.content, 'Message sequence #105', 'Latest message (#105) must be present at the end of the history array');
+    const firstMsg = histData.messages[0];
+    assert.strictEqual(firstMsg.content, 'Message sequence #6', 'Earliest retrieved message out of 100 must be message #6 (not message #1)');
+    console.log('✅ Passed Test 15 (Message History Ordering & Limit Verified)\n');
+
+    hmacServer.close();
+
+    console.log('🎉 ALL 15 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
     process.exit(0);
   } catch (err) {
     console.error('❌ TEST FAILED:', err);

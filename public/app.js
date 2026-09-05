@@ -2676,12 +2676,12 @@ const enterChat = () => {
         blurUrl = imageSrc.substring(0, uploadIdx + 8) + 'w_20,e_blur:200,f_auto,q_10/' + imageSrc.substring(uploadIdx + 8);
         highResUrl = imageSrc.substring(0, uploadIdx + 8) + 'w_1280,f_auto,q_auto/' + imageSrc.substring(uploadIdx + 8);
       }
-      contentHtml = `<div class="image-wrapper blur-placeholder-container" style="background-image: url('${blurUrl}'); background-size: cover; border-radius: 12px; overflow: hidden; min-height: 150px; min-width: 150px;">
-                       <img src="${highResUrl}" class="msg-image fade-in-image" style="cursor: zoom-in; opacity: 0; transition: opacity 0.3s ease; width: 100%; height: auto; display: block;" alt="Image attachment" loading="lazy" onclick="openLightbox('${highResUrl}')" onload="this.style.opacity='1'" onerror="this.parentElement.style.backgroundImage='none'; this.parentElement.innerHTML='<div style=\\'padding: 30px 20px; text-align: center; color: var(--text-muted); background: var(--bg-hover);\\'>📸 Media Archived<br><small style=\\'font-size: 0.8em; opacity: 0.7;\\'>Cache Expired</small></div>'">
+      contentHtml = `<div class="image-wrapper blur-placeholder-container" style="background-image: url('${escapeHtml(blurUrl)}'); background-size: cover; border-radius: 12px; overflow: hidden; min-height: 150px; min-width: 150px;">
+                       <img src="${escapeHtml(highResUrl)}" data-highres="${escapeHtml(highResUrl)}" class="msg-image fade-in-image lightbox-clickable" style="cursor: zoom-in; opacity: 0; transition: opacity 0.3s ease; width: 100%; height: auto; display: block;" alt="Image attachment" loading="lazy">
                      </div>`;
     } else if (isFile) {
       contentHtml = `
-        <div class="msg-file-card" onclick="window.open('${fileSrc}', '_blank')">
+        <div class="msg-file-card" data-filesrc="${escapeHtml(fileSrc)}">
           <span class="msg-file-icon">📄</span>
           <div class="msg-file-details">
             <span class="msg-file-name">${escapeHtml(fileName)}</span>
@@ -2719,6 +2719,37 @@ const enterChat = () => {
         </div>
       </div>
     `;
+
+    // Lightbox image click handler
+    const imgEl = msgCard.querySelector('.lightbox-clickable');
+    if (imgEl) {
+      imgEl.addEventListener('load', () => { imgEl.style.opacity = '1'; });
+      imgEl.addEventListener('error', () => {
+        if (imgEl.parentElement) {
+          imgEl.parentElement.style.backgroundImage = 'none';
+          imgEl.parentElement.innerHTML = '<div style="padding: 30px 20px; text-align: center; color: var(--text-muted); background: var(--bg-hover);">📸 Media Archived<br><small style="font-size: 0.8em; opacity: 0.7;">Cache Expired</small></div>';
+        }
+      });
+      imgEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const hr = imgEl.dataset.highres;
+        if (hr && (hr.startsWith('https://') || hr.startsWith('http://') || hr.startsWith('data:'))) {
+          openLightbox(hr);
+        }
+      });
+    }
+
+    // Safe File Download handler
+    const fileCard = msgCard.querySelector('.msg-file-card');
+    if (fileCard) {
+      fileCard.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const fs = fileCard.dataset.filesrc;
+        if (fs && (fs.startsWith('https://') || fs.startsWith('http://') || fs.startsWith('data:'))) {
+          window.open(fs, '_blank', 'noopener,noreferrer');
+        }
+      });
+    }
 
     const bubbleEl = msgCard.querySelector('.msg-bubble');
     if (msg.is_blurred && bubbleEl) {
@@ -3979,7 +4010,11 @@ if (fileUrl) {
           ctx.drawImage(img, 0, 0, width, height);
 
           canvas.toBlob((blob) => {
-            resolve(blob);
+            if (blob) {
+              resolve(blob);
+            } else {
+              canvas.toBlob((jpgBlob) => resolve(jpgBlob), 'image/jpeg', 0.8);
+            }
           }, 'image/webp', 0.8);
         };
         img.onerror = (error) => reject(error);
