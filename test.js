@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware, verifyUserSession } = require('./auth');
 const db = require('./db');
 
-console.log('🧪 Running Complete SChat 15-Suite Automated Regression & Integration Test Suite...\n');
+console.log('🧪 Running Complete SChat 16-Suite Automated Regression & Integration Test Suite...\n');
 
 async function runAllTests() {
   try {
@@ -468,9 +468,56 @@ async function runAllTests() {
     assert.strictEqual(firstMsg.content, 'Message sequence #6', 'Earliest retrieved message out of 100 must be message #6 (not message #1)');
     console.log('✅ Passed Test 15 (Message History Ordering & Limit Verified)\n');
 
+    // 16. WebSocket In-Flight Pipeline Race Condition & Authentication Queue Verification
+    console.log('Test 16: WebSocket In-Flight Pipeline Race Condition Verification');
+    const wsUrl = `ws://127.0.0.1:${hmacPort}`;
+    const raceWs = new WebSocket(wsUrl);
+
+    let raceAuthSuccessReceived = false;
+    let raceAuthErrorReceived = false;
+
+    await new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('WebSocket in-flight race test timed out after 5000ms'));
+      }, 5000);
+
+      raceWs.on('open', () => {
+        // Synchronously pipeline auth frame followed immediately by an in-flight frame
+        raceWs.send(JSON.stringify({ type: 'auth', token: tokenA }));
+        // This frame arrives while verifyUserSession is awaiting SQLite
+        raceWs.send(JSON.stringify({ type: 'client_ack_read', sender_id: userB.id }));
+      });
+
+      raceWs.on('message', (msgBuf) => {
+        try {
+          const parsed = JSON.parse(msgBuf.toString());
+          if (parsed.type === 'auth_error') {
+            raceAuthErrorReceived = true;
+          }
+          if (parsed.type === 'auth_success') {
+            raceAuthSuccessReceived = true;
+            setTimeout(() => {
+              clearTimeout(timeout);
+              raceWs.close();
+              resolve();
+            }, 200);
+          }
+        } catch (e) {}
+      });
+
+      raceWs.on('error', (err) => {
+        clearTimeout(timeout);
+        reject(err);
+      });
+    });
+
+    assert.strictEqual(raceAuthSuccessReceived, true, 'WebSocket must receive auth_success despite pipelined in-flight frames');
+    assert.strictEqual(raceAuthErrorReceived, false, 'WebSocket must NEVER receive auth_error during in-flight auth pipelining');
+    console.log('✅ Passed Test 16 (WebSocket In-Flight Pipeline Race Condition & Immunity Verified)\n');
+
     hmacServer.close();
 
-    console.log('🎉 ALL 15 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
+    console.log('🎉 ALL 16 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
     process.exit(0);
   } catch (err) {
     console.error('❌ TEST FAILED:', err);

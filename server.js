@@ -1313,59 +1313,83 @@ wss.on('connection', async (ws, req) => {
   }
 
   let currentUser = null;
+  let isAuthenticating = false;
+  const pendingAuthQueue = [];
   const msgRate = { count: 0, resetAt: Date.now() + 60000 };
   const typingRate = { count: 0, resetAt: Date.now() + 5000 };
 
-  ws.on('message', async (messageBuffer) => {
+  const processMessage = async (data) => {
+    if (!data || typeof data !== 'object') return;
     try {
-      const data = JSON.parse(messageBuffer.toString());
 
-      if (data.type === 'ping') {
-        return ws.send(JSON.stringify({ type: 'pong' }));
+    if (data.type === 'ping') {
+      return ws.send(JSON.stringify({ type: 'pong' }));
+    }
+
+    if (data.type === 'visibility') {
+      ws.clientVisibility = data.status;
+      return;
+    }
+    if (data.type === 'auth') {
+      isAuthenticating = true;
+      let decoded = null;
+      try {
+        decoded = await verifyUserSession(data.token);
+      } catch (err) {
+        console.error('Session verify error:', err);
+      }
+      isAuthenticating = false;
+
+      if (!decoded) {
+        ws.send(JSON.stringify({ type: 'auth_error', message: 'Authentication failed. Session revoked or invalid.' }));
+        return ws.close(4401, 'Auth failed');
       }
 
-      if (data.type === 'visibility') {
-        ws.clientVisibility = data.status;
-        return;
-      }
-      if (data.type === 'auth') {
-        const decoded = await verifyUserSession(data.token);
-        if (!decoded) {
-          ws.send(JSON.stringify({ type: 'auth_error', message: 'Authentication failed. Session revoked or invalid.' }));
-          return ws.close(4401, 'Auth failed');
+      currentUser = decoded;
+      clients.set(ws, currentUser);
+
+      const renewedWsToken = generateToken(currentUser, currentUser.sessionId);
+      ws.send(JSON.stringify({
+        type: 'auth_success',
+        user: currentUser,
+        token: renewedWsToken,
+        onlineUsers: getOnlineUsersList()
+      }));
+
+      broadcast({
+        type: 'presence',
+        action: 'join',
+        username: currentUser.username,
+        avatar: currentUser.avatar,
+        onlineUsers: getOnlineUsersList()
+      });
+      
+      // Mark pending messages as delivered and notify only relevant senders
+      const pendingSenders = await db.all('SELECT DISTINCT user_id FROM messages WHERE recipient_id = ? AND status = ?', [currentUser.id, 'sent']);
+      await db.run('UPDATE messages SET status = ? WHERE recipient_id = ? AND status = ?', ['delivered', currentUser.id, 'sent']);
+      (pendingSenders || []).forEach(s => {
+        sendToUser(s.user_id, { type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
+      });
+
+      // Drain any messages queued while in-flight authentication was pending
+      while (pendingAuthQueue.length > 0) {
+        const queuedData = pendingAuthQueue.shift();
+        try {
+          await processMessage(queuedData);
+        } catch (qErr) {
+          console.error('Error handling queued in-flight WS message:', qErr);
         }
+      }
+      return;
+    }
 
-        currentUser = decoded;
-        clients.set(ws, currentUser);
-
-        const renewedWsToken = generateToken(currentUser, currentUser.sessionId);
-        ws.send(JSON.stringify({
-          type: 'auth_success',
-          user: currentUser,
-          token: renewedWsToken,
-          onlineUsers: getOnlineUsersList()
-        }));
-
-        broadcast({
-          type: 'presence',
-          action: 'join',
-          username: currentUser.username,
-          avatar: currentUser.avatar,
-          onlineUsers: getOnlineUsersList()
-        });
-        
-        // Mark pending messages as delivered and notify only relevant senders
-        const pendingSenders = await db.all('SELECT DISTINCT user_id FROM messages WHERE recipient_id = ? AND status = ?', [currentUser.id, 'sent']);
-        await db.run('UPDATE messages SET status = ? WHERE recipient_id = ? AND status = ?', ['delivered', currentUser.id, 'sent']);
-        (pendingSenders || []).forEach(s => {
-          sendToUser(s.user_id, { type: 'msg_status_update', recipient_id: currentUser.id, status: 'delivered' });
-        });
+    if (!currentUser) {
+      if (isAuthenticating) {
+        pendingAuthQueue.push(data);
         return;
       }
-
-      if (!currentUser) {
-        return ws.send(JSON.stringify({ type: 'auth_error', message: 'Unauthorized WebSocket message.' }));
-      }
+      return ws.send(JSON.stringify({ type: 'error', message: 'Unauthorized WebSocket message. Please authenticate first.' }));
+    }
 
       if (data.type === 'chat_message') {
         // Enforce per-connection message rate limit (max 45 messages / min)
@@ -1840,9 +1864,19 @@ wss.on('connection', async (ws, req) => {
     } catch (err) {
       console.error('WS Message Handler Error:', err);
     }
+  };
+
+  ws.on('message', async (messageBuffer) => {
+    try {
+      const data = JSON.parse(messageBuffer.toString());
+      await processMessage(data);
+    } catch (err) {
+      console.error('WS JSON parse error:', err);
+    }
   });
 
   ws.onclose = () => {
+    pendingAuthQueue.length = 0;
     if (currentUser) {
       clients.delete(ws);
       broadcast({

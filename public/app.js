@@ -178,10 +178,11 @@ const startSChat = () => {
   let unreadCounts = {};
   let totalUnreadDM = 0;
   let isPrivacyBlurActive = false;
+  let isWSAuthenticated = false;
   const outboundMessageQueue = [];
 
   const flushOutboundQueue = () => {
-    if (!ws || ws.readyState !== WebSocket.OPEN || outboundMessageQueue.length === 0) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN || !isWSAuthenticated || outboundMessageQueue.length === 0) return;
     while (outboundMessageQueue.length > 0) {
       const item = outboundMessageQueue.shift();
       try {
@@ -901,8 +902,9 @@ const startSChat = () => {
     const cards = document.querySelectorAll('.message-card');
     if (cards.length === 0) return alert('No messages to export.');
 
+    const isDM = activeRecipient && activeRecipient !== 'empty' && activeRecipient.username;
     let exportText = `========================================\n`;
-    exportText += `SChat Export: ${activeRecipient ? 'DM with ' + activeRecipient.username : 'Global Channel'}\n`;
+    exportText += `SChat Export: ${isDM ? 'DM with ' + activeRecipient.username : 'Global Channel'}\n`;
     exportText += `Exported At: ${new Date().toLocaleString()}\n`;
     exportText += `========================================\n\n`;
 
@@ -917,7 +919,7 @@ const startSChat = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `SChat_Export_${activeRecipient ? activeRecipient.username : 'Global'}_${Date.now()}.txt`;
+    a.download = `SChat_Export_${isDM ? activeRecipient.username : 'Global'}_${Date.now()}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -1469,7 +1471,7 @@ const startSChat = () => {
       roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Private Direct Message';
 // DM welcome header rendered by loadMessageHistory
 
-      if (ws && ws.readyState === WebSocket.OPEN) {
+      if (ws && ws.readyState === WebSocket.OPEN && isWSAuthenticated) {
         ws.send(JSON.stringify({
           type: 'mark_read',
           sender_id: activeRecipient.id
@@ -1520,11 +1522,6 @@ const startSChat = () => {
         myMutedChats = data.muted_chats || [];
       }
     } catch(err) {}
-
-    // Immediate fail-safe data dispatch
-    loadAllUsers();
-    loadMessageHistory();
-    connectWebSocket();
 
     try {
       myAvatarEl.innerHTML = renderAvatarHTML(currentUser.avatar, currentUser.username, 'no-hover');
@@ -1698,7 +1695,7 @@ const enterChat = () => {
         data.messages.forEach((msg) => renderMessage(msg, { animateEnter: false }));
         scrollToBottom();
 
-        if (activeRecipient && ws && ws.readyState === WebSocket.OPEN) {
+        if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id && ws && ws.readyState === WebSocket.OPEN && isWSAuthenticated) {
           // Explicitly ACK all received messages as read
           ws.send(JSON.stringify({
             type: 'client_ack_read',
@@ -1760,14 +1757,13 @@ const enterChat = () => {
 
     ws.onopen = () => {
       console.log('⚡ Connected to SChat WebSocket Server');
+      isWSAuthenticated = false;
       ws.send(JSON.stringify({ type: 'auth', token: authToken }));
 
       if (wsReconnectTimer) {
         clearTimeout(wsReconnectTimer);
         wsReconnectTimer = null;
       }
-      
-      flushOutboundQueue();
 
       if (pingInterval) clearInterval(pingInterval);
       pingInterval = setInterval(() => {
@@ -1775,13 +1771,6 @@ const enterChat = () => {
           ws.send(JSON.stringify({ type: 'ping' }));
         }
       }, 20000);
-
-      if (activeRecipient) {
-        ws.send(JSON.stringify({
-          type: 'client_ack_read',
-          sender_id: activeRecipient.id
-        }));
-      }
     };
 
     ws.onmessage = (event) => {
@@ -1795,11 +1784,20 @@ const enterChat = () => {
         }
 
         if (data.type === 'auth_success') {
+          isWSAuthenticated = true;
           if (data.token) {
             authToken = data.token;
             localStorage.setItem('schat_token', authToken);
           }
           updateOnlineUsers(data.onlineUsers);
+          flushOutboundQueue();
+
+          if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id) {
+            ws.send(JSON.stringify({
+              type: 'client_ack_read',
+              sender_id: activeRecipient.id
+            }));
+          }
         } else if (data.type === 'global_announcement') {
           if (currentUser && currentUser.role === 'super_admin') {
             return; // The sender already gets a "System broadcast sent!" toast in the send function.
@@ -2061,6 +2059,7 @@ const enterChat = () => {
     };
 
     ws.onclose = () => {
+      isWSAuthenticated = false;
       if (pingInterval) clearInterval(pingInterval);
       if (!wsReconnectTimer && authToken) {
         wsReconnectTimer = setTimeout(() => {
@@ -3710,14 +3709,14 @@ const audioPayload = '[AUDIO]' + fileUrl;
         
         const timerSeconds = timerSelect ? parseInt(timerSelect.value, 10) : 0;
 
-        if (activeRecipient) {
+        if (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id) {
           chattedUserIds.add(Number(activeRecipient.id));
           updateOnlineUsers();
         }
 
         const audioMsgPayload = {
           type: 'chat_message',
-          recipient_id: activeRecipient ? activeRecipient.id : null,
+          recipient_id: (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id) ? activeRecipient.id : null,
           content: audioPayload,
           is_blurred: isPrivacyBlurActive ? 1 : 0,
           timer_seconds: timerSeconds,
@@ -3726,7 +3725,7 @@ const audioPayload = '[AUDIO]' + fileUrl;
           reply_to_text: activeReply ? activeReply.text : null
         };
 
-        if (ws && ws.readyState === WebSocket.OPEN) {
+        if (ws && ws.readyState === WebSocket.OPEN && isWSAuthenticated) {
           ws.send(JSON.stringify(audioMsgPayload));
         } else {
           outboundMessageQueue.push(audioMsgPayload);
@@ -4038,7 +4037,7 @@ if (fileUrl) {
 
     const payload = {
       type: 'chat_message',
-      recipient_id: activeRecipient ? activeRecipient.id : null,
+      recipient_id: (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id) ? activeRecipient.id : null,
       content: content,
       is_blurred: isPrivacyBlurActive ? 1 : 0,
       timer_seconds: timerSeconds,
@@ -4047,7 +4046,7 @@ if (fileUrl) {
       reply_to_text: activeReply ? activeReply.text : null
     };
 
-    if (ws && ws.readyState === WebSocket.OPEN) {
+    if (ws && ws.readyState === WebSocket.OPEN && isWSAuthenticated) {
       ws.send(JSON.stringify(payload));
     } else {
       outboundMessageQueue.push(payload);
@@ -4060,21 +4059,23 @@ hideElement(typingBanner);
     hideElement(emojiPicker);
     playSound('send');
 
-    ws.send(JSON.stringify({
-      type: 'typing',
-      recipient_id: activeRecipient ? activeRecipient.id : null,
-      isTyping: false
-    }));
+    if (ws && ws.readyState === WebSocket.OPEN && isWSAuthenticated) {
+      ws.send(JSON.stringify({
+        type: 'typing',
+        recipient_id: (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id) ? activeRecipient.id : null,
+        isTyping: false
+      }));
+    }
   });
 
   messageInput.addEventListener('input', () => {
-    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    if (!ws || ws.readyState !== WebSocket.OPEN || !isWSAuthenticated) return;
 
     if (!isSendingTyping) {
       isSendingTyping = true;
       ws.send(JSON.stringify({
         type: 'typing',
-        recipient_id: activeRecipient ? activeRecipient.id : null,
+        recipient_id: (activeRecipient && activeRecipient !== 'empty' && activeRecipient.id) ? activeRecipient.id : null,
         isTyping: true
       }));
     }
