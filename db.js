@@ -123,9 +123,10 @@ if (process.env.TURSO_DATABASE_URL) {
       console.error('Turso Database Init Error:', err);
     }
   }
-  initTurso();
+  const readyPromise = initTurso();
 
   dbInstance = {
+    ready: readyPromise,
     async run(sql, params = []) {
       const res = await client.execute({ sql, args: params });
       return { 
@@ -273,9 +274,10 @@ if (process.env.TURSO_DATABASE_URL) {
       console.error('PostgreSQL Init Error:', err);
     }
   }
-  initPg();
+  const readyPromise = initPg();
 
   dbInstance = {
+    ready: readyPromise,
     async run(sql, params = []) {
       let paramIndex = 1;
       const pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
@@ -353,6 +355,7 @@ if (process.env.TURSO_DATABASE_URL) {
   const saveData = () => fs.writeFileSync(fallbackPath, JSON.stringify(data, null, 2), 'utf8');
 
   dbInstance = {
+    ready: Promise.resolve(),
     async run(sql, params = []) {
       if (sql.includes('INSERT INTO users')) {
         const [username, email, password, avatar, bio] = params;

@@ -6,13 +6,18 @@ All notable changes to this project will be documented in this file.
 
 ### ⚡ True Delivery ACK Protocol & Real-Time Lifecycle
 - **Deterministic Delivery Lifecycle**: Standardized initial message persistence strictly to `'sent'`. The status transitions to `'delivered'` only after the recipient client explicitly transmits a validated `client_ack_delivered` receipt.
-- **Live WebSocket Session Termination**: Integrated instant remote session disconnection into `/api/sessions/:sessionId` and `/api/sessions`—revoking a session now actively closes corresponding TCP WebSocket connections with close code `4401 ('Session revoked')`.
+- **Delivery ACK Authorization Boundary**: Enforced that only the legitimate message recipient can transition delivery status; third-party attempts to acknowledge or forge ACKs are rejected.
+- **Live WebSocket Session Termination**: Integrated instant remote session disconnection into `/api/sessions/:sessionId` and `/api/sessions`—revoking a session via HTTP now actively closes corresponding TCP WebSocket connections with close code `4401 ('Session revoked')`.
+- **Session Privacy Hardening**: Removed internal session identifiers from global WebSocket broadcasts, restricting revocation notices strictly to the target user's authenticated sockets.
 
 ### 🛡️ Non-Blocking Asynchronous Cryptography & Security Headers
 - **Async Non-Blocking Password Hashing**: Converted password hashing (`hashPassword`) and verification (`comparePassword`) to `async/await` using `bcrypt.hash` and `bcrypt.compare`, eliminating event-loop stalls under concurrent authentication traffic.
 - **In-Band WebSocket Authentication**: Removed sensitive JWT tokens from WebSocket URL query parameters (`ws://...?token=`), standardizing exclusively on secure in-band `{ type: 'auth', token }` message handshakes to prevent tokens from appearing in reverse-proxy access logs.
 - **Dotfile & Header Hardening**: Disabled global dotfile serving in `express.static` (explicitly mounting `/.well-known`), and disabled `x-powered-by` header.
-- **Graceful Process Shutdown**: Added `SIGTERM` and `SIGINT` handlers to gracefully terminate active WebSocket connections and close HTTP/DB listeners on deployment rollouts.
+- **Readiness-Gated Boot & Graceful Process Shutdown**: Server startup now explicitly awaits database readiness before binding `server.listen()`. Added `SIGTERM` and `SIGINT` handlers to gracefully terminate active WebSocket connections and close HTTP/DB listeners on deployment rollouts.
+
+### 🧪 Advanced End-to-End Test Suite Synchronization
+- **Event-Driven Integration Testing**: Upgraded Test 12 with promise-based event listeners (`waitForMessage`, `waitForClose`), replacing fixed sleep delays with deterministic event triggers and validating actual HTTP `DELETE /api/sessions/:sessionId` invocation against live WebSockets.
 
 ---
 

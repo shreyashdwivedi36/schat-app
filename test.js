@@ -210,114 +210,145 @@ async function runAllTests() {
     await db.run('DELETE FROM blocked_users WHERE blocker_id = ? AND blocked_id = ?', [userA.id, userB.id]);
     console.log('✅ Passed Test 11 (Server-Side DM Authorization Boundaries Confirmed)\n');
 
-    // 12. Live WebSocket End-to-End Realtime Messaging & Authorization Integration Suite
-    console.log('Test 12: Live Production WebSocket End-to-End Realtime Messaging & Authorization Integration Suite');
+    // 12. Live Production WebSocket End-to-End Realtime Messaging, ACKs, Authorization & Revocation Integration Suite
+    console.log('Test 12: Live Production WebSocket End-to-End Realtime Messaging, ACKs, Authorization & Revocation Integration Suite');
     
-    // Import and start the actual production server from server.js
-    const { server: prodServer } = require('./server');
-    await new Promise((resolve) => prodServer.listen(0, resolve));
+    function waitForMessage(ws, predicate, timeoutMs = 3000) {
+      return new Promise((resolve, reject) => {
+        const timer = setTimeout(() => {
+          ws.off('message', onMsg);
+          reject(new Error(`Timed out after ${timeoutMs}ms waiting for WebSocket message`));
+        }, timeoutMs);
+
+        function onMsg(raw) {
+          try {
+            const data = JSON.parse(raw.toString());
+            if (predicate(data)) {
+              clearTimeout(timer);
+              ws.off('message', onMsg);
+              resolve(data);
+            }
+          } catch (e) {}
+        }
+        ws.on('message', onMsg);
+      });
+    }
+
+    function waitForClose(ws, timeoutMs = 3000) {
+      return new Promise((resolve, reject) => {
+        if (ws.readyState === WebSocket.CLOSED) return resolve({ code: ws._closeCode || 1000 });
+        const timer = setTimeout(() => {
+          reject(new Error(`Timed out after ${timeoutMs}ms waiting for WebSocket close`));
+        }, timeoutMs);
+        ws.once('close', (code, reason) => {
+          clearTimeout(timer);
+          resolve({ code, reason: reason ? reason.toString() : '' });
+        });
+      });
+    }
+
+    // Import and start the actual production server from server.js awaiting db.ready
+    const { startServer, server: prodServer } = require('./server');
+    await startServer(0);
     const testPort = prodServer.address().port;
 
-    // Issue tokens for User A and User B
+    // Issue tokens for User A, User B (primary + secondary sessions), and User C
     const sessA = `sess_live_a_${ts}`;
     const sessB = `sess_live_b_${ts}`;
+    const sessB_secondary = `sess_live_b2_${ts}`;
+    const sessC = `sess_live_c_${ts}`;
     await db.run('INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address) VALUES (?, ?, ?, ?, ?)', [sessA, userA.id, 'Test', 'Node', '127.0.0.1']);
     await db.run('INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address) VALUES (?, ?, ?, ?, ?)', [sessB, userB.id, 'Test', 'Node', '127.0.0.1']);
+    await db.run('INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address) VALUES (?, ?, ?, ?, ?)', [sessB_secondary, userB.id, 'Mobile', 'Node', '127.0.0.1']);
+    await db.run('INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address) VALUES (?, ?, ?, ?, ?)', [sessC, userC.id, 'Test', 'Node', '127.0.0.1']);
 
     const tokenA = generateToken({ id: userA.id, username: unameA, email: emailA }, sessA);
     const tokenB = generateToken({ id: userB.id, username: `bob_${ts}`, email: `bob_${ts}@test.com` }, sessB);
+    const tokenB_secondary = generateToken({ id: userB.id, username: `bob_${ts}`, email: `bob_${ts}@test.com` }, sessB_secondary);
+    const tokenC = generateToken({ id: userC.id, username: `charlie_${ts}`, email: `charlie_${ts}@test.com` }, sessC);
 
-    // Connect Client A and Client B directly to the production WebSocket server
+    // Connect Client A, Client B, Client B2, and Client C directly to the production WebSocket server
     const clientA = new WebSocket(`ws://127.0.0.1:${testPort}`);
     const clientB = new WebSocket(`ws://127.0.0.1:${testPort}`);
+    const clientB2 = new WebSocket(`ws://127.0.0.1:${testPort}`);
+    const clientC = new WebSocket(`ws://127.0.0.1:${testPort}`);
 
     await Promise.all([
       new Promise((res) => clientA.on('open', res)),
-      new Promise((res) => clientB.on('open', res))
+      new Promise((res) => clientB.on('open', res)),
+      new Promise((res) => clientB2.on('open', res)),
+      new Promise((res) => clientC.on('open', res))
     ]);
 
-    // Authenticate both sockets
-    let authA = false, authB = false;
+    // Authenticate all sockets via in-band messages
+    const pAuthA = waitForMessage(clientA, (d) => d.type === 'auth_success');
+    const pAuthB = waitForMessage(clientB, (d) => d.type === 'auth_success');
+    const pAuthB2 = waitForMessage(clientB2, (d) => d.type === 'auth_success');
+    const pAuthC = waitForMessage(clientC, (d) => d.type === 'auth_success');
+
     clientA.send(JSON.stringify({ type: 'auth', token: tokenA }));
     clientB.send(JSON.stringify({ type: 'auth', token: tokenB }));
+    clientB2.send(JSON.stringify({ type: 'auth', token: tokenB_secondary }));
+    clientC.send(JSON.stringify({ type: 'auth', token: tokenC }));
 
-    await new Promise((resolve) => {
-      clientA.on('message', (msg) => {
-        const d = JSON.parse(msg.toString());
-        if (d.type === 'auth_success') { authA = true; if (authA && authB) resolve(); }
-      });
-      clientB.on('message', (msg) => {
-        const d = JSON.parse(msg.toString());
-        if (d.type === 'auth_success') { authB = true; if (authA && authB) resolve(); }
-      });
-    });
-    assert.strictEqual(authA && authB, true, 'Both live WebSocket clients must successfully authenticate via production server');
+    await Promise.all([pAuthA, pAuthB, pAuthB2, pAuthC]);
+    assert.ok(true, 'All live WebSocket clients successfully authenticated via production server');
 
     // Case 1: User A sends DM to User B (Mutual Contacts) -> Client B receives message
-    let bReceivedMsg = null;
-    clientB.on('message', (msg) => {
-      const d = JSON.parse(msg.toString());
-      if (d.type === 'new_message') bReceivedMsg = d;
-    });
-
+    const pMsgB = waitForMessage(clientB, (d) => d.type === 'new_message');
     clientA.send(JSON.stringify({ type: 'chat_message', recipient_id: userB.id, content: 'Hello Bob over production WebSocket!' }));
-
-    await new Promise((res) => setTimeout(res, 150));
-    assert.ok(bReceivedMsg, 'User B must receive live WebSocket direct message from accepted contact User A');
+    const bReceivedMsg = await pMsgB;
     assert.strictEqual(bReceivedMsg.content, 'Hello Bob over production WebSocket!');
 
     // Case 1b: Verify initial status is strictly 'sent'
     const persistedMsg = await db.get('SELECT status FROM messages WHERE id = ?', [bReceivedMsg.id]);
     assert.strictEqual(persistedMsg.status, 'sent', 'Initial persisted message status must be strictly sent');
 
-    // Case 1c: Recipient sends delivery ACK -> verify sender receives ACK & DB updates to 'delivered'
-    let aReceivedDeliveryAck = false;
-    clientA.on('message', (msg) => {
-      const d = JSON.parse(msg.toString());
-      if (d.type === 'msg_status_update' && d.status === 'delivered') aReceivedDeliveryAck = true;
-    });
+    // Case 1c: ACK Authorization Boundary Check — Unauthorized User C attempts to ACK message belonging to User B
+    clientC.send(JSON.stringify({ type: 'client_ack_delivered', message_ids: [bReceivedMsg.id] }));
+    await new Promise((res) => setTimeout(res, 100));
+    const msgAfterUnauthorizedAck = await db.get('SELECT status FROM messages WHERE id = ?', [bReceivedMsg.id]);
+    assert.strictEqual(msgAfterUnauthorizedAck.status, 'sent', 'Message status must remain sent when an unauthorized third-party attempts to ACK');
 
+    // Case 1d: Legitimate Recipient B sends delivery ACK -> verify sender A receives ACK & DB updates to 'delivered'
+    const pDeliveryAckA = waitForMessage(clientA, (d) => d.type === 'msg_status_update' && d.status === 'delivered');
     clientB.send(JSON.stringify({ type: 'client_ack_delivered', message_ids: [bReceivedMsg.id] }));
-    await new Promise((res) => setTimeout(res, 150));
-    assert.strictEqual(aReceivedDeliveryAck, true, 'Sender A must receive delivery status update once recipient B acknowledges receipt');
+    const aReceivedDeliveryAck = await pDeliveryAckA;
+    assert.ok(aReceivedDeliveryAck, 'Sender A must receive delivery status update once legitimate recipient B acknowledges receipt');
     const deliveredMsg = await db.get('SELECT status FROM messages WHERE id = ?', [bReceivedMsg.id]);
-    assert.strictEqual(deliveredMsg.status, 'delivered', 'Message status must transition to delivered in DB following recipient ACK');
+    assert.strictEqual(deliveredMsg.status, 'delivered', 'Message status must transition to delivered in DB following legitimate recipient ACK');
 
     // Case 2: User A attempts to send DM to unauthorized non-contact User C -> Production server rejects live
-    let aReceivedError = null;
-    clientA.on('message', (msg) => {
-      const d = JSON.parse(msg.toString());
-      if (d.type === 'error') aReceivedError = d;
-    });
-
+    const pErrorA = waitForMessage(clientA, (d) => d.type === 'error');
     clientA.send(JSON.stringify({ type: 'chat_message', recipient_id: userC.id, content: 'Unauthorized DM to Charlie' }));
-
-    await new Promise((res) => setTimeout(res, 150));
-    assert.ok(aReceivedError, 'Production server must reject live WebSocket DM to non-contact User C');
+    const aReceivedError = await pErrorA;
     assert.ok(aReceivedError.message.includes('contact authorization'), 'Error message must specify contact authorization requirement');
 
-    // Case 3: Live Session Revocation terminates WebSocket connection
-    let clientBClosed = false;
-    clientB.on('close', (code) => {
-      clientBClosed = true;
-    });
-
-    const { clients: prodClients } = require('./server');
-    for (const [s, u] of prodClients.entries()) {
-      if (u.sessionId === sessB) {
-        s.close(4401, 'Session revoked');
-        prodClients.delete(s);
+    // Case 3: Live Session Revocation via actual HTTP DELETE /api/sessions/:sessionId endpoint
+    const pCloseB2 = waitForClose(clientB2);
+    const deleteRes = await fetch(`http://127.0.0.1:${testPort}/api/sessions/${sessB_secondary}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${tokenB}`
       }
-    }
+    });
+    assert.strictEqual(deleteRes.status, 200, 'Session revocation HTTP endpoint must respond with 200 OK');
+    const closeEvent = await pCloseB2;
+    assert.strictEqual(closeEvent.code, 4401, 'Targeted live WebSocket connection must be terminated with close code 4401 upon HTTP session revocation');
 
-    await new Promise((res) => setTimeout(res, 150));
-    assert.strictEqual(clientBClosed, true, 'Live WebSocket connection must be terminated immediately upon session revocation');
+    // Verify session row was deleted from database
+    const dbSessB2 = await db.get('SELECT id FROM user_sessions WHERE session_id = ?', [sessB_secondary]);
+    assert.strictEqual(dbSessB2, null, 'Revoked session row must be purged from database');
+
+    // Verify User B's primary session remains open and active
+    assert.strictEqual(clientB.readyState, WebSocket.OPEN, "User B's unrevoked primary session socket must remain open and connected");
 
     // Clean up test clients & server
     clientA.close();
     clientB.close();
+    clientC.close();
     prodServer.close();
-    console.log('✅ Passed Test 12 (Live Production WebSocket Realtime Messaging, ACKs & Revocation Verified)\n');
+    console.log('✅ Passed Test 12 (Live Production WebSocket Realtime Messaging, ACKs, Authorization Boundaries & HTTP Revocation Verified)\n');
 
     console.log('🎉 ALL 12 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
     process.exit(0);

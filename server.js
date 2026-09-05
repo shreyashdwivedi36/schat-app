@@ -864,8 +864,8 @@ app.delete('/api/sessions/:sessionId', authMiddleware, async (req, res) => {
 
   try {
     await db.run('DELETE FROM user_sessions WHERE session_id = ? AND user_id = ?', [sessionId, req.user.id]);
-    // Force disconnect revoked session via WebSocket
-    broadcast({ type: 'session_revoked', sessionId, userId: req.user.id });
+    // Notify the user's other sessions without disclosing raw session IDs globally
+    sendToUser(req.user.id, { type: 'session_revoked' });
     for (const [clientSocket, clientUser] of clients.entries()) {
       if (clientUser.id === req.user.id && clientUser.sessionId === sessionId) {
         clientSocket.send(JSON.stringify({ type: 'auth_error', message: 'Session has been revoked remotely.' }));
@@ -886,7 +886,7 @@ app.delete('/api/sessions', authMiddleware, async (req, res) => {
 
   try {
     await db.run('DELETE FROM user_sessions WHERE user_id = ? AND session_id != ?', [req.user.id, currentSessionId]);
-    broadcast({ type: 'all_other_sessions_terminated', userId: req.user.id, keepSessionId: currentSessionId });
+    sendToUser(req.user.id, { type: 'all_other_sessions_terminated' });
     for (const [clientSocket, clientUser] of clients.entries()) {
       if (clientUser.id === req.user.id && clientUser.sessionId !== currentSessionId) {
         clientSocket.send(JSON.stringify({ type: 'auth_error', message: 'Session has been revoked remotely.' }));
@@ -1772,13 +1772,28 @@ wss.on('connection', async (ws, req) => {
 });
 
 const PORT = process.env.PORT || 3000;
-if (require.main === module) {
-  server.listen(PORT, () => {
-    console.log(`================================================`);
-    console.log(`🚀 SChat Server running on http://localhost:${PORT}`);
-    console.log(`⚡ WebSockets active on ws://localhost:${PORT}`);
-    console.log(`================================================`);
+async function startServer(port = PORT) {
+  if (db && db.ready) {
+    try {
+      await db.ready;
+    } catch (e) {
+      console.error('Database readiness error on startup:', e);
+    }
+  }
+  return new Promise((resolve) => {
+    server.listen(port, () => {
+      const activePort = server.address().port;
+      console.log(`================================================`);
+      console.log(`🚀 SChat Server running on http://localhost:${activePort}`);
+      console.log(`⚡ WebSockets active on ws://localhost:${activePort}`);
+      console.log(`================================================`);
+      resolve(server);
+    });
   });
+}
+
+if (require.main === module) {
+  startServer();
 }
 
 function gracefulShutdown(signal) {
@@ -1804,7 +1819,7 @@ function gracefulShutdown(signal) {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-module.exports = { app, server, wss, db, clients };
+module.exports = { app, server, wss, db, clients, startServer };
 
 // Admin Push Diagnostics
 app.get('/api/admin/push-logs', superAdminMiddleware, (req, res) => {

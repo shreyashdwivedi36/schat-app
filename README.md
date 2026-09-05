@@ -93,7 +93,7 @@ node test.js
 9. Message Search Privacy & Scoped Authorization Boundaries
 10. Server-Side Session Revocation Guard & Database Validation
 11. Server-Side Direct Message Authorization & Block Verification
-12. Live WebSocket End-to-End Realtime Messaging & Authorization Integration Suite
+12. Live Production WebSocket End-to-End Messaging, Multi-Stage ACKs, Boundary Enforcement & HTTP Session Revocation Suite
 
 ---
 
