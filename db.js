@@ -556,6 +556,13 @@ if (process.env.TURSO_DATABASE_URL) {
         saveData();
         return { changes: initLen - data.user_sessions.length };
       }
+      if (sql.includes('DELETE FROM user_sessions WHERE user_id = ?') && !sql.includes('AND')) {
+        const [user_id] = params;
+        const initLen = data.user_sessions.length;
+        data.user_sessions = data.user_sessions.filter(s => Number(s.user_id) !== Number(user_id));
+        saveData();
+        return { changes: initLen - data.user_sessions.length };
+      }
       if (sql.includes('INSERT INTO contacts')) {
         const [requester_id, recipient_id, status] = params;
         data.lastContactId += 1;

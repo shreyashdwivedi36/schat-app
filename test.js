@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware, verifyUserSession } = require('./auth');
 const db = require('./db');
 
-console.log('🧪 Running Complete SChat 16-Suite Automated Regression & Integration Test Suite...\n');
+console.log('🧪 Running Complete SChat 17-Suite Automated Regression & Integration Test Suite...\n');
 
 async function runAllTests() {
   try {
@@ -515,9 +515,75 @@ async function runAllTests() {
     assert.strictEqual(raceAuthErrorReceived, false, 'WebSocket must NEVER receive auth_error during in-flight auth pipelining');
     console.log('✅ Passed Test 16 (WebSocket In-Flight Pipeline Race Condition & Immunity Verified)\n');
 
+    // 17. Admin Ban Immediate WebSocket Termination & Session Purge Verification
+    console.log('Test 17: Admin Ban Immediate WebSocket Termination & Session Purge Verification');
+    const unameBan = `bantest_${ts}`;
+    const userBan = await db.run(
+      'INSERT INTO users (username, email, password, avatar) VALUES (?, ?, ?, ?)',
+      [unameBan, `${unameBan}@test.com`, hash, '⚡']
+    );
+    const sessBan = `sess_ban_${ts}`;
+    await db.run(
+      'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address) VALUES (?, ?, ?, ?, ?)',
+      [sessBan, userBan.id, 'TestBanDev', 'Node', '127.0.0.1']
+    );
+    const tokenBan = generateToken({ id: userBan.id, username: unameBan, email: `${unameBan}@test.com` }, sessBan);
+
+    // Create an active admin user, token and session
+    const adminUser = await db.run(
+      'INSERT INTO users (username, email, password, avatar) VALUES (?, ?, ?, ?)',
+      [`adm_${ts}`, `adm_${ts}@test.com`, hash, '🛡️']
+    );
+    const adminSess = `sess_admin_${ts}`;
+    await db.run(
+      'INSERT INTO user_sessions (session_id, user_id, device, browser, ip_address) VALUES (?, ?, ?, ?, ?)',
+      [adminSess, adminUser.id, 'AdminDevice', 'Node', '127.0.0.1']
+    );
+    const adminToken = generateToken({ id: adminUser.id, username: `adm_${ts}`, role: 'super_admin' }, adminSess);
+
+    // Connect userBan to WebSocket
+    const banWs = new WebSocket(`ws://127.0.0.1:${hmacPort}`);
+    await new Promise(res => banWs.on('open', res));
+    const pBanAuth = waitForMessage(banWs, d => d.type === 'auth_success');
+    banWs.send(JSON.stringify({ type: 'auth', token: tokenBan }));
+    await pBanAuth;
+
+    // Set up close listener before issuing ban
+    const pBanClose = waitForClose(banWs);
+
+    // Call admin ban HTTP endpoint
+    const banRes = await fetch(`http://127.0.0.1:${hmacPort}/api/admin/users/${userBan.id}/ban`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${adminToken}` }
+    });
+    assert.strictEqual(banRes.status, 200, 'Admin ban endpoint must return 200 OK');
+
+    // Assert that the WebSocket was actively terminated by the server with close code 4403
+    const banCloseEvent = await pBanClose;
+    assert.strictEqual(banCloseEvent.code, 4403, 'Banned user WebSocket must be actively terminated by server with code 4403');
+
+    // Assert that all user_sessions rows for the banned user were deleted from DB
+    const remainingSessions = await db.all('SELECT id FROM user_sessions WHERE user_id = ?', [userBan.id]);
+    assert.strictEqual(remainingSessions.length, 0, 'All database sessions for banned user must be purged');
+
+    // Verify that attempting to authenticate with the banned user's token fails verification
+    const verifiedBanned = await verifyUserSession(tokenBan);
+    assert.strictEqual(verifiedBanned, null, 'verifyUserSession must fail-closed and reject banned user token');
+
+    // Verify reserved admin username protection in /api/register
+    if (process.env.SUPER_ADMIN_USERNAME) {
+      const regRes = await fetch(`http://127.0.0.1:${hmacPort}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: process.env.SUPER_ADMIN_USERNAME, email: 'reserved_test@test.com', password: 'password123' })
+      });
+      assert.strictEqual(regRes.status, 400, 'Registering configured super admin username must return 400 Bad Request');
+    }
+    console.log('✅ Passed Test 17 (Admin Ban Active Socket Termination, Session Purge & Reserved Username Verified)\n');
+
     hmacServer.close();
 
-    console.log('🎉 ALL 16 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
+    console.log('🎉 ALL 17 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
     process.exit(0);
   } catch (err) {
     console.error('❌ TEST FAILED:', err);

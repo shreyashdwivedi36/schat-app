@@ -32,6 +32,15 @@ const server = http.createServer(app);
 
 // In-Memory Authentication Rate Limiter (Sliding Window: 15 attempts / 15 mins)
 const loginAttemptMap = new Map();
+setInterval(() => {
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000;
+  for (const [ip, record] of loginAttemptMap.entries()) {
+    if (now - record.firstAttempt > windowMs) {
+      loginAttemptMap.delete(ip);
+    }
+  }
+}, 10 * 60 * 1000).unref();
 function authRateLimiter(req, res, next) {
   const ip = req.ip || req.socket.remoteAddress || '127.0.0.1';
   const now = Date.now();
@@ -1184,7 +1193,19 @@ app.post('/api/admin/users/:id/ban', superAdminMiddleware, async (req, res) => {
     const userId = parseInt(req.params.id, 10);
     await db.run('UPDATE users SET is_banned = 1 WHERE id = ?', [userId]);
     
-    // Broadcast to force immediate client logout if online
+    // Purge all active sessions in DB for the banned user
+    await db.run('DELETE FROM user_sessions WHERE user_id = ?', [userId]);
+
+    // Forcefully sever any open WebSocket connections for the banned user
+    for (const [clientSocket, clientUser] of clients.entries()) {
+      if (clientUser.id === userId) {
+        clientSocket.send(JSON.stringify({ type: 'auth_error', message: 'Your account has been suspended by administrator.' }));
+        clientSocket.close(4403, 'Account suspended');
+        clients.delete(clientSocket);
+      }
+    }
+
+    // Broadcast to update online presence and notify other users if needed
     broadcast({ type: 'user_banned', userId });
     
     res.json({ message: 'User suspended successfully.' });
