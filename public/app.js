@@ -23,6 +23,10 @@ navigator.serviceWorker.addEventListener('controllerchange', () => {
 const startSChat = () => {
   // Dismiss Startup Splash Screen with Smooth Cinematic Dissolve
   const dismissSplashScreen = () => {
+    if (window.__splashFailsafe) {
+      clearTimeout(window.__splashFailsafe);
+      window.__splashFailsafe = null;
+    }
     const splash = document.getElementById('appSplashScreen');
     if (!splash) return;
     setTimeout(() => {
@@ -30,8 +34,11 @@ const startSChat = () => {
       setTimeout(() => {
         if (splash.parentNode) splash.parentNode.removeChild(splash);
       }, 550);
-    }, 750);
+    }, 300);
   };
+  window.dismissSplashScreen = dismissSplashScreen;
+  // Safety watchdog: dismiss splash screen within 2s even if subtasks stall
+  setTimeout(dismissSplashScreen, 2000);
 
   function escapeHtml(str) {
     if (!str || typeof str !== 'string') return '';
@@ -170,7 +177,14 @@ const startSChat = () => {
 
   // Application State
   let authToken = localStorage.getItem('schat_token') || null;
-  let currentUser = JSON.parse(localStorage.getItem('schat_user')) || null;
+  let currentUser = null;
+  try {
+    const rawUser = localStorage.getItem('schat_user');
+    currentUser = rawUser ? JSON.parse(rawUser) : null;
+  } catch (e) {
+    console.warn('Failed to parse cached user:', e);
+    currentUser = null;
+  }
   let currentTheme = localStorage.getItem('schat_theme') || 'dark';
   let myMutedChats = [];
   let activeRecipient = 'empty'; // 'empty' = Privacy Standby Screen, null = Global Channel, { id, username, avatar } = Direct Message // 'empty' = Welcome Screen, null = Global Channel, { id, username, avatar } = Direct Message
@@ -652,7 +666,10 @@ const startSChat = () => {
   const closeChatBtn = document.getElementById('closeChatBtn');
   if (closeChatBtn) {
     closeChatBtn.addEventListener('click', () => {
-      if (typeof switchChatTab === 'function') {
+      playSound('tap');
+      if (typeof showAppView === 'function') {
+        showAppView('hub');
+      } else if (typeof switchChatTab === 'function') {
         switchChatTab('empty');
       }
     });
@@ -1594,13 +1611,6 @@ const startSChat = () => {
       showAppView('chats');
     });
   }
-  const closeChatBtn = document.getElementById('closeChatBtn');
-  if (closeChatBtn) {
-    closeChatBtn.addEventListener('click', () => {
-      playSound('tap');
-      showAppView('hub');
-    });
-  }
 
   // Settings screen quick option handlers
   const settingsThemeToggle = document.getElementById('settingsThemeToggle');
@@ -1698,13 +1708,13 @@ const startSChat = () => {
     });
   }
   
-  const getTimeGreeting = () => {
+  function getTimeGreeting() {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return 'Good morning';
     if (hour >= 12 && hour < 17) return 'Good afternoon';
     if (hour >= 17 && hour < 22) return 'Good evening';
     return 'Welcome back';
-  };
+  }
 
   const switchChatTab = (recipient) => {
     activeRecipient = recipient;
@@ -4860,12 +4870,19 @@ hideElement(typingBanner);
 
 
 
-  if (authToken && currentUser) {
-    initializeChatSession();
-    dismissSplashScreen();
-  } else {
-    authView.classList.remove('hidden');
-    MotionFX.enter(authView, { y: 18 });
+  try {
+    if (authToken && currentUser) {
+      initializeChatSession();
+    } else {
+      if (authView) {
+        authView.classList.remove('hidden');
+        if (window.MotionFX) MotionFX.enter(authView, { y: 18 });
+      }
+    }
+  } catch (err) {
+    console.error('Initialization error in startSChat:', err);
+    if (authView) authView.classList.remove('hidden');
+  } finally {
     dismissSplashScreen();
   }
 };

@@ -48,6 +48,17 @@
     </div>
   </div>
 
+  <script>
+    // Automatic failsafe watchdog: dismiss splash screen if app initialization takes >2.8s
+    window.__splashFailsafe = setTimeout(function() {
+      var s = document.getElementById('appSplashScreen');
+      if (s) {
+        s.classList.add('fade-out');
+        setTimeout(function() { if (s && s.parentNode) s.parentNode.removeChild(s); }, 550);
+      }
+    }, 2800);
+  </script>
+
 
   <!-- Interactive motion canvas, aurora, and 21st.dev-style background beams -->
   <!-- canvas disabled for calm static background -->
@@ -863,7 +874,6 @@
       </div>
 
     <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"></script>
-    <script src="motion-fx.js????v=158" type="module"></script>
 
 
 
