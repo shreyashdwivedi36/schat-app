@@ -705,7 +705,8 @@ const startSChat = () => {
         if (listEl) listEl.innerHTML = `<div class="admin-chat-feed-empty">Unable to load messages.</div>`;
       }
     } catch (e) {
-      if (listEl) listEl.innerHTML = `<div class="admin-chat-feed-empty">Network error loading messages.</div>`;
+      console.error('Failed to fetch admin global messages:', e);
+      if (listEl) listEl.innerHTML = `<div class="admin-chat-feed-empty">Unable to load messages. Please try again.</div>`;
     }
   };
 
@@ -730,7 +731,7 @@ const startSChat = () => {
     }
 
     container.innerHTML = filtered.map(m => {
-      const timeStr = m.created_at ? formatTimestamp(m.created_at) : '';
+      const timeStr = m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
       return `
         <div class="admin-chat-feed-item" data-admin-msg-id="${m.id}">
           <div class="admin-chat-item-main">
@@ -1078,14 +1079,17 @@ const startSChat = () => {
       btn.classList.add('active');
 
       Object.keys(profileTabPanels).forEach(key => {
-        if (profileTabPanels[key]) {
+        const panel = profileTabPanels[key];
+        if (panel) {
           if (key === targetTab) {
-            profileTabPanels[key].classList.add('active');
+            panel.classList.add('active');
+            panel.style.display = 'block';
             if (key === 'sessions' && typeof fetchUserSessions === 'function') {
               fetchUserSessions();
             }
           } else {
-            profileTabPanels[key].classList.remove('active');
+            panel.classList.remove('active');
+            panel.style.display = 'none';
           }
         }
       });
@@ -2041,9 +2045,13 @@ const startSChat = () => {
     const quickRow = document.getElementById('homeHubQuickContactsRow');
     if (!quickSection || !quickRow) return;
 
-    const contactsToShow = (typeof acceptedContacts !== 'undefined' && acceptedContacts && acceptedContacts.length > 0) 
-      ? acceptedContacts.slice(0, 6) 
-      : [];
+    const seen = new Set();
+    const uniqueContacts = (acceptedContacts || []).filter(c => {
+      if (seen.has(Number(c.id))) return false;
+      seen.add(Number(c.id));
+      return true;
+    });
+    const contactsToShow = uniqueContacts.slice(0, 6);
 
     if (contactsToShow.length === 0) {
       quickSection.style.display = 'none';
@@ -2644,7 +2652,7 @@ const startSChat = () => {
               if (chatListEl) {
                 const emptyEl = chatListEl.querySelector('.admin-chat-feed-empty, .admin-chat-feed-loading');
                 if (emptyEl) emptyEl.remove();
-                const timeStr = data.created_at ? formatTimestamp(data.created_at) : 'Just now';
+                const timeStr = data.created_at ? new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now';
                 const feedItem = document.createElement('div');
                 feedItem.className = 'admin-chat-feed-item just-added';
                 feedItem.dataset.adminMsgId = rawMsgId;
@@ -3718,8 +3726,11 @@ const startSChat = () => {
     
     const query = (searchTerm || '').toLowerCase().trim();
 
+    const seen = new Set();
     let displayUsers = acceptedContacts.filter(u => {
       if (Number(u.id) === Number(currentUser.id)) return false;
+      if (seen.has(Number(u.id))) return false;
+      seen.add(Number(u.id));
       if (query) {
          return u.username.toLowerCase().includes(query);
       }

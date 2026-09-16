@@ -979,11 +979,15 @@ app.get('/api/contacts', authMiddleware, async (req, res) => {
     const accepted = [];
     const incomingPending = [];
     const outgoingPending = [];
+    const seenAcceptedIds = new Set();
+    const seenIncomingIds = new Set();
+    const seenOutgoingIds = new Set();
 
     (allContacts || []).forEach(c => {
       if (c.status === 'accepted') {
-        const partnerId = Number(c.requester_id) === Number(req.user.id) ? c.recipient_id : c.requester_id;
-        if (userMap[partnerId]) {
+        const partnerId = Number(c.requester_id) === Number(req.user.id) ? Number(c.recipient_id) : Number(c.requester_id);
+        if (userMap[partnerId] && !seenAcceptedIds.has(partnerId)) {
+          seenAcceptedIds.add(partnerId);
           accepted.push({
             ...userMap[partnerId],
             connected_at: c.created_at
@@ -991,16 +995,20 @@ app.get('/api/contacts', authMiddleware, async (req, res) => {
         }
       } else if (c.status === 'pending') {
         if (Number(c.recipient_id) === Number(req.user.id)) {
-          if (userMap[c.requester_id]) {
+          const senderId = Number(c.requester_id);
+          if (userMap[senderId] && !seenIncomingIds.has(senderId)) {
+            seenIncomingIds.add(senderId);
             incomingPending.push({
-              ...userMap[c.requester_id],
+              ...userMap[senderId],
               request_date: c.created_at
             });
           }
         } else if (Number(c.requester_id) === Number(req.user.id)) {
-          if (userMap[c.recipient_id]) {
+          const targetId = Number(c.recipient_id);
+          if (userMap[targetId] && !seenOutgoingIds.has(targetId)) {
+            seenOutgoingIds.add(targetId);
             outgoingPending.push({
-              ...userMap[c.recipient_id],
+              ...userMap[targetId],
               request_date: c.created_at
             });
           }
