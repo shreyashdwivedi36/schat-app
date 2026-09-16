@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2.0.1] - 2026-09-16
+
+### 🚀 Performance & UI Improvements
+- **Full Message Clearance**: Raised chat feed bottom clearance and refined message spacing so the latest messages are fully visible and never obscured by floating input controls or keyboards.
+- **Ultra-Smooth 60–120 FPS Chat Scrolling**: Eliminated forced layout recalculations from view-timeline scroll animations, enabled GPU-backed off-screen message culling, and aligned scroll pins with browser animation frames for buttery smooth scrolling.
+- **Core Platform & Engine Optimizations**: Enhanced viewport event responsiveness, memory efficiency during fast scrolling, and real-time state synchronization across all client sessions.
+
+---
+
 ## [v2.0.0] - 2026-09-16
 
 ### ✨ What's New
