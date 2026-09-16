@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2.0.0] - 2026-09-16
+
+### ✨ What's New
+- **Pure Full-Screen Experience (No More Sidebars)**: Removed all sidebars and overlapping slide-in drawers. Every section (Home Hub, Conversations, Active Chat, Requests, and Settings) now opens cleanly in its own dedicated full screen with nothing bleeding behind it.
+- **Modern Floating Bottom Navigation**: Added an animated, pill-shaped navigation bar at the bottom with smooth spring tab transitions, subtle tap sounds, and automatic tucking when typing on mobile keyboards.
+- **Polished Home Hub**: Designed a fresh welcome screen with a dynamic greeting, live connection status, quick-jump contact chips, and clean glassmorphic action cards.
+- **Fast & Reliable Startup**: Resolved startup loading hangs by streamlining script loading and adding automatic failsafe timers so the app always opens smoothly in under a second.
+
+---
+
 ## [v1.9.0] - 2026-09-05
 
 ### 🛡️ Private Messaging Isolation & Privacy Boundary Enforcement
