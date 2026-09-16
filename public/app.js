@@ -1071,6 +1071,14 @@ const startSChat = () => {
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
         osc.start();
         osc.stop(ctx.currentTime + 0.12);
+      } else if (type === 'tap') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(540, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(800, ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.05);
       }
     } catch (e) {}
   };
@@ -1404,6 +1412,193 @@ const startSChat = () => {
   globalChannelBtn.addEventListener('touchmove', () => clearTimeout(channelLongPressTimer));
 
   
+  // ================= MODERN BOTTOM PILL NAVIGATION & HOME HUB =================
+  const bottomPillNav = document.getElementById('bottomPillNav');
+  const pillNavIndicator = document.getElementById('pillNavIndicator');
+  const pillNavHub = document.getElementById('pillNavHub');
+  const pillNavGlobal = document.getElementById('pillNavGlobal');
+  const pillNavMessages = document.getElementById('pillNavMessages');
+  const pillNavRequests = document.getElementById('pillNavRequests');
+  const pillNavSettings = document.getElementById('pillNavSettings');
+
+  const updatePillIndicator = (activeBtn, animated = true) => {
+    if (!pillNavIndicator || !activeBtn || !bottomPillNav) return;
+    const navRect = bottomPillNav.getBoundingClientRect();
+    const btnRect = activeBtn.getBoundingClientRect();
+    if (navRect.width === 0 || btnRect.width === 0) return;
+
+    const leftOffset = btnRect.left - navRect.left;
+    const width = btnRect.width;
+
+    if (!animated) {
+      pillNavIndicator.style.transition = 'none';
+    } else {
+      pillNavIndicator.style.transition = 'transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), width 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease';
+    }
+    pillNavIndicator.style.transform = `translate3d(${leftOffset}px, 0, 0)`;
+    pillNavIndicator.style.width = `${width}px`;
+    pillNavIndicator.style.opacity = '1';
+  };
+
+  const setActivePillTab = (tabName, animated = true) => {
+    if (!bottomPillNav) return;
+    const items = bottomPillNav.querySelectorAll('.pill-nav-item');
+    items.forEach(item => item.classList.remove('active'));
+
+    let targetBtn = pillNavHub;
+    if (tabName === 'global') targetBtn = pillNavGlobal;
+    else if (tabName === 'messages') targetBtn = pillNavMessages;
+    else if (tabName === 'requests') targetBtn = pillNavRequests;
+    else if (tabName === 'settings') targetBtn = pillNavSettings;
+
+    if (targetBtn) {
+      targetBtn.classList.add('active');
+      requestAnimationFrame(() => updatePillIndicator(targetBtn, animated));
+    }
+  };
+
+  window.addEventListener('resize', () => {
+    const activeBtn = bottomPillNav ? bottomPillNav.querySelector('.pill-nav-item.active') : null;
+    if (activeBtn) updatePillIndicator(activeBtn, false);
+  });
+
+  if (pillNavHub) {
+    pillNavHub.addEventListener('click', () => {
+      playSound('tap');
+      switchChatTab('empty');
+    });
+  }
+
+  if (pillNavGlobal) {
+    pillNavGlobal.addEventListener('click', () => {
+      playSound('tap');
+      switchChatTab(null);
+    });
+  }
+
+  if (pillNavMessages) {
+    pillNavMessages.addEventListener('click', () => {
+      playSound('tap');
+      if (window.innerWidth <= 768) {
+        openSidebar();
+        if (tabDirectMessages) tabDirectMessages.click();
+      } else {
+        if (activeRecipient === 'empty' || !activeRecipient) {
+          if (tabDirectMessages) tabDirectMessages.click();
+          if (filterInput) filterInput.focus();
+        }
+      }
+      setActivePillTab('messages');
+    });
+  }
+
+  if (pillNavRequests) {
+    pillNavRequests.addEventListener('click', () => {
+      playSound('tap');
+      const pendingModal = document.getElementById('pendingRequestsModal');
+      if (pendingModal && typeof showElement === 'function') {
+        showElement(pendingModal);
+        if (typeof renderPendingRequests === 'function') renderPendingRequests();
+      } else if (tabIncomingRequests) {
+        tabIncomingRequests.click();
+        if (window.innerWidth <= 768) openSidebar();
+      }
+      setActivePillTab('requests');
+    });
+  }
+
+  if (pillNavSettings) {
+    pillNavSettings.addEventListener('click', () => {
+      playSound('tap');
+      if (typeof window.openProfileModal === 'function') {
+        window.openProfileModal();
+      }
+      setActivePillTab('settings');
+    });
+  }
+
+  // Bento cards event listeners on Home Hub
+  const bentoCardGlobal = document.getElementById('bentoCardGlobal');
+  const bentoCardDms = document.getElementById('bentoCardDms');
+  const bentoCardContacts = document.getElementById('bentoCardContacts');
+  const bentoCardSettings = document.getElementById('bentoCardSettings');
+
+  if (bentoCardGlobal) {
+    bentoCardGlobal.addEventListener('click', () => {
+      if (pillNavGlobal) pillNavGlobal.click();
+    });
+  }
+  if (bentoCardDms) {
+    bentoCardDms.addEventListener('click', () => {
+      if (pillNavMessages) pillNavMessages.click();
+    });
+  }
+  if (bentoCardContacts) {
+    bentoCardContacts.addEventListener('click', () => {
+      playSound('tap');
+      const addContactBtn = document.getElementById('addContactBtn');
+      if (addContactBtn) addContactBtn.click();
+    });
+  }
+  if (bentoCardSettings) {
+    bentoCardSettings.addEventListener('click', () => {
+      if (pillNavSettings) pillNavSettings.click();
+    });
+  }
+
+  // Home Hub Quick Contacts Launcher
+  const renderHomeHubQuickContacts = () => {
+    const quickSection = document.getElementById('homeHubQuickContactsSection');
+    const quickRow = document.getElementById('homeHubQuickContactsRow');
+    if (!quickSection || !quickRow) return;
+
+    const contactsToShow = (typeof acceptedContacts !== 'undefined' && acceptedContacts && acceptedContacts.length > 0) 
+      ? acceptedContacts.slice(0, 6) 
+      : [];
+
+    if (contactsToShow.length === 0) {
+      quickSection.style.display = 'none';
+      return;
+    }
+
+    quickRow.innerHTML = contactsToShow.map(c => `
+      <div class="quick-contact-chip" data-user-id="${c.id}" data-username="${c.username}" data-avatar="${c.avatar || '⚡'}">
+        <span class="chip-avatar">${renderAvatarHTML(c.avatar, c.username, 'mini')}</span>
+        <span class="chip-name">@${c.username}</span>
+      </div>
+    `).join('');
+
+    quickRow.querySelectorAll('.quick-contact-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const id = parseInt(chip.getAttribute('data-user-id'), 10);
+        const username = chip.getAttribute('data-username');
+        const avatar = chip.getAttribute('data-avatar');
+        playSound('tap');
+        switchChatTab({ id, username, avatar });
+      });
+    });
+
+    quickSection.style.display = 'block';
+  };
+
+  // Keyboard tucking for mobile input
+  if (messageInput && bottomPillNav) {
+    messageInput.addEventListener('focus', () => {
+      if (window.innerWidth <= 768) {
+        bottomPillNav.classList.add('keyboard-tucked');
+        const chatFooter = document.querySelector('.chat-footer');
+        if (chatFooter) chatFooter.style.paddingBottom = '10px';
+      }
+    });
+    messageInput.addEventListener('blur', () => {
+      bottomPillNav.classList.remove('keyboard-tucked');
+      const chatFooter = document.querySelector('.chat-footer');
+      if (chatFooter) chatFooter.style.paddingBottom = '';
+      const activeBtn = bottomPillNav.querySelector('.pill-nav-item.active');
+      if (activeBtn) updatePillIndicator(activeBtn, false);
+    });
+  }
+  
   const getTimeGreeting = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return 'Good morning';
@@ -1433,6 +1628,8 @@ const startSChat = () => {
         const greeting = getTimeGreeting();
         welcomeGreeting.innerHTML = `${greeting}, <span style="opacity: 0.9; font-weight: 600;">${currentUser.username}</span>.`;
       }
+      setActivePillTab('hub');
+      renderHomeHubQuickContacts();
       return;
     }
 
@@ -1448,6 +1645,7 @@ const startSChat = () => {
       if (micBtnGlobal) micBtnGlobal.style.display = 'none';
       if (headerRemoveContactBtn) headerRemoveContactBtn.style.display = 'none';
       globalChannelBtn.classList.add('active');
+      setActivePillTab('global');
       roomAvatar.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>';
       roomTitle.textContent = 'Global Channel';
       roomSubtitle.innerHTML = '<span class="pulse-dot"></span> Realtime Active';
@@ -1456,6 +1654,7 @@ const startSChat = () => {
       if (attachBtnGlobal) attachBtnGlobal.style.display = 'flex';
       if (micBtnGlobal) micBtnGlobal.style.display = 'flex';
       if (headerRemoveContactBtn) headerRemoveContactBtn.style.display = 'flex';
+      setActivePillTab('messages');
       if (unreadCounts[activeRecipient.id]) {
         unreadCounts[activeRecipient.id] = 0;
       }
@@ -1492,6 +1691,21 @@ const startSChat = () => {
       document.title = 'SChat™ — Real-Time Messaging Platform';
     }
 
+    const pillUnreadBadge = document.getElementById('pillUnreadBadge');
+    if (pillUnreadBadge) {
+      if (totalUnreadDM > 0) {
+        pillUnreadBadge.textContent = totalUnreadDM > 99 ? '99+' : totalUnreadDM;
+        pillUnreadBadge.style.display = 'inline-block';
+      } else {
+        pillUnreadBadge.style.display = 'none';
+      }
+    }
+
+    const bentoUnreadCounter = document.getElementById('bentoUnreadCounter');
+    if (bentoUnreadCounter) {
+      bentoUnreadCounter.textContent = totalUnreadDM > 0 ? `${totalUnreadDM} Unread` : '0 Unread';
+    }
+
     for (const [userId, count] of Object.entries(unreadCounts)) {
       const userItem = document.querySelector(`.online-user-item[data-user-id="${userId}"]`);
       if (userItem) {
@@ -1506,6 +1720,28 @@ const startSChat = () => {
         } else if (badgeEl) {
           badgeEl.remove();
         }
+      }
+    }
+  };
+
+  const updateRequestsBadgeUI = () => {
+    const incomingCount = incomingContactRequests ? incomingContactRequests.length : 0;
+    const pillRequestsBadge = document.getElementById('pillRequestsBadge');
+    if (pillRequestsBadge) {
+      if (incomingCount > 0) {
+        pillRequestsBadge.textContent = incomingCount > 99 ? '99+' : incomingCount;
+        pillRequestsBadge.style.display = 'inline-block';
+      } else {
+        pillRequestsBadge.style.display = 'none';
+      }
+    }
+    const sidebarRequestsBadgeEl = document.getElementById('sidebarRequestsBadge');
+    if (sidebarRequestsBadgeEl) {
+      if (incomingCount > 0) {
+        sidebarRequestsBadgeEl.textContent = incomingCount;
+        sidebarRequestsBadgeEl.style.display = 'inline-block';
+      } else {
+        sidebarRequestsBadgeEl.style.display = 'none';
       }
     }
   };
@@ -1608,10 +1844,13 @@ const enterChat = () => {
           const greeting = getTimeGreeting();
           welcomeGreeting.innerHTML = `${greeting}, <span style="opacity: 0.9; font-weight: 600;">${currentUser.username}</span>.`;
         }
+        if (typeof setActivePillTab === 'function') setActivePillTab('hub', false);
+        if (typeof renderHomeHubQuickContacts === 'function') renderHomeHubQuickContacts();
       } else {
         const chatWrapper = document.querySelector('.chat-wrapper');
         if (chatWrapper) chatWrapper.classList.remove('empty-state');
         if (globalChannelBtn) globalChannelBtn.classList.add('active');
+        if (typeof setActivePillTab === 'function') setActivePillTab('global', false);
       }
 
       try {
@@ -3269,14 +3508,7 @@ const enterChat = () => {
         outgoingContactRequests = data.outgoing_requests || [];
 
         const incomingCount = incomingContactRequests.length;
-        if (sidebarRequestsBadge) {
-          if (incomingCount > 0) {
-            sidebarRequestsBadge.textContent = incomingCount;
-            sidebarRequestsBadge.style.display = 'inline-block';
-          } else {
-            sidebarRequestsBadge.style.display = 'none';
-          }
-        }
+        updateRequestsBadgeUI();
 
         renderSidebarRequestsList();
         updateOnlineUsers();
@@ -3299,17 +3531,17 @@ const enterChat = () => {
     }
 
     pendingRequestsList.innerHTML = incomingContactRequests.map(req => `
-      <div class="contact-item-row">
-        <div class="contact-user-info">
+      <div class="pending-request-card">
+        <div class="pending-request-user">
           <div class="avatar">${renderAvatarHTML(req.avatar, req.username, "", `openAvatarLightboxById(${req.id})`)}</div>
           <div>
-            <div style="font-weight: 700; font-size: 0.9rem;">@${escapeHtml(req.username)}</div>
-            <div style="font-size: 0.75rem; color: var(--text-muted);">${escapeHtml(req.bio || 'Wants to connect with you')}</div>
+            <div style="font-weight: 700; font-size: 0.95rem; color: var(--text-main);">@${escapeHtml(req.username)}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(req.bio || 'Wants to message with you')}</div>
           </div>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button type="button" class="unban-btn" onclick="acceptContactRequest(${req.id}, '${escapeHtml(req.username)}')">Accept</button>
-          <button type="button" class="ban-btn" onclick="declineContactRequest(${req.id})">Decline</button>
+        <div class="pending-request-actions">
+          <button type="button" class="btn btn-primary btn-sm" onclick="acceptContactRequest(${req.id}, '${escapeHtml(req.username)}')">Accept</button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="declineContactRequest(${req.id})">Decline</button>
         </div>
       </div>
     `).join('');
@@ -3351,7 +3583,9 @@ const enterChat = () => {
       if (res.ok) {
         showAlert('Request declined.', 'info');
         incomingContactRequests = incomingContactRequests.filter(r => Number(r.id) !== Number(requesterId));
+        updateRequestsBadgeUI();
         renderPendingRequests();
+        renderSidebarRequestsList();
         if (pendingRequestsBtn && requestsCountText) {
           if (incomingContactRequests.length > 0) {
             requestsCountText.textContent = `Requests (${incomingContactRequests.length})`;
