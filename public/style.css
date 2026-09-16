@@ -3619,9 +3619,14 @@ button:active,
 .empty-state-branding {
   display: none;
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
   text-align: center;
   color: var(--text-main);
   z-index: 10;
@@ -3701,7 +3706,10 @@ button:active,
 
 /* Privacy Shield Concealment */
 .chat-wrapper.empty-state .empty-state-branding {
-  display: block;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .chat-wrapper.empty-state .chat-header {
@@ -6059,17 +6067,26 @@ emoji-picker.schat-emoji-picker {
   }
 }
 
-/* 2. ELEVATED SChat HOME HUB STYLES */
+/* 2. ELEVATED SChat HOME HUB STYLES (CENTERED & RESPONSIVE) */
 .empty-state-branding.home-hub-container {
   display: none;
   position: absolute;
-  inset: 0;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  transform: none !important;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 32px 20px 100px 20px;
+  padding: 36px 20px 110px 20px;
   z-index: 10;
   pointer-events: auto;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .chat-wrapper.empty-state .empty-state-branding.home-hub-container {
@@ -6082,7 +6099,7 @@ emoji-picker.schat-emoji-picker {
 .home-hub-scroll-wrap {
   width: 100%;
   max-width: 860px;
-  margin: auto;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6100,6 +6117,54 @@ emoji-picker.schat-emoji-picker {
   margin-bottom: 12px;
 }
 
+.home-hub-hero .logo-icon-lg {
+  width: 76px;
+  height: 76px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 22px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(79, 70, 229, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.35);
+  box-shadow: 0 12px 30px rgba(99, 102, 241, 0.2);
+  transition: transform 0.25s var(--spring-bounce);
+}
+
+.home-hub-hero .logo-icon-lg:hover {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.home-hub-hero .brand-logo-img-lg {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+.home-hub-hero h1.mature-greeting {
+  font-size: 2.1rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin: 12px 0 8px 0;
+  color: var(--text-main);
+}
+
+.home-hub-hero p.mature-subtext {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  max-width: 520px;
+  line-height: 1.5;
+  margin: 0 auto 14px auto;
+}
+
+[data-theme="light"] .home-hub-hero h1.mature-greeting {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .home-hub-hero p.mature-subtext {
+  color: #64748b !important;
+}
+
 .home-hub-presence-pill {
   display: inline-flex;
   align-items: center;
@@ -6111,7 +6176,7 @@ emoji-picker.schat-emoji-picker {
   color: var(--text-muted);
   font-size: 0.8rem;
   font-weight: 500;
-  margin-top: 12px;
+  margin-top: 4px;
 }
 
 [data-theme="light"] .home-hub-presence-pill {
@@ -6134,190 +6199,7 @@ emoji-picker.schat-emoji-picker {
   100% { transform: scale(0.95); opacity: 0.8; }
 }
 
-.home-hub-bento-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-  width: 100%;
-}
-
-@media (max-width: 680px) {
-  .home-hub-bento-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-}
-
-.bento-card {
-  position: relative;
-  background: rgba(16, 21, 32, 0.65);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid var(--panel-border);
-  border-radius: 20px;
-  padding: 22px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 16px;
-  cursor: pointer;
-  overflow: hidden;
-  text-align: left;
-  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
-  user-select: none;
-}
-
-[data-theme="light"] .bento-card {
-  background: rgba(255, 255, 255, 0.75);
-}
-
-.bento-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  border-color: rgba(99, 102, 241, 0.45);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35), 0 0 24px rgba(99, 102, 241, 0.16);
-}
-
-[data-theme="light"] .bento-card:hover {
-  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08), 0 0 20px rgba(99, 102, 241, 0.12);
-}
-
-.bento-card:active {
-  transform: scale(0.98);
-}
-
-.bento-card-bg-glow {
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
-  pointer-events: none;
-  transition: transform 0.4s ease;
-}
-
-.bento-card:hover .bento-card-bg-glow {
-  transform: scale(1.4);
-}
-
-.bento-icon-wrap {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.25s var(--spring-bounce);
-}
-
-.bento-card:hover .bento-icon-wrap {
-  transform: scale(1.1) rotate(4deg);
-}
-
-.global-icon-glow {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
-  color: #38bdf8;
-  border: 1px solid rgba(56, 189, 248, 0.35);
-}
-
-.dm-icon-glow {
-  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(99, 102, 241, 0.2));
-  color: #c084fc;
-  border: 1px solid rgba(168, 85, 247, 0.35);
-}
-
-.contacts-icon-glow {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.2));
-  color: #34d399;
-  border: 1px solid rgba(16, 185, 129, 0.35);
-}
-
-.settings-icon-glow {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.2));
-  color: #fbbf24;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-}
-
-.bento-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.bento-tag {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-dim);
-}
-
-.bento-live-badge {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
-  padding: 2px 8px;
-  border-radius: 9999px;
-  border: 1px solid rgba(56, 189, 248, 0.25);
-}
-
-.tiny-pulse {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #38bdf8;
-  animation: pulseGreen 1.5s infinite;
-}
-
-.bento-counter-pill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: #a5b4fc;
-  background: rgba(99, 102, 241, 0.15);
-  padding: 2px 8px;
-  border-radius: 9999px;
-  border: 1px solid rgba(99, 102, 241, 0.28);
-}
-
-.bento-title {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: var(--text-main);
-  margin-bottom: 6px;
-  letter-spacing: -0.02em;
-}
-
-.bento-desc {
-  font-size: 0.83rem;
-  color: var(--text-muted);
-  line-height: 1.45;
-}
-
-.bento-action-arrow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--primary-accent);
-  transition: transform 0.2s ease, gap 0.2s ease;
-}
-
-.bento-card:hover .bento-action-arrow {
-  gap: 10px;
-  color: #818cf8;
-}
-
-.bento-card:hover .bento-action-arrow svg {
-  transform: translateX(3px);
-}
-
+/* Quick Contacts Quick Jump Row */
 .home-hub-quick-contacts {
   width: 100%;
   background: rgba(255, 255, 255, 0.02);
@@ -6328,10 +6210,12 @@ emoji-picker.schat-emoji-picker {
 }
 
 .quick-contacts-title {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .quick-contacts-row {
@@ -6362,6 +6246,102 @@ emoji-picker.schat-emoji-picker {
   transform: translateY(-2px);
 }
 
+[data-theme="light"] .quick-contact-chip {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* Platform Features Grid (Zero-Log, WebSockets, Translate, Devices) */
+.home-hub-features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .home-hub-features-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.hub-feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(16, 21, 32, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--panel-border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  text-align: left;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hub-feature-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35), 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
+[data-theme="light"] .hub-feature-card {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .hub-feature-card:hover {
+  background: #ffffff;
+  border-color: rgba(79, 70, 229, 0.35);
+  box-shadow: 0 12px 28px rgba(79, 70, 229, 0.12);
+}
+
+.hub-feature-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+.hub-feature-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.hub-feature-details h4 {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.hub-feature-details p {
+  font-size: 0.84rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin: 0;
+}
+
+[data-theme="light"] .hub-feature-details h4 {
+  color: #0f172a;
+}
+
+[data-theme="light"] .hub-feature-details p {
+  color: #64748b;
+}
+
+/* Badges Row */
 .home-hub-badges-row {
   display: flex;
   flex-wrap: wrap;
@@ -6381,4 +6361,44 @@ emoji-picker.schat-emoji-picker {
   color: var(--text-muted);
   font-size: 0.76rem;
   font-weight: 600;
+}
+
+[data-theme="light"] .hub-pill-chip {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  color: #64748b;
+}
+
+/* Sidebar Messages Header */
+.sidebar-messages-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 4px 10px 4px;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 8px;
+}
+
+.sidebar-header-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.sidebar-messages-header .tab-badge {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(99, 102, 241, 0.25);
+}
+
+[data-theme="light"] .sidebar-messages-header .tab-badge {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary-accent);
+  border-color: rgba(79, 70, 229, 0.2);
 }
