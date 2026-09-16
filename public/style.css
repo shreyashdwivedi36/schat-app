@@ -334,10 +334,12 @@ body {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
-.input-wrapper {
+.input-wrapper,
+.password-input-wrapper {
   position: relative;
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .input-icon {
@@ -346,9 +348,11 @@ body {
   font-size: 0.95rem;
   pointer-events: none;
   opacity: 0.7;
+  z-index: 2;
 }
 
-.input-wrapper input {
+.input-wrapper input,
+.password-input-wrapper input {
   width: 100%;
   padding: 12px 16px 12px 42px;
   background: var(--input-bg);
@@ -359,21 +363,57 @@ body {
   font-size: 0.92rem;
   outline: none;
   transition: all var(--transition-fast);
+  box-sizing: border-box;
 }
 
-.input-wrapper input:focus {
+.input-wrapper.password-wrapper input,
+.password-input-wrapper input {
+  padding: 12px 44px 12px 16px !important;
+}
+
+.input-wrapper input:focus,
+.password-input-wrapper input:focus {
   border-color: var(--primary-accent);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
 }
 
-.toggle-pwd-btn {
+.toggle-pwd-btn,
+.pwd-toggle {
   position: absolute;
   right: 12px;
-  background: none;
-  border: none;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0.65;
   font-size: 0.9rem;
+  color: var(--text-muted);
+  padding: 6px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: color 0.15s ease, opacity 0.15s ease, background 0.15s ease;
+  z-index: 3;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.toggle-pwd-btn:hover,
+.pwd-toggle:hover {
+  opacity: 1;
+  color: var(--text-main);
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.toggle-pwd-btn .pwd-eye-icon,
+.pwd-toggle .pwd-eye-icon {
+  display: block;
+  pointer-events: none;
 }
 
 .btn {
@@ -6551,6 +6591,15 @@ emoji-picker.schat-emoji-picker {
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.quick-contacts-row::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .quick-contact-chip {
@@ -6593,12 +6642,15 @@ emoji-picker.schat-emoji-picker {
 .hub-action-card {
   display: flex;
   align-items: center;
-  gap: 16px;
-  flex: 1 1 240px;
-  padding: 18px 22px;
+  gap: 14px;
+  flex: 1 1 0;
+  min-width: 0;
+  height: auto;
+  min-height: auto;
+  padding: 16px 20px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  border-radius: 18px;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   cursor: pointer;
@@ -6609,6 +6661,24 @@ emoji-picker.schat-emoji-picker {
   outline: none;
   font-family: inherit;
   box-sizing: border-box;
+  position: relative;
+}
+
+.hub-action-chevron {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.5;
+  transition: transform 0.2s var(--spring-bounce), opacity 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.hub-action-card:hover .hub-action-chevron {
+  opacity: 1;
+  color: var(--text-main);
+  transform: translateX(3px);
 }
 
 .hub-action-card:hover {
@@ -6685,34 +6755,54 @@ emoji-picker.schat-emoji-picker {
 
 @media (max-width: 640px) {
   .home-hub-scroll-wrap {
-    padding: 16px 14px 100px;
-    gap: 16px;
+    padding: 20px 16px 95px;
+    gap: 14px;
+    max-width: 100%;
   }
 
   .home-hub-hero {
-    margin-bottom: 0px;
+    margin-bottom: 2px;
   }
 
   .home-hub-hero .logo-icon-lg {
-    width: 54px;
-    height: 54px;
-    border-radius: 16px;
+    width: 60px;
+    height: 60px;
+    border-radius: 18px;
   }
 
   .home-hub-hero .brand-logo-img-lg {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
   }
 
   .home-hub-hero h1.mature-greeting {
-    font-size: 1.55rem;
+    font-size: 1.6rem;
+    letter-spacing: -0.03em;
     margin: 8px 0 4px 0;
+    line-height: 1.2;
   }
 
   .home-hub-hero p.mature-subtext {
-    font-size: 0.85rem;
-    margin-bottom: 10px;
+    font-size: 0.84rem;
+    margin-bottom: 8px;
     line-height: 1.4;
+    max-width: 340px;
+  }
+
+  .home-hub-presence-pill {
+    padding: 4px 14px;
+    font-size: 0.74rem;
+    margin-top: 2px;
+  }
+
+  .home-hub-quick-contacts {
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  .quick-contacts-title {
+    font-size: 0.74rem;
+    margin-bottom: 8px;
   }
 
   .home-hub-actions-row {
@@ -6720,28 +6810,44 @@ emoji-picker.schat-emoji-picker {
     width: 100%;
     padding: 0;
     gap: 10px;
-    margin-top: 4px;
+    margin-top: 2px;
   }
 
   .hub-action-card {
-    padding: 12px 14px;
+    flex: 0 0 auto !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    padding: 13px 16px !important;
     border-radius: 16px;
-    gap: 12px;
+    gap: 14px;
+    align-items: center !important;
   }
 
   .hub-action-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.35rem;
+    width: 42px;
+    height: 42px;
+    font-size: 1.4rem;
     border-radius: 12px;
   }
 
+  .hub-action-info {
+    flex: 1;
+    min-width: 0;
+  }
+
   .hub-action-info h4 {
-    font-size: 0.9rem;
+    font-size: 0.92rem;
+    font-weight: 700;
   }
 
   .hub-action-info p {
     font-size: 0.76rem;
+    line-height: 1.3;
+  }
+
+  .hub-action-chevron {
+    opacity: 0.6;
   }
 }
 

@@ -99,7 +99,9 @@
             <div class="input-wrapper">
               <span class="input-icon" aria-hidden="true">🔒</span>
               <input type="password" id="loginPassword" placeholder="••••••••" required autocomplete="current-password">
-              <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('loginPassword', this)">👁️</button>
+              <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('loginPassword', this)">
+                <svg class="pwd-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
             </div>
           </div>
 
@@ -142,7 +144,9 @@
             <div class="input-wrapper">
               <span class="input-icon" aria-hidden="true">🔒</span>
               <input type="password" id="regPassword" placeholder="Minimum 6 characters" required autocomplete="new-password">
-              <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('regPassword', this)">👁️</button>
+              <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('regPassword', this)">
+                <svg class="pwd-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
             </div>
           </div>
 
@@ -280,6 +284,9 @@
                 <h4>Open Conversations</h4>
                 <p>Chat with friends or search contacts</p>
               </div>
+              <span class="hub-action-chevron" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </span>
             </button>
             <button type="button" class="hub-action-card" id="hubOpenGlobalBtn">
               <span class="hub-action-icon">🌐</span>
@@ -287,6 +294,9 @@
                 <h4>Global Channel</h4>
                 <p>Public real-time worldwide room</p>
               </div>
+              <span class="hub-action-chevron" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </span>
             </button>
           </div>
         </div>
@@ -642,17 +652,21 @@
             <form id="changePasswordForm" class="settings-panel-form">
               <div id="pwdAlert" class="auth-alert hidden"></div>
               <div class="input-group">
-                <label>Current Password</label>
-                <div class="password-input-wrapper">
-                  <input type="password" id="changeCurrentPwd" placeholder="••••••••" required>
-                  <button type="button" class="pwd-toggle" data-target="changeCurrentPwd" aria-label="Toggle password visibility">👁️</button>
+                <label for="changeCurrentPwd">Current Password</label>
+                <div class="input-wrapper password-wrapper">
+                  <input type="password" id="changeCurrentPwd" placeholder="••••••••" required autocomplete="current-password">
+                  <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('changeCurrentPwd', this)">
+                    <svg class="pwd-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
                 </div>
               </div>
               <div class="input-group">
-                <label>New Password</label>
-                <div class="password-input-wrapper">
-                  <input type="password" id="changeNewPwd" placeholder="Minimum 6 characters" minLength="6" required>
-                  <button type="button" class="pwd-toggle" data-target="changeNewPwd" aria-label="Toggle password visibility">👁️</button>
+                <label for="changeNewPwd">New Password</label>
+                <div class="input-wrapper password-wrapper">
+                  <input type="password" id="changeNewPwd" placeholder="Minimum 6 characters" minLength="6" required autocomplete="new-password">
+                  <button type="button" class="toggle-pwd-btn" aria-label="Toggle password visibility" onclick="togglePasswordVisibility('changeNewPwd', this)">
+                    <svg class="pwd-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
                 </div>
                 <span class="input-hint">Use at least 6 characters with letters and numbers.</span>
               </div>
