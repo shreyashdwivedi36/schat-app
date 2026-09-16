@@ -577,6 +577,260 @@ const startSChat = () => {
     }
   };
 
+  // ==========================================
+  // SUPER ADMIN GOD-MODE CONSOLE CONTROLLER
+  // ==========================================
+  let adminMatrixUsers = [];
+  let adminMatrixFilter = 'all';
+  let adminConsoleInitialized = false;
+
+  const showAdminCommandCenter = () => {
+    document.body.classList.add('admin-mode');
+    const bottomPillNav = document.getElementById('bottomPillNav');
+    if (bottomPillNav) bottomPillNav.style.display = 'none';
+
+    // Hide auth and chat root views
+    if (authView) authView.classList.add('hidden');
+    if (chatView) chatView.classList.add('hidden');
+    document.querySelectorAll('.app-view').forEach(v => {
+      if (v.id !== 'adminCommandView') v.classList.remove('active');
+    });
+
+    const adminCommandView = document.getElementById('adminCommandView');
+    if (adminCommandView) {
+      adminCommandView.classList.remove('hidden');
+      adminCommandView.classList.add('active');
+    }
+
+    if (!adminConsoleInitialized) {
+      setupAdminConsoleHandlers();
+      adminConsoleInitialized = true;
+    }
+
+    refreshAdminConsoleData();
+  };
+
+  const setupAdminConsoleHandlers = () => {
+    const logoutBtn = document.getElementById('adminConsoleLogoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', performLogout);
+    }
+
+    const broadcastInput = document.getElementById('adminConsoleBroadcastInput');
+    const broadcastBtn = document.getElementById('adminConsoleBroadcastBtn');
+    if (broadcastBtn && broadcastInput) {
+      const dispatchBroadcast = async () => {
+        const message = broadcastInput.value.trim();
+        if (!message) return;
+        broadcastBtn.disabled = true;
+        try {
+          const res = await fetch('/api/admin/announce', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ message })
+          });
+          if (res.ok) {
+            broadcastInput.value = '';
+            showAppToast('Platform emergency broadcast dispatched!', 'success');
+          } else {
+            const err = await res.json();
+            showAppToast(err.error || 'Failed to send broadcast.', 'error');
+          }
+        } catch (e) {
+          showAppToast('Network error dispatching broadcast.', 'error');
+        } finally {
+          broadcastBtn.disabled = false;
+        }
+      };
+
+      broadcastBtn.addEventListener('click', dispatchBroadcast);
+      broadcastInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          dispatchBroadcast();
+        }
+      });
+    }
+
+    const filterPills = document.querySelectorAll('[data-admin-matrix-filter]');
+    filterPills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        filterPills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        adminMatrixFilter = pill.dataset.adminMatrixFilter || 'all';
+        renderAdminMatrixUsers();
+      });
+    });
+
+    const searchInput = document.getElementById('adminConsoleSearchInput');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        renderAdminMatrixUsers();
+      });
+    }
+  };
+
+  const refreshAdminConsoleData = async () => {
+    if (!authToken || !currentUser || currentUser.role !== 'super_admin') return;
+
+    try {
+      const healthRes = await fetch('/api/health');
+      if (healthRes.ok) {
+        const health = await healthRes.json();
+        const engineStatusEl = document.getElementById('adminStatEngineStatus');
+        if (engineStatusEl) engineStatusEl.textContent = health.database === 'connected' ? 'Operational' : 'Degraded';
+      }
+    } catch(e) {}
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        adminMatrixUsers = await res.json() || [];
+        updateAdminTelemetryMetrics();
+        renderAdminMatrixUsers();
+      }
+    } catch(e) {
+      console.error('Failed to fetch admin users:', e);
+    }
+  };
+
+  const updateAdminTelemetryMetrics = () => {
+    const total = adminMatrixUsers.length;
+    const suspended = adminMatrixUsers.filter(u => Number(u.is_banned) === 1 || u.is_banned === true).length;
+    const active = total - suspended;
+
+    const elTotal = document.getElementById('adminStatTotalUsers');
+    const elActive = document.getElementById('adminStatActiveUsers');
+    const elSuspended = document.getElementById('adminStatSuspendedUsers');
+
+    if (elTotal) elTotal.textContent = total;
+    if (elActive) elActive.textContent = active;
+    if (elSuspended) elSuspended.textContent = suspended;
+
+    const countAll = document.getElementById('adminFilterCountAll');
+    const countActive = document.getElementById('adminFilterCountActive');
+    const countSuspended = document.getElementById('adminFilterCountSuspended');
+
+    if (countAll) countAll.textContent = total;
+    if (countActive) countActive.textContent = active;
+    if (countSuspended) countSuspended.textContent = suspended;
+  };
+
+  const renderAdminMatrixUsers = () => {
+    const container = document.getElementById('adminConsoleUserList');
+    if (!container) return;
+
+    const searchInput = document.getElementById('adminConsoleSearchInput');
+    const query = (searchInput?.value || '').toLowerCase().trim();
+
+    let filtered = adminMatrixUsers.filter(u => {
+      const isBanned = Number(u.is_banned) === 1 || u.is_banned === true;
+      if (adminMatrixFilter === 'active' && isBanned) return false;
+      if (adminMatrixFilter === 'suspended' && !isBanned) return false;
+      if (query) {
+        const matchName = (u.username || '').toLowerCase().includes(query);
+        const matchEmail = (u.email || '').toLowerCase().includes(query);
+        const matchId = String(u.id).includes(query);
+        return matchName || matchEmail || matchId;
+      }
+      return true;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="admin-matrix-empty" style="text-align:center; padding: 2.5rem 1rem; color: #fda4af; font-size: 0.9rem; opacity: 0.8;">No matching records found in security matrix.</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(u => {
+      const isBanned = Number(u.is_banned) === 1 || u.is_banned === true;
+      const isSuperAdmin = (u.username || '').toLowerCase() === 'admin' || u.role === 'super_admin';
+
+      const statusBadge = isBanned
+        ? '<span class="admin-matrix-badge suspended">Suspended</span>'
+        : '<span class="admin-matrix-badge active">Active</span>';
+
+      let actionHtml = '';
+      if (isSuperAdmin) {
+        actionHtml = '<span class="admin-matrix-role-tag">Console Operator</span>';
+      } else if (isBanned) {
+        actionHtml = `<button type="button" class="btn-action-unban" onclick="window.adminMatrixUnban(${u.id}, '${escapeHtml(u.username)}')">Restore Access</button>`;
+      } else {
+        actionHtml = `<button type="button" class="btn-action-ban" onclick="window.adminMatrixBan(${u.id}, '${escapeHtml(u.username)}')">Terminate Session</button>`;
+      }
+
+      return `
+        <div class="admin-matrix-user-row ${isBanned ? 'is-suspended' : ''}">
+          <div class="admin-user-cell-meta">
+            <div class="avatar">${renderAvatarHTML(u.avatar, u.username, "no-hover")}</div>
+            <div class="user-details">
+              <div class="user-handle-row">
+                <span class="user-handle">@${escapeHtml(u.username)}</span>
+                ${statusBadge}
+              </div>
+              <div class="user-telemetry-sub">ID: ${u.id} • ${escapeHtml(u.email || 'No email')}</div>
+            </div>
+          </div>
+          <div class="admin-user-cell-action">
+            ${actionHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  window.adminMatrixBan = async (userId, username) => {
+    if (!confirm(`Are you sure you want to SUSPEND and TERMINATE access for @${username} (ID: ${userId})? They will be immediately disconnected.`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/ban`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        showAppToast(`@${username} access suspended.`, 'success');
+        const target = adminMatrixUsers.find(u => Number(u.id) === Number(userId));
+        if (target) target.is_banned = 1;
+        updateAdminTelemetryMetrics();
+        renderAdminMatrixUsers();
+        refreshAdminConsoleData();
+      } else {
+        const err = await res.json();
+        showAppToast(err.error || 'Failed to suspend user.', 'error');
+      }
+    } catch(e) {
+      showAppToast('Network error executing suspension.', 'error');
+    }
+  };
+
+  window.adminMatrixUnban = async (userId, username) => {
+    if (!confirm(`Restore full platform access for @${username} (ID: ${userId})?`)) return;
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/unban`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        showAppToast(`@${username} access restored.`, 'success');
+        const target = adminMatrixUsers.find(u => Number(u.id) === Number(userId));
+        if (target) target.is_banned = 0;
+        updateAdminTelemetryMetrics();
+        renderAdminMatrixUsers();
+        refreshAdminConsoleData();
+      } else {
+        const err = await res.json();
+        showAppToast(err.error || 'Failed to restore access.', 'error');
+      }
+    } catch(e) {
+      showAppToast('Network error restoring access.', 'error');
+    }
+  };
+
   const logoutBtn = document.getElementById('logoutBtn');
   const soundToggleBtn = document.getElementById('soundToggleBtn');
   const themeModeBtn = document.getElementById('themeModeBtn');
@@ -1254,6 +1508,17 @@ const startSChat = () => {
     if (pingInterval) clearInterval(pingInterval);
     if (ws) ws.close();
 
+    document.body.classList.remove('admin-mode');
+    const adminView = document.getElementById('adminCommandView');
+    if (adminView) {
+      adminView.classList.remove('active');
+      adminView.classList.add('hidden');
+    }
+    const bottomPillNav = document.getElementById('bottomPillNav');
+    if (bottomPillNav) {
+      bottomPillNav.style.display = '';
+    }
+
     const leaveChat = async () => {
       await MotionFX.exit(chatView, { y: 16 });
       chatView.classList.add('hidden');
@@ -1514,6 +1779,17 @@ const startSChat = () => {
     Object.values(views).forEach(v => {
       if (v) v.classList.remove('active');
     });
+
+    const adminView = document.getElementById('adminCommandView');
+    if (adminView && viewName !== 'admin') {
+      adminView.classList.remove('active');
+      adminView.classList.add('hidden');
+    }
+
+    if (viewName === 'admin') {
+      showAdminCommandCenter();
+      return;
+    }
 
     if (viewName === 'hub') {
       if (views.hub) views.hub.classList.add('active');
@@ -1862,6 +2138,12 @@ const startSChat = () => {
   const initializeChatSession = async () => {
     if (!authToken || !currentUser) return;
 
+    if (currentUser.role === 'super_admin') {
+      showAdminCommandCenter();
+      connectWebSocket();
+      return;
+    }
+
     try {
       const muteRes = await fetch('/api/users/muted_chats', {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -2126,6 +2408,10 @@ const startSChat = () => {
             authToken = data.token;
             localStorage.setItem('schat_token', authToken);
           }
+          if (currentUser && currentUser.role === 'super_admin') {
+            const elActive = document.getElementById('adminStatActiveUsers');
+            if (elActive && data.onlineUsers) elActive.textContent = data.onlineUsers.length;
+          }
           updateOnlineUsers(data.onlineUsers);
           flushOutboundQueue();
 
@@ -2340,6 +2626,10 @@ const startSChat = () => {
         } else if (data.type === 'delete_message') {
           removeMessageFromDOM(data.messageId);
         } else if (data.type === 'presence') {
+          if (currentUser && currentUser.role === 'super_admin') {
+            const elActive = document.getElementById('adminStatActiveUsers');
+            if (elActive && data.onlineUsers) elActive.textContent = data.onlineUsers.length;
+          }
           updateOnlineUsers(data.onlineUsers);
         } else if (data.type === 'typing') {
           handleTypingEvent(data);
@@ -2347,6 +2637,8 @@ const startSChat = () => {
           if (currentUser && Number(data.userId) === Number(currentUser.id)) {
             performLogout();
             showAlert('Your account has been suspended by administrator.', 'error');
+          } else if (currentUser && currentUser.role === 'super_admin') {
+            refreshAdminConsoleData();
           }
         } else if (data.type === 'session_revoked') {
           if (currentUser && Number(data.userId) === Number(currentUser.id) && currentUser.sessionId === data.sessionId) {
@@ -3255,7 +3547,11 @@ const startSChat = () => {
 
 
   const scrollToBottom = () => {
-    messagesFeed.scrollTop = messagesFeed.scrollHeight;
+    requestAnimationFrame(() => {
+      if (messagesFeed) {
+        messagesFeed.scrollTop = messagesFeed.scrollHeight;
+      }
+    });
   };
 
   const updateOnlineUsers = (users = []) => {

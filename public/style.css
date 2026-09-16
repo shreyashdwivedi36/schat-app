@@ -3064,8 +3064,14 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
   position: absolute;
   inset: 0;
   padding-top: 115px !important;
-  padding-bottom: 130px !important;
+  padding-bottom: 240px !important;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   z-index: 10;
+}
+
+.messages-feed .message-card:last-child {
+  margin-bottom: 28px !important;
 }
 
 .pinned-banner {
@@ -3349,21 +3355,11 @@ button:active, .btn:active, .icon-btn:active, .quick-rx-btn:active {
 .date-divider { text-align: center; font-size: 0.75rem; color: var(--text-muted); margin: 15px 0; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; opacity: 0.8; } .date-divider::before, .date-divider::after { content: ''; flex: 1; border-bottom: 1px solid rgba(255, 255, 255, 0.1); margin: 0 15px; } [data-theme='light'] .date-divider::before, [data-theme='light'] .date-divider::after { border-bottom: 1px solid rgba(0, 0, 0, 0.1); }
 
 
-@supports ((animation-timeline: view()) and (animation-range: entry)) {
-  @keyframes scale-in-on-scroll {
-    0% { opacity: 0; transform: scale(0.85) translateY(30px); }
-    100% { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .messages-feed {
-    view-timeline-name: --feed-scroll;
-  }
-
-  .message-card {
-    animation: scale-in-on-scroll linear both;
-    animation-timeline: view();
-    animation-range: entry 2% cover 15%;
-  }
+/* High-performance scroll optimization: cull off-screen message cards for silky 60/120fps scrolling */
+.message-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 75px;
+  contain: layout style;
 }
 
 
@@ -6721,4 +6717,492 @@ emoji-picker.schat-emoji-picker {
   background: rgba(79, 70, 229, 0.1);
   color: var(--primary-accent);
   border-color: rgba(79, 70, 229, 0.2);
+}
+
+/* ==========================================================================
+   SUPER-ADMIN GOD-MODE COMMAND CENTER (EXCLUSIVE TO SUPER ADMIN)
+   ========================================================================== */
+body.admin-mode {
+  background: #06070a !important;
+  color: #f1f5f9 !important;
+}
+
+body.admin-mode #bottomPillNav {
+  display: none !important;
+}
+
+.admin-command-view {
+  background: radial-gradient(circle at top right, #1c0812 0%, #0c0509 45%, #06070a 100%) !important;
+  padding: 0 !important;
+  z-index: 50 !important;
+}
+
+.admin-console-wrap {
+  width: 100%;
+  max-width: 1020px;
+  margin: 0 auto;
+  padding: 32px 24px 60px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+/* Command Header */
+.admin-console-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(244, 63, 94, 0.2);
+}
+
+.admin-brand-col {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-shield-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.25), rgba(225, 29, 72, 0.08));
+  border: 1px solid rgba(244, 63, 94, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f43f5e;
+  box-shadow: 0 0 24px rgba(244, 63, 94, 0.25);
+}
+
+.admin-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-console-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  margin: 0;
+}
+
+.admin-console-title-accent {
+  color: #f43f5e;
+}
+
+.admin-security-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  padding: 3px 9px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.admin-console-subtext {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 4px 0 0;
+}
+
+.admin-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-mesh-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(244, 63, 94, 0.06);
+  border: 1px solid rgba(244, 63, 94, 0.18);
+  font-size: 0.78rem;
+  color: #cbd5e1;
+}
+
+.pulse-dot-crimson {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f43f5e;
+  box-shadow: 0 0 10px #f43f5e;
+  animation: pulseCrimson 1.8s infinite;
+}
+
+@keyframes pulseCrimson {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 14px #f43f5e; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.admin-btn-crimson-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: rgba(244, 63, 94, 0.08);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: #f43f5e;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-btn-crimson-outline:hover {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: #f43f5e;
+  transform: translateY(-1px);
+}
+
+/* Telemetry Grid */
+.admin-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px;
+}
+
+.admin-telemetry-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: rgba(18, 10, 15, 0.5);
+  border: 1px solid rgba(244, 63, 94, 0.16);
+  border-radius: 18px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-telemetry-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(244, 63, 94, 0.35);
+}
+
+.telemetry-icon-box {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.telemetry-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.telemetry-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+}
+
+.telemetry-value {
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Admin Sections */
+.admin-console-section {
+  background: rgba(14, 11, 16, 0.6);
+  border: 1px solid rgba(244, 63, 94, 0.16);
+  border-radius: 22px;
+  padding: 24px 26px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.admin-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.section-title-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-title-box h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.section-tag {
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: #fb7185;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.25);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.admin-section-desc {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 0 0 18px 0;
+  line-height: 1.45;
+}
+
+/* Broadcast Input Bar */
+.admin-broadcast-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-input-wrap {
+  flex: 1 1 280px;
+}
+
+.admin-input-wrap input {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(244, 63, 94, 0.22);
+  color: #ffffff;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.admin-input-wrap input:focus {
+  border-color: #f43f5e;
+  box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.18);
+}
+
+.admin-btn-crimson {
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  border: none;
+  color: #ffffff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(244, 63, 94, 0.35);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-btn-crimson:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(244, 63, 94, 0.5);
+}
+
+.admin-btn-crimson:active {
+  transform: translateY(0);
+}
+
+/* Filter Pills */
+.admin-filter-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-filter-pill {
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-filter-pill.active {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.4);
+  color: #f43f5e;
+}
+
+/* Search Bar */
+.admin-matrix-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(244, 63, 94, 0.18);
+  margin-bottom: 18px;
+}
+
+.admin-matrix-search-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: 0.88rem;
+  outline: none;
+}
+
+/* User Moderation Table / List */
+.admin-users-table-container {
+  max-height: 480px;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.admin-console-user-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-matrix-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.15s ease;
+}
+
+.admin-matrix-user-row:hover {
+  background: rgba(244, 63, 94, 0.04);
+}
+
+.admin-matrix-user-row.is-banned {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+.admin-matrix-user-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-user-meta h4 {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-user-subline {
+  font-size: 0.74rem;
+  color: #94a3b8;
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 2px;
+}
+
+.admin-status-badge {
+  font-size: 0.66rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.admin-status-badge.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.admin-status-badge.banned {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.admin-matrix-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-action-ban {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action-ban:hover {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-action-unban {
+  padding: 6px 14px;
+  border-radius: 8px;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-action-unban:hover {
+  background: #10b981;
+  color: #ffffff;
 }

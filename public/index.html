@@ -680,6 +680,126 @@
         </div>
       </section>
 
+      <!-- 6. SUPER-ADMIN GOD-MODE COMMAND CENTER (Exclusive to Super Admin) -->
+      <section id="adminCommandView" class="app-view admin-command-view" role="region" aria-label="Super-Admin Command Center">
+        <div class="admin-console-wrap">
+          <!-- Command Header -->
+          <header class="admin-console-header">
+            <div class="admin-brand-col">
+              <div class="admin-shield-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="admin-title-row">
+                  <h1 class="admin-console-title">SChat<span class="admin-console-title-accent">™</span> God-Mode Console</h1>
+                  <span class="admin-security-badge">SUPER ADMIN</span>
+                </div>
+                <p class="admin-console-subtext">Unified Operations, Telemetry, and Threat Mitigation Center</p>
+              </div>
+            </div>
+
+            <div class="admin-header-actions">
+              <div class="admin-mesh-indicator">
+                <span class="pulse-dot-crimson"></span>
+                <span class="mesh-label">Live Platform Stream</span>
+              </div>
+              <button type="button" id="adminConsoleLogoutBtn" class="admin-btn-crimson-outline" title="Exit God-Mode">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                  <polyline points="16 17 21 12 16 7"></polyline>
+                  <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </header>
+
+          <!-- Telemetry Metric Grid -->
+          <div class="admin-telemetry-grid">
+            <div class="admin-telemetry-card">
+              <div class="telemetry-icon-box blue">👥</div>
+              <div class="telemetry-info">
+                <span class="telemetry-label">Registered Users</span>
+                <span class="telemetry-value" id="adminStatTotalUsers">0</span>
+              </div>
+            </div>
+
+            <div class="admin-telemetry-card">
+              <div class="telemetry-icon-box emerald">🟢</div>
+              <div class="telemetry-info">
+                <span class="telemetry-label">Active / Online</span>
+                <span class="telemetry-value" id="adminStatActiveUsers">0</span>
+              </div>
+            </div>
+
+            <div class="admin-telemetry-card">
+              <div class="telemetry-icon-box rose">🚫</div>
+              <div class="telemetry-info">
+                <span class="telemetry-label">Suspended Accounts</span>
+                <span class="telemetry-value" id="adminStatSuspendedUsers">0</span>
+              </div>
+            </div>
+
+            <div class="admin-telemetry-card">
+              <div class="telemetry-icon-box amber">⚡</div>
+              <div class="telemetry-info">
+                <span class="telemetry-label">Core Engine</span>
+                <span class="telemetry-value" id="adminStatEngineStatus">Online</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Broadcast Console Section -->
+          <div class="admin-console-section">
+            <div class="admin-section-header">
+              <div class="section-title-box">
+                <span class="section-symbol">📢</span>
+                <h3>Global Emergency Broadcast Dispatcher</h3>
+              </div>
+              <span class="section-tag">UNBLOCKABLE SYSTEM NOTIFICATION</span>
+            </div>
+            <p class="admin-section-desc">Transmit an un-blockable, instantaneous priority message across all currently active WebSocket connections.</p>
+            
+            <div class="admin-broadcast-bar">
+              <div class="admin-input-wrap">
+                <input type="text" id="adminConsoleBroadcastInput" placeholder="Enter platform-wide emergency announcement..." />
+              </div>
+              <button type="button" id="adminConsoleBroadcastBtn" class="admin-btn-crimson">
+                <span>Transmit Broadcast</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- User Directory & Moderation Matrix Section -->
+          <div class="admin-console-section">
+            <div class="admin-section-header">
+              <div class="section-title-box">
+                <span class="section-symbol">🛡️</span>
+                <h3>User Moderation Matrix</h3>
+              </div>
+              <div class="admin-filter-pills">
+                <button type="button" class="admin-filter-pill active" data-admin-matrix-filter="all">All (<span id="adminFilterCountAll">0</span>)</button>
+                <button type="button" class="admin-filter-pill" data-admin-matrix-filter="active">Active (<span id="adminFilterCountActive">0</span>)</button>
+                <button type="button" class="admin-filter-pill" data-admin-matrix-filter="suspended">Suspended (<span id="adminFilterCountSuspended">0</span>)</button>
+              </div>
+            </div>
+
+            <div class="admin-matrix-search-bar">
+              <span class="search-symbol">🔍</span>
+              <input type="text" id="adminConsoleSearchInput" placeholder="Filter user database by username, email, or ID..." />
+            </div>
+
+            <div class="admin-users-table-container">
+              <div id="adminConsoleUserList" class="admin-console-user-list">
+                <!-- User moderation cards injected dynamically -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Compatibility Anchors Container (keeps legacy element IDs available for any automated tests or legacy handlers) -->
       <div id="legacyCompatibilityContainer" style="display: none !important;" aria-hidden="true">
         <aside class="chat-sidebar" id="legacySidebar"></aside>
