@@ -398,7 +398,7 @@
             <h2>SChat™</h2>
           </div>
           <div class="sidebar-top-actions">
-            <button id="closeSidebarBtn" class="icon-btn mobile-only-btn" title="Close Menu" aria-label="Close menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            <button id="closeSidebarBtn" class="icon-btn close-sidebar-btn" title="Close Drawer" aria-label="Close drawer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
           </div>
         </div>
 
@@ -489,52 +489,12 @@
               </div>
             </div>
 
-            <!-- Platform Architecture & Security Highlights -->
-            <div class="home-hub-features-grid">
-              <div class="hub-feature-card">
-                <div class="hub-feature-icon">🔒</div>
-                <div class="hub-feature-details">
-                  <h4>Zero-Log Privacy</h4>
-                  <p>Messages with self-destruct timers and client-side privacy blur concealment.</p>
-                </div>
-              </div>
-              <div class="hub-feature-card">
-                <div class="hub-feature-icon">⚡</div>
-                <div class="hub-feature-details">
-                  <h4>High-Speed WebSockets</h4>
-                  <p>Sub-millisecond real-time message delivery, typing pulses, and instant ACKs.</p>
-                </div>
-              </div>
-              <div class="hub-feature-card">
-                <div class="hub-feature-icon">🌐</div>
-                <div class="hub-feature-details">
-                  <h4>Real-Time Translation</h4>
-                  <p>Neural on-the-fly translation across 16+ languages with language picker.</p>
-                </div>
-              </div>
-              <div class="hub-feature-card">
-                <div class="hub-feature-icon">💻</div>
-                <div class="hub-feature-details">
-                  <h4>Active Device Control</h4>
-                  <p>Multi-tab synchronization with remote session termination security.</p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Hub Feature Badges -->
-            <div class="home-hub-badges-row">
-              <div class="hub-pill-chip"><span class="chip-spark">🔒</span> Zero-Log Messages</div>
-              <div class="hub-pill-chip"><span class="chip-spark">⏱️</span> Self-Destruct Timers</div>
-              <div class="hub-pill-chip"><span class="chip-spark">🌐</span> 16+ Languages Auto-Translate</div>
-              <div class="hub-pill-chip"><span class="chip-spark">📱</span> PWA Cross-Platform</div>
-            </div>
-
           </div>
         </div>
         <!-- Chat Header -->
         <header class="chat-header" role="banner">
           <div class="room-info">
-            <button id="mobileSidebarToggle" class="icon-btn mobile-toggle-btn" title="Open Users Menu" aria-label="Open sidebar menu"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></button>
+            <button id="mobileSidebarToggle" class="icon-btn sidebar-toggle-btn" title="Conversations & Contacts" aria-label="Open conversations drawer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></button>
             <div id="roomAvatar" class="room-avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
             <div class="room-text-details">
               <h2 id="roomTitle" class="room-title">Global Channel</h2>

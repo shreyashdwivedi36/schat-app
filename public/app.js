@@ -1036,6 +1036,11 @@ const startSChat = () => {
   if (mobileSidebarToggle) mobileSidebarToggle.addEventListener('click', openSidebar);
   if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
   if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && chatSidebar && chatSidebar.classList.contains('open')) {
+      closeSidebar();
+    }
+  });
 
   // Web Audio Synthesizer
   const playSound = (type) => {
@@ -1465,6 +1470,7 @@ const startSChat = () => {
   if (pillNavHub) {
     pillNavHub.addEventListener('click', () => {
       playSound('tap');
+      closeSidebar();
       switchChatTab('empty');
     });
   }
@@ -1472,6 +1478,7 @@ const startSChat = () => {
   if (pillNavGlobal) {
     pillNavGlobal.addEventListener('click', () => {
       playSound('tap');
+      closeSidebar();
       switchChatTab(null);
     });
   }
@@ -1479,14 +1486,11 @@ const startSChat = () => {
   if (pillNavMessages) {
     pillNavMessages.addEventListener('click', () => {
       playSound('tap');
-      if (window.innerWidth <= 768) {
-        openSidebar();
-        if (tabDirectMessages) tabDirectMessages.click();
+      if (chatSidebar && chatSidebar.classList.contains('open')) {
+        closeSidebar();
       } else {
-        if (activeRecipient === 'empty' || !activeRecipient) {
-          if (tabDirectMessages) tabDirectMessages.click();
-          if (filterInput) filterInput.focus();
-        }
+        openSidebar();
+        if (filterInput) setTimeout(() => filterInput.focus(), 150);
       }
       setActivePillTab('messages');
     });
@@ -1495,13 +1499,14 @@ const startSChat = () => {
   if (pillNavRequests) {
     pillNavRequests.addEventListener('click', () => {
       playSound('tap');
+      closeSidebar();
       const pendingModal = document.getElementById('pendingRequestsModal');
       if (pendingModal && typeof showElement === 'function') {
         showElement(pendingModal);
         if (typeof renderPendingRequests === 'function') renderPendingRequests();
       } else if (tabIncomingRequests) {
         tabIncomingRequests.click();
-        if (window.innerWidth <= 768) openSidebar();
+        openSidebar();
       }
       setActivePillTab('requests');
     });
@@ -1510,6 +1515,7 @@ const startSChat = () => {
   if (pillNavSettings) {
     pillNavSettings.addEventListener('click', () => {
       playSound('tap');
+      closeSidebar();
       if (typeof window.openProfileModal === 'function') {
         window.openProfileModal();
       }
