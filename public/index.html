@@ -781,10 +781,10 @@
       </nav>
     </div>
 
-    <!-- 6. SUPER-ADMIN GOD-MODE COMMAND CENTER (Exclusive to Super Admin) -->
-    <section id="adminCommandView" class="admin-command-view hidden" role="region" aria-label="Console">
+    <!-- 6. ADMINISTRATION & OPERATIONS CONSOLE (Exclusive to Super Admin) -->
+    <section id="adminCommandView" class="admin-command-view hidden" role="region" aria-label="Administration Console">
       <div class="admin-console-wrap">
-        <!-- Command Header -->
+        <!-- Console Header -->
         <header class="admin-console-header">
           <div class="admin-brand-col">
             <div class="admin-shield-icon">
@@ -794,19 +794,19 @@
             </div>
             <div>
               <div class="admin-title-row">
-                <h1 class="admin-console-title">SChat<span class="admin-console-title-accent">™</span> God-Mode Console</h1>
-                <span class="admin-security-badge">SUPER ADMIN</span>
+                <h1 class="admin-console-title">SChat<span class="admin-console-title-accent">™</span> Management Console</h1>
+                <span class="admin-security-badge">System Administrator</span>
               </div>
-              <p class="admin-console-subtext">Unified Operations, Telemetry, and Threat Mitigation Center</p>
+              <p class="admin-console-subtext">Platform operations, user moderation, and real-time communications</p>
             </div>
           </div>
 
           <div class="admin-header-actions">
             <div class="admin-mesh-indicator">
-              <span class="pulse-dot-crimson"></span>
-              <span class="mesh-label">Live Platform Stream</span>
+              <span class="pulse-dot-emerald"></span>
+              <span class="mesh-label">System Active</span>
             </div>
-            <button type="button" id="adminConsoleLogoutBtn" class="admin-btn-crimson-outline" title="Exit God-Mode">
+            <button type="button" id="adminConsoleLogoutBtn" class="admin-btn-outline" title="Sign Out">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16 17 21 12 16 7"></polyline>
@@ -820,7 +820,14 @@
         <!-- Telemetry Metric Grid -->
         <div class="admin-telemetry-grid">
           <div class="admin-telemetry-card">
-            <div class="telemetry-icon-box blue">👥</div>
+            <div class="telemetry-icon-box blue">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+            </div>
             <div class="telemetry-info">
               <span class="telemetry-label">Registered Users</span>
               <span class="telemetry-value" id="adminStatTotalUsers">0</span>
@@ -828,7 +835,12 @@
           </div>
 
           <div class="admin-telemetry-card">
-            <div class="telemetry-icon-box emerald">🟢</div>
+            <div class="telemetry-icon-box emerald">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
             <div class="telemetry-info">
               <span class="telemetry-label">Active / Online</span>
               <span class="telemetry-value" id="adminStatActiveUsers">0</span>
@@ -836,7 +848,12 @@
           </div>
 
           <div class="admin-telemetry-card">
-            <div class="telemetry-icon-box rose">🚫</div>
+            <div class="telemetry-icon-box rose">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+              </svg>
+            </div>
             <div class="telemetry-info">
               <span class="telemetry-label">Suspended Accounts</span>
               <span class="telemetry-value" id="adminStatSuspendedUsers">0</span>
@@ -844,41 +861,80 @@
           </div>
 
           <div class="admin-telemetry-card">
-            <div class="telemetry-icon-box amber">⚡</div>
+            <div class="telemetry-icon-box amber">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
             <div class="telemetry-info">
               <span class="telemetry-label">Core Engine</span>
-              <span class="telemetry-value" id="adminStatEngineStatus">Online</span>
+              <span class="telemetry-value" id="adminStatEngineStatus">Operational</span>
             </div>
           </div>
         </div>
 
-        <!-- Broadcast Console Section -->
+        <!-- Live Global Chat Review Section -->
+        <div class="admin-console-section">
+          <div class="admin-section-header">
+            <div class="section-title-box">
+              <span class="section-symbol">💬</span>
+              <h3>Global Chat Feed & Moderation</h3>
+            </div>
+            <div class="admin-chat-feed-actions">
+              <button type="button" id="adminRefreshChatBtn" class="admin-feed-refresh-btn" title="Reload global messages">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="23 4 23 10 17 10"></polyline>
+                  <polyline points="1 20 1 14 7 14"></polyline>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                <span>Refresh</span>
+              </button>
+              <span class="section-tag section-tag-live">Live Feed</span>
+            </div>
+          </div>
+          <p class="admin-section-desc">Review global community messages in real-time, search conversation history, and delete inappropriate content directly.</p>
+
+          <div class="admin-chat-feed-toolbar">
+            <div class="admin-matrix-search-bar admin-chat-search-bar">
+              <span class="search-symbol">🔍</span>
+              <input type="text" id="adminChatSearchInput" placeholder="Filter global messages by author or content..." />
+            </div>
+          </div>
+
+          <div class="admin-chat-feed-container">
+            <div id="adminGlobalChatList" class="admin-global-chat-list">
+              <div class="admin-chat-feed-loading">Loading recent global messages...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Announcements Section -->
         <div class="admin-console-section">
           <div class="admin-section-header">
             <div class="section-title-box">
               <span class="section-symbol">📢</span>
-              <h3>Global Emergency Broadcast Dispatcher</h3>
+              <h3>System Announcements</h3>
             </div>
-            <span class="section-tag">UNBLOCKABLE SYSTEM NOTIFICATION</span>
+            <span class="section-tag">Platform Broadcast</span>
           </div>
-          <p class="admin-section-desc">Transmit an un-blockable, instantaneous priority message across all currently active WebSocket connections.</p>
+          <p class="admin-section-desc">Broadcast an immediate notification banner to all connected users across the platform.</p>
           
           <div class="admin-broadcast-bar">
             <div class="admin-input-wrap">
-              <input type="text" id="adminConsoleBroadcastInput" placeholder="Enter platform-wide emergency announcement..." />
+              <input type="text" id="adminConsoleBroadcastInput" placeholder="Type system announcement message..." />
             </div>
-            <button type="button" id="adminConsoleBroadcastBtn" class="admin-btn-crimson">
-              <span>Transmit Broadcast</span>
+            <button type="button" id="adminConsoleBroadcastBtn" class="admin-btn-primary">
+              <span>Broadcast Announcement</span>
             </button>
           </div>
         </div>
 
-        <!-- User Directory & Moderation Matrix Section -->
+        <!-- User Management & Moderation Section -->
         <div class="admin-console-section">
           <div class="admin-section-header">
             <div class="section-title-box">
-              <span class="section-symbol">🛡️</span>
-              <h3>User Moderation Matrix</h3>
+              <span class="section-symbol">👥</span>
+              <h3>User Management & Moderation</h3>
             </div>
             <div class="admin-filter-pills">
               <button type="button" class="admin-filter-pill active" data-admin-matrix-filter="all">All (<span id="adminFilterCountAll">0</span>)</button>
@@ -889,7 +945,7 @@
 
           <div class="admin-matrix-search-bar">
             <span class="search-symbol">🔍</span>
-            <input type="text" id="adminConsoleSearchInput" placeholder="Filter user database by username, email, or ID..." />
+            <input type="text" id="adminConsoleSearchInput" placeholder="Search users by username, email, or user ID..." />
           </div>
 
           <div class="admin-users-table-container">

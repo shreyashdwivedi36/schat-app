@@ -578,10 +578,11 @@ const startSChat = () => {
   };
 
   // ==========================================
-  // SUPER ADMIN GOD-MODE CONSOLE CONTROLLER
+  // ADMINISTRATION & OPERATIONS CONSOLE CONTROLLER
   // ==========================================
   let adminMatrixUsers = [];
   let adminMatrixFilter = 'all';
+  let adminGlobalMessages = [];
   let adminConsoleInitialized = false;
 
   const showAdminCommandCenter = () => {
@@ -608,6 +609,7 @@ const startSChat = () => {
     }
 
     refreshAdminConsoleData();
+    fetchAdminGlobalMessages();
   };
 
   const setupAdminConsoleHandlers = () => {
@@ -634,13 +636,13 @@ const startSChat = () => {
           });
           if (res.ok) {
             broadcastInput.value = '';
-            showAppToast('Platform emergency broadcast dispatched!', 'success');
+            showAppToast('System announcement broadcasted successfully.', 'success');
           } else {
             const err = await res.json();
-            showAppToast(err.error || 'Failed to send broadcast.', 'error');
+            showAppToast(err.error || 'Failed to send announcement.', 'error');
           }
         } catch (e) {
-          showAppToast('Network error dispatching broadcast.', 'error');
+          showAppToast('Network error dispatching announcement.', 'error');
         } finally {
           broadcastBtn.disabled = false;
         }
@@ -652,6 +654,21 @@ const startSChat = () => {
           e.preventDefault();
           dispatchBroadcast();
         }
+      });
+    }
+
+    const refreshChatBtn = document.getElementById('adminRefreshChatBtn');
+    if (refreshChatBtn) {
+      refreshChatBtn.addEventListener('click', () => {
+        fetchAdminGlobalMessages();
+        showAppToast('Global chat feed reloaded.', 'info');
+      });
+    }
+
+    const chatSearchInput = document.getElementById('adminChatSearchInput');
+    if (chatSearchInput) {
+      chatSearchInput.addEventListener('input', () => {
+        renderAdminGlobalMessages();
       });
     }
 
@@ -670,6 +687,97 @@ const startSChat = () => {
       searchInput.addEventListener('input', () => {
         renderAdminMatrixUsers();
       });
+    }
+  };
+
+  const fetchAdminGlobalMessages = async () => {
+    if (!authToken || !currentUser || currentUser.role !== 'super_admin') return;
+    const listEl = document.getElementById('adminGlobalChatList');
+    try {
+      const res = await fetch('/api/messages', {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        adminGlobalMessages = (data.messages || []).slice().reverse();
+        renderAdminGlobalMessages();
+      } else {
+        if (listEl) listEl.innerHTML = `<div class="admin-chat-feed-empty">Unable to load messages.</div>`;
+      }
+    } catch (e) {
+      if (listEl) listEl.innerHTML = `<div class="admin-chat-feed-empty">Network error loading messages.</div>`;
+    }
+  };
+
+  const renderAdminGlobalMessages = () => {
+    const container = document.getElementById('adminGlobalChatList');
+    if (!container) return;
+
+    const searchInput = document.getElementById('adminChatSearchInput');
+    const query = (searchInput?.value || '').toLowerCase().trim();
+
+    let filtered = adminGlobalMessages.filter(m => {
+      if (!query) return true;
+      const matchAuthor = (m.username || '').toLowerCase().includes(query);
+      const matchText = (m.content || '').toLowerCase().includes(query);
+      const matchId = String(m.id || '').includes(query);
+      return matchAuthor || matchText || matchId;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div class="admin-chat-feed-empty">${query ? 'No matching messages found.' : 'No messages in global chat yet.'}</div>`;
+      return;
+    }
+
+    container.innerHTML = filtered.map(m => {
+      const timeStr = m.created_at ? formatTimestamp(m.created_at) : '';
+      return `
+        <div class="admin-chat-feed-item" data-admin-msg-id="${m.id}">
+          <div class="admin-chat-item-main">
+            <div class="admin-chat-avatar">
+              ${renderAvatarHTML(m.avatar, m.username, "no-hover")}
+            </div>
+            <div class="admin-chat-content-wrap">
+              <div class="admin-chat-author-line">
+                <span class="admin-chat-username">@${escapeHtml(m.username)}</span>
+                <span class="admin-chat-uid">ID: ${m.user_id}</span>
+                <span class="admin-chat-time">${timeStr}</span>
+              </div>
+              <div class="admin-chat-text">${escapeHtml(m.content || '')}</div>
+            </div>
+          </div>
+          <button type="button" class="admin-chat-del-btn" onclick="window.adminDeleteGlobalMessage(${m.id})" title="Delete message">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            <span>Delete</span>
+          </button>
+        </div>
+      `;
+    }).join('');
+  };
+
+  window.adminDeleteGlobalMessage = async (messageId) => {
+    if (!confirm(`Are you sure you want to delete message #${messageId} from global chat?`)) return;
+
+    try {
+      const res = await fetch(`/api/messages/${messageId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      });
+      if (res.ok) {
+        showAppToast(`Message #${messageId} removed.`, 'success');
+        adminGlobalMessages = adminGlobalMessages.filter(m => Number(m.id) !== Number(messageId));
+        const itemEl = document.querySelector(`.admin-chat-feed-item[data-admin-msg-id="${messageId}"]`);
+        if (itemEl) itemEl.remove();
+        if (adminGlobalMessages.length === 0) renderAdminGlobalMessages();
+      } else {
+        const err = await res.json();
+        showAppToast(err.error || 'Failed to delete message.', 'error');
+      }
+    } catch(e) {
+      showAppToast('Network error deleting message.', 'error');
     }
   };
 
@@ -695,7 +803,7 @@ const startSChat = () => {
         renderAdminMatrixUsers();
       }
     } catch(e) {
-      console.error('Failed to fetch admin users:', e);
+      console.error('Failed to fetch users:', e);
     }
   };
 
@@ -742,7 +850,7 @@ const startSChat = () => {
     });
 
     if (filtered.length === 0) {
-      container.innerHTML = `<div class="admin-matrix-empty" style="text-align:center; padding: 2.5rem 1rem; color: #fda4af; font-size: 0.9rem; opacity: 0.8;">No matching records found in security matrix.</div>`;
+      container.innerHTML = `<div class="admin-matrix-empty" style="text-align:center; padding: 2.5rem 1rem; color: #94a3b8; font-size: 0.88rem;">No matching user accounts found.</div>`;
       return;
     }
 
@@ -756,11 +864,11 @@ const startSChat = () => {
 
       let actionHtml = '';
       if (isSuperAdmin) {
-        actionHtml = '<span class="admin-matrix-role-tag">Console Operator</span>';
+        actionHtml = '<span class="admin-matrix-role-tag">System Administrator</span>';
       } else if (isBanned) {
-        actionHtml = `<button type="button" class="btn-action-unban" onclick="window.adminMatrixUnban(${u.id}, '${escapeHtml(u.username)}')">Restore Access</button>`;
+        actionHtml = `<button type="button" class="btn-action-unban" onclick="window.adminMatrixUnban(${u.id}, '${escapeHtml(u.username)}')">Reinstate User</button>`;
       } else {
-        actionHtml = `<button type="button" class="btn-action-ban" onclick="window.adminMatrixBan(${u.id}, '${escapeHtml(u.username)}')">Terminate Session</button>`;
+        actionHtml = `<button type="button" class="btn-action-ban" onclick="window.adminMatrixBan(${u.id}, '${escapeHtml(u.username)}')">Suspend User</button>`;
       }
 
       return `
@@ -784,7 +892,7 @@ const startSChat = () => {
   };
 
   window.adminMatrixBan = async (userId, username) => {
-    if (!confirm(`Are you sure you want to SUSPEND and TERMINATE access for @${username} (ID: ${userId})? They will be immediately disconnected.`)) return;
+    if (!confirm(`Are you sure you want to suspend @${username} (ID: ${userId})? They will be logged out and access revoked.`)) return;
 
     try {
       const res = await fetch(`/api/admin/users/${userId}/ban`, {
@@ -792,7 +900,7 @@ const startSChat = () => {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (res.ok) {
-        showAppToast(`@${username} access suspended.`, 'success');
+        showAppToast(`@${username} account suspended.`, 'success');
         const target = adminMatrixUsers.find(u => Number(u.id) === Number(userId));
         if (target) target.is_banned = 1;
         updateAdminTelemetryMetrics();
@@ -808,7 +916,7 @@ const startSChat = () => {
   };
 
   window.adminMatrixUnban = async (userId, username) => {
-    if (!confirm(`Restore full platform access for @${username} (ID: ${userId})?`)) return;
+    if (!confirm(`Reinstate full platform access for @${username} (ID: ${userId})?`)) return;
 
     try {
       const res = await fetch(`/api/admin/users/${userId}/unban`, {
@@ -816,7 +924,7 @@ const startSChat = () => {
         headers: { 'Authorization': `Bearer ${authToken}` }
       });
       if (res.ok) {
-        showAppToast(`@${username} access restored.`, 'success');
+        showAppToast(`@${username} account reinstated.`, 'success');
         const target = adminMatrixUsers.find(u => Number(u.id) === Number(userId));
         if (target) target.is_banned = 0;
         updateAdminTelemetryMetrics();
@@ -824,10 +932,10 @@ const startSChat = () => {
         refreshAdminConsoleData();
       } else {
         const err = await res.json();
-        showAppToast(err.error || 'Failed to restore access.', 'error');
+        showAppToast(err.error || 'Failed to reinstate access.', 'error');
       }
     } catch(e) {
-      showAppToast('Network error restoring access.', 'error');
+      showAppToast('Network error reinstating access.', 'error');
     }
   };
 
@@ -2528,6 +2636,45 @@ const startSChat = () => {
             }
           }
 
+          if (!data.recipient_id && currentUser && currentUser.role === 'super_admin') {
+            const rawMsgId = data.id || data.messageId;
+            if (rawMsgId && !adminGlobalMessages.some(m => Number(m.id) === Number(rawMsgId))) {
+              adminGlobalMessages.unshift(data);
+              const chatListEl = document.getElementById('adminGlobalChatList');
+              if (chatListEl) {
+                const emptyEl = chatListEl.querySelector('.admin-chat-feed-empty, .admin-chat-feed-loading');
+                if (emptyEl) emptyEl.remove();
+                const timeStr = data.created_at ? formatTimestamp(data.created_at) : 'Just now';
+                const feedItem = document.createElement('div');
+                feedItem.className = 'admin-chat-feed-item just-added';
+                feedItem.dataset.adminMsgId = rawMsgId;
+                feedItem.innerHTML = `
+                  <div class="admin-chat-item-main">
+                    <div class="admin-chat-avatar">
+                      ${renderAvatarHTML(data.avatar, data.username, "no-hover")}
+                    </div>
+                    <div class="admin-chat-content-wrap">
+                      <div class="admin-chat-author-line">
+                        <span class="admin-chat-username">@${escapeHtml(data.username)}</span>
+                        <span class="admin-chat-uid">ID: ${data.user_id}</span>
+                        <span class="admin-chat-time">${timeStr}</span>
+                      </div>
+                      <div class="admin-chat-text">${escapeHtml(data.content || '')}</div>
+                    </div>
+                  </div>
+                  <button type="button" class="admin-chat-del-btn" onclick="window.adminDeleteGlobalMessage(${rawMsgId})" title="Delete message">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                    <span>Delete</span>
+                  </button>
+                `;
+                chatListEl.prepend(feedItem);
+              }
+            }
+          }
+
           if (Number(data.user_id) !== Number(currentUser.id)) {
             let targetCheck = data.recipient_id ? data.user_id.toString() : 'global';
             if (myMutedChats && !myMutedChats.includes(targetCheck) && !myMutedChats.includes(data.user_id.toString())) {
@@ -2625,6 +2772,12 @@ const startSChat = () => {
           }
         } else if (data.type === 'delete_message') {
           removeMessageFromDOM(data.messageId);
+          if (currentUser && currentUser.role === 'super_admin') {
+            adminGlobalMessages = adminGlobalMessages.filter(m => Number(m.id) !== Number(data.messageId));
+            const adminFeedItem = document.querySelector(`.admin-chat-feed-item[data-admin-msg-id="${data.messageId}"]`);
+            if (adminFeedItem) adminFeedItem.remove();
+            if (adminGlobalMessages.length === 0) renderAdminGlobalMessages();
+          }
         } else if (data.type === 'presence') {
           if (currentUser && currentUser.role === 'super_admin') {
             const elActive = document.getElementById('adminStatActiveUsers');
