@@ -716,50 +716,61 @@ const startSChat = () => {
   // Staged avatar for profile editing (only saved on 'Save Changes' submit)
   let stagedAvatar = null;
 
-  const openProfileModal = () => {
-    if (profileModal) {
-      if (window.innerWidth <= 768 && typeof closeSidebar === 'function') {
-        closeSidebar();
+  const populateSettingsView = () => {
+    stagedAvatar = currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
+
+    if (profileBioInput && currentUser) profileBioInput.value = currentUser.bio || '';
+    const profileHeroUsername = document.getElementById('profileHeroUsername');
+    const profileHeroEmail = document.getElementById('profileHeroEmail');
+    const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+    
+    if (currentUser) {
+      if (profileHeroUsername) profileHeroUsername.textContent = `@${currentUser.username}`;
+      if (profileHeroEmail) profileHeroEmail.textContent = currentUser.email || '';
+      if (profileAvatarPreview) profileAvatarPreview.innerHTML = renderAvatarHTML(stagedAvatar, currentUser.username, 'no-hover');
+    }
+
+    // Highlight active preset avatar card ONLY IF staged avatar matches
+    document.querySelectorAll('.preset-avatar-card').forEach(card => {
+      if (card.dataset.avatarUrl && card.dataset.avatarUrl === stagedAvatar) {
+        card.classList.add('active');
+      } else {
+        card.classList.remove('active');
       }
-      
-      stagedAvatar = currentUser?.avatar || '/avatars/cosmic-astronaut.svg';
+    });
 
-      if (profileBioInput && currentUser) profileBioInput.value = currentUser.bio || '';
-      const profileHeroUsername = document.getElementById('profileHeroUsername');
-      const profileHeroEmail = document.getElementById('profileHeroEmail');
-      const profileAvatarPreview = document.getElementById('profileAvatarPreview');
-      
-      if (currentUser) {
-        if (profileHeroUsername) profileHeroUsername.textContent = `@${currentUser.username}`;
-        if (profileHeroEmail) profileHeroEmail.textContent = currentUser.email || '';
-        if (profileAvatarPreview) profileAvatarPreview.innerHTML = renderAvatarHTML(stagedAvatar, currentUser.username, 'no-hover');
-      }
+    const pwdAlertEl = document.getElementById('pwdAlert');
+    const changeCurrPwdEl = document.getElementById('changeCurrentPwd');
+    const changeNewPwdEl = document.getElementById('changeNewPwd');
+    if (pwdAlertEl) pwdAlertEl.classList.add('hidden');
+    if (changeCurrPwdEl) changeCurrPwdEl.value = '';
+    if (changeNewPwdEl) changeNewPwdEl.value = '';
+    
+    // Default to General tab
+    const firstTab = document.querySelector('.settings-tab-btn[data-tab="general"]');
+    if (firstTab) firstTab.click();
 
-      // Highlight active preset avatar card ONLY IF staged avatar matches
-      document.querySelectorAll('.preset-avatar-card').forEach(card => {
-        if (card.dataset.avatarUrl && card.dataset.avatarUrl === stagedAvatar) {
-          card.classList.add('active');
-        } else {
-          card.classList.remove('active');
-        }
-      });
-
-      const pwdAlertEl = document.getElementById('pwdAlert');
-      const changeCurrPwdEl = document.getElementById('changeCurrentPwd');
-      const changeNewPwdEl = document.getElementById('changeNewPwd');
-      if (pwdAlertEl) pwdAlertEl.classList.add('hidden');
-      if (changeCurrPwdEl) changeCurrPwdEl.value = '';
-      if (changeNewPwdEl) changeNewPwdEl.value = '';
-      
-      // Default to General tab
-      const firstTab = document.querySelector('.settings-tab-btn[data-tab="general"]');
-      if (firstTab) firstTab.click();
-
-      profileModal.style.display = 'flex';
-      profileModal.classList.remove('hidden');
+    const settingsThemeLabel = document.getElementById('settingsThemeLabel');
+    if (settingsThemeLabel) {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      settingsThemeLabel.textContent = isLight ? 'Light Mode' : 'Dark Mode';
+    }
+    const settingsSoundLabel = document.getElementById('settingsSoundLabel');
+    if (settingsSoundLabel) {
+      settingsSoundLabel.textContent = soundEnabled ? 'Enabled' : 'Muted';
     }
   };
-  const closeProfileModal = () => { if (profileModal) { profileModal.style.display = 'none'; profileModal.classList.add('hidden'); } };
+
+  const openProfileModal = () => {
+    if (typeof showAppView === 'function') {
+      showAppView('settings');
+    }
+  };
+  const closeProfileModal = () => {
+    if (typeof showAppView === 'function') {
+      showAppView('hub');
+    }
+  };
   window.openProfileModal = openProfileModal;
   window.closeProfileModal = closeProfileModal;
 
@@ -770,7 +781,11 @@ const startSChat = () => {
       window.openAvatarLightbox(currentUser);
       return;
     }
-    openProfileModal();
+    if (typeof showAppView === 'function') {
+      showAppView('settings');
+    } else {
+      openProfileModal();
+    }
   });
   if (closeProfileBtn) closeProfileBtn.addEventListener('click', closeProfileModal);
 
@@ -1022,25 +1037,18 @@ const startSChat = () => {
     closeOptionsDropdown();
   });
 
-  // Mobile Sidebar Drawer
+  // Sidebar elimination compatibility wrappers
   const openSidebar = () => {
-    chatSidebar.classList.add('open');
-    sidebarOverlay.classList.add('active');
+    if (typeof showAppView === 'function') {
+      showAppView('chats');
+    }
   };
 
-  const closeSidebar = () => {
-    chatSidebar.classList.remove('open');
-    sidebarOverlay.classList.remove('active');
-  };
+  const closeSidebar = () => {};
 
   if (mobileSidebarToggle) mobileSidebarToggle.addEventListener('click', openSidebar);
   if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', closeSidebar);
   if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && chatSidebar && chatSidebar.classList.contains('open')) {
-      closeSidebar();
-    }
-  });
 
   // Web Audio Synthesizer
   const playSound = (type) => {
@@ -1467,89 +1475,170 @@ const startSChat = () => {
     if (activeBtn) updatePillIndicator(activeBtn, false);
   });
 
+  const showAppView = (viewName, data = null) => {
+    const views = {
+      hub: document.getElementById('viewHub'),
+      chats: document.getElementById('viewChats'),
+      chat: document.getElementById('viewChat'),
+      requests: document.getElementById('viewRequests'),
+      settings: document.getElementById('viewSettings')
+    };
+
+    // Close floating overlays
+    const overlayModals = [
+      document.getElementById('aboutModal'),
+      document.getElementById('adminModal'),
+      document.getElementById('langModal'),
+      document.getElementById('avatarCropperModal')
+    ];
+    overlayModals.forEach(m => { if (m) hideElement(m); });
+
+    // Hide all top-level views
+    Object.values(views).forEach(v => {
+      if (v) v.classList.remove('active');
+    });
+
+    if (viewName === 'hub') {
+      if (views.hub) views.hub.classList.add('active');
+      setActivePillTab('hub');
+      if (typeof renderHomeHubQuickContacts === 'function') renderHomeHubQuickContacts();
+      const welcomeGreeting = document.getElementById('welcomeGreeting');
+      if (welcomeGreeting && typeof currentUser !== 'undefined' && currentUser) {
+        const greeting = getTimeGreeting();
+        welcomeGreeting.innerHTML = `${greeting}, <span style="opacity: 0.9; font-weight: 600;">${escapeHtml(currentUser.username)}</span>.`;
+      }
+    } else if (viewName === 'global') {
+      if (views.chat) views.chat.classList.add('active');
+      setActivePillTab('global');
+      const backBtn = document.getElementById('backToChatsBtn');
+      if (backBtn) backBtn.style.display = 'none';
+      switchChatTab(null);
+    } else if (viewName === 'chats') {
+      if (views.chats) views.chats.classList.add('active');
+      setActivePillTab('messages');
+      if (typeof updateOnlineUsers === 'function') updateOnlineUsers();
+    } else if (viewName === 'dm') {
+      if (views.chat) views.chat.classList.add('active');
+      setActivePillTab('messages');
+      const backBtn = document.getElementById('backToChatsBtn');
+      if (backBtn) backBtn.style.display = 'inline-flex';
+      if (data) switchChatTab(data);
+    } else if (viewName === 'requests') {
+      if (views.requests) views.requests.classList.add('active');
+      setActivePillTab('requests');
+      if (typeof renderPendingRequests === 'function') renderPendingRequests();
+    } else if (viewName === 'settings') {
+      if (views.settings) views.settings.classList.add('active');
+      setActivePillTab('settings');
+      if (typeof populateSettingsView === 'function') populateSettingsView();
+    }
+  };
+  window.showAppView = showAppView;
+
   if (pillNavHub) {
     pillNavHub.addEventListener('click', () => {
       playSound('tap');
-      closeSidebar();
-      switchChatTab('empty');
+      showAppView('hub');
     });
   }
 
   if (pillNavGlobal) {
     pillNavGlobal.addEventListener('click', () => {
       playSound('tap');
-      closeSidebar();
-      switchChatTab(null);
+      showAppView('global');
     });
   }
 
   if (pillNavMessages) {
     pillNavMessages.addEventListener('click', () => {
       playSound('tap');
-      if (chatSidebar && chatSidebar.classList.contains('open')) {
-        closeSidebar();
-      } else {
-        openSidebar();
-        if (filterInput) setTimeout(() => filterInput.focus(), 150);
-      }
-      setActivePillTab('messages');
+      showAppView('chats');
     });
   }
 
   if (pillNavRequests) {
     pillNavRequests.addEventListener('click', () => {
       playSound('tap');
-      closeSidebar();
-      const pendingModal = document.getElementById('pendingRequestsModal');
-      if (pendingModal && typeof showElement === 'function') {
-        showElement(pendingModal);
-        if (typeof renderPendingRequests === 'function') renderPendingRequests();
-      } else if (tabIncomingRequests) {
-        tabIncomingRequests.click();
-        openSidebar();
-      }
-      setActivePillTab('requests');
+      showAppView('requests');
     });
   }
 
   if (pillNavSettings) {
     pillNavSettings.addEventListener('click', () => {
       playSound('tap');
-      closeSidebar();
-      if (typeof window.openProfileModal === 'function') {
-        window.openProfileModal();
-      }
-      setActivePillTab('settings');
+      showAppView('settings');
     });
   }
 
-  // Bento cards event listeners on Home Hub
-  const bentoCardGlobal = document.getElementById('bentoCardGlobal');
-  const bentoCardDms = document.getElementById('bentoCardDms');
-  const bentoCardContacts = document.getElementById('bentoCardContacts');
-  const bentoCardSettings = document.getElementById('bentoCardSettings');
-
-  if (bentoCardGlobal) {
-    bentoCardGlobal.addEventListener('click', () => {
-      if (pillNavGlobal) pillNavGlobal.click();
-    });
-  }
-  if (bentoCardDms) {
-    bentoCardDms.addEventListener('click', () => {
-      if (pillNavMessages) pillNavMessages.click();
-    });
-  }
-  if (bentoCardContacts) {
-    bentoCardContacts.addEventListener('click', () => {
+  // Action cards on Home Hub
+  const hubStartChatBtn = document.getElementById('hubStartChatBtn');
+  if (hubStartChatBtn) {
+    hubStartChatBtn.addEventListener('click', () => {
       playSound('tap');
-      const addContactBtn = document.getElementById('addContactBtn');
-      if (addContactBtn) addContactBtn.click();
+      showAppView('chats');
     });
   }
-  if (bentoCardSettings) {
-    bentoCardSettings.addEventListener('click', () => {
-      if (pillNavSettings) pillNavSettings.click();
+  const hubOpenGlobalBtn = document.getElementById('hubOpenGlobalBtn');
+  if (hubOpenGlobalBtn) {
+    hubOpenGlobalBtn.addEventListener('click', () => {
+      playSound('tap');
+      showAppView('global');
     });
+  }
+
+  // Header navigation buttons
+  const backToChatsBtn = document.getElementById('backToChatsBtn');
+  if (backToChatsBtn) {
+    backToChatsBtn.addEventListener('click', () => {
+      playSound('tap');
+      showAppView('chats');
+    });
+  }
+  const closeChatBtn = document.getElementById('closeChatBtn');
+  if (closeChatBtn) {
+    closeChatBtn.addEventListener('click', () => {
+      playSound('tap');
+      showAppView('hub');
+    });
+  }
+
+  // Settings screen quick option handlers
+  const settingsThemeToggle = document.getElementById('settingsThemeToggle');
+  if (settingsThemeToggle) {
+    settingsThemeToggle.addEventListener('click', () => {
+      toggleTheme();
+      const settingsThemeLabel = document.getElementById('settingsThemeLabel');
+      if (settingsThemeLabel) {
+        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+        settingsThemeLabel.textContent = isLight ? 'Light Mode' : 'Dark Mode';
+      }
+    });
+  }
+  const settingsSoundToggle = document.getElementById('settingsSoundToggle');
+  if (settingsSoundToggle) {
+    settingsSoundToggle.addEventListener('click', () => {
+      toggleSound();
+      const settingsSoundLabel = document.getElementById('settingsSoundLabel');
+      if (settingsSoundLabel) {
+        settingsSoundLabel.textContent = soundEnabled ? 'Enabled' : 'Muted';
+      }
+    });
+  }
+  const settingsLangBtn = document.getElementById('settingsLangBtn');
+  if (settingsLangBtn) {
+    settingsLangBtn.addEventListener('click', () => {
+      openLangModal();
+    });
+  }
+  const settingsAboutBtn = document.getElementById('settingsAboutBtn');
+  if (settingsAboutBtn) {
+    settingsAboutBtn.addEventListener('click', () => {
+      openAboutModal();
+    });
+  }
+  const settingsLogoutBtn = document.getElementById('settingsLogoutBtn');
+  if (settingsLogoutBtn) {
+    settingsLogoutBtn.addEventListener('click', performLogout);
   }
 
   // Home Hub Quick Contacts Launcher
@@ -1580,7 +1669,11 @@ const startSChat = () => {
         const username = chip.getAttribute('data-username');
         const avatar = chip.getAttribute('data-avatar');
         playSound('tap');
-        switchChatTab({ id, username, avatar });
+        if (typeof showAppView === 'function') {
+          showAppView('dm', { id, username, avatar });
+        } else {
+          switchChatTab({ id, username, avatar });
+        }
       });
     });
 
@@ -1628,6 +1721,10 @@ const startSChat = () => {
     if (closeChatBtn) closeChatBtn.style.display = activeRecipient === 'empty' ? 'none' : '';
 
     if (activeRecipient === 'empty') {
+      if (typeof showAppView === 'function') {
+        showAppView('hub');
+        return;
+      }
       chatWrapper.classList.add('empty-state');
       const welcomeGreeting = document.getElementById('welcomeGreeting');
       if (welcomeGreeting && typeof currentUser !== 'undefined' && currentUser) {
@@ -1834,36 +1931,21 @@ const startSChat = () => {
     });
   }
 
-const enterChat = () => {
-      authView.classList.add('hidden');
-      authView.style.opacity = '';
-      authView.style.filter = '';
-      authView.style.transform = '';
-      chatView.classList.remove('hidden');
+  const enterChat = () => {
+    authView.classList.add('hidden');
+    authView.style.opacity = '';
+    authView.style.filter = '';
+    authView.style.transform = '';
+    chatView.classList.remove('hidden');
 
-      if (activeRecipient === 'empty') {
-        document.querySelector('.chat-wrapper').classList.add('empty-state');
-        if (globalChannelBtn) globalChannelBtn.classList.remove('active');
-        document.querySelectorAll('.online-user-item').forEach(el => el.classList.remove('active'));
-        const welcomeGreeting = document.getElementById('welcomeGreeting');
-        if (welcomeGreeting && typeof currentUser !== 'undefined' && currentUser) {
-          const greeting = getTimeGreeting();
-          welcomeGreeting.innerHTML = `${greeting}, <span style="opacity: 0.9; font-weight: 600;">${currentUser.username}</span>.`;
-        }
-        if (typeof setActivePillTab === 'function') setActivePillTab('hub', false);
-        if (typeof renderHomeHubQuickContacts === 'function') renderHomeHubQuickContacts();
-      } else {
-        const chatWrapper = document.querySelector('.chat-wrapper');
-        if (chatWrapper) chatWrapper.classList.remove('empty-state');
-        if (globalChannelBtn) globalChannelBtn.classList.add('active');
-        if (typeof setActivePillTab === 'function') setActivePillTab('global', false);
-      }
+    if (typeof showAppView === 'function') {
+      showAppView('hub');
+    }
 
-      try {
-        MotionFX.enter(chatView, { y: 16, bounce: 0.08 });
-        MotionFX.staggerIn(chatView.querySelectorAll('.chat-sidebar > *, .chat-header, .welcome-banner, .chat-footer'), { y: 10, step: 0.03 });
-      } catch(e) {}
-    };
+    try {
+      MotionFX.enter(chatView, { y: 16, bounce: 0.08 });
+    } catch(e) {}
+  };
     enterChat();
 
     requestNotificationPermission();
@@ -3218,8 +3300,11 @@ const enterChat = () => {
       `;
 
       li.addEventListener('click', () => {
-        closeSidebar();
-        switchChatTab(u);
+        if (typeof showAppView === 'function') {
+          showAppView('dm', u);
+        } else {
+          switchChatTab(u);
+        }
       });
 
       li.addEventListener('contextmenu', handleChannelContextMenu);

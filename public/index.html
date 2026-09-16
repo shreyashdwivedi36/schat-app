@@ -237,21 +237,303 @@
       
 
 
-            <!-- Modern Tabbed Profile & Account Settings Modal -->
-      <div id="profileModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="profileModalTitle">
-        <div class="modal-card profile-settings-card">
-          <button id="closeProfileBtn" class="modal-close-btn" aria-label="Close profile modal">✕</button>
+      <!-- 1. HUB / WELCOME SCREEN -->
+      <section id="viewHub" class="app-view active" role="region" aria-label="Home Hub">
+        <div class="home-hub-scroll-wrap">
+          <div class="home-hub-hero">
+            <div class="home-hub-brand-aura">
+              <div class="logo-icon-lg mature-logo" id="homeHubLogo" title="SChat™">
+                <img src="logo.png" alt="SChat Logo" class="brand-logo-img-lg" />
+              </div>
+            </div>
+            <h1 id="welcomeGreeting" class="mature-greeting text-shimmer">Welcome to SChat™</h1>
+            <p id="welcomeSubtext" class="mature-subtext">Real-time messaging platform with ultra-low latency & privacy</p>
+            
+            <div class="home-hub-presence-pill">
+              <span class="pulse-dot"></span>
+              <span class="presence-text">Connected to Live Mesh • E2E Privacy Guard</span>
+            </div>
+          </div>
+
+          <!-- Quick Jump Conversations -->
+          <div class="home-hub-quick-contacts" id="homeHubQuickContactsSection" style="display: none;">
+            <h4 class="quick-contacts-title">⚡ Quick Jump Conversations</h4>
+            <div class="quick-contacts-row" id="homeHubQuickContactsRow"></div>
+          </div>
+
+          <!-- Quick Hub Action Cards -->
+          <div class="home-hub-actions-row">
+            <button type="button" class="hub-action-card" id="hubStartChatBtn">
+              <span class="hub-action-icon">💬</span>
+              <div class="hub-action-info">
+                <h4>Open Conversations</h4>
+                <p>Chat with friends or search contacts</p>
+              </div>
+            </button>
+            <button type="button" class="hub-action-card" id="hubOpenGlobalBtn">
+              <span class="hub-action-icon">🌐</span>
+              <div class="hub-action-info">
+                <h4>Global Channel</h4>
+                <p>Public real-time worldwide room</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. CONVERSATIONS SCREEN (Full-Canvas, NO Sidebar!) -->
+      <section id="viewChats" class="app-view" role="region" aria-label="Conversations">
+        <div class="view-panel chats-panel">
+          <div class="chats-view-header">
+            <div class="view-header-title-row">
+              <div class="brand-mini">
+                <div class="logo-icon-sm">
+                  <img src="logo.png" alt="SChat Logo" class="brand-logo-img-sm" />
+                </div>
+                <h2>Conversations</h2>
+              </div>
+              <span id="onlineCountBadge" class="tab-badge">0</span>
+            </div>
+
+            <!-- Current User Mini Profile Bar -->
+            <div class="current-user-card" id="myProfileCard" title="Click to view Settings">
+              <div class="user-avatar-wrapper">
+                <span id="myAvatar" class="avatar-badge">⚡</span>
+                <span class="status-indicator online"></span>
+              </div>
+              <div class="user-info">
+                <h3 id="myUsername">Username</h3>
+                <span id="myBio" class="status-label">Online</span>
+              </div>
+              <span class="profile-settings-hint" aria-hidden="true">⚙️</span>
+            </div>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="sidebar-search">
+            <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
+            <input type="text" id="filterInput" placeholder="Search conversations (Ctrl + K)..." aria-label="Search users or messages">
+          </div>
+
+          <!-- Contacts List -->
+          <div class="chats-list-wrap">
+            <ul id="onlineUsersList" class="online-users-list">
+              <!-- User items injected dynamically -->
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. CHAT SCREEN (Global Channel & Direct Messages) -->
+      <section id="viewChat" class="app-view chat-main-view" role="region" aria-label="Chat Conversation">
+        <main class="chat-main" id="chatMain">
+          <div class="interactive-pointer-halo" id="pointerHalo"></div>
           
+          <!-- Chat Header -->
+          <header class="chat-header" role="banner">
+            <div class="room-info">
+              <button id="backToChatsBtn" class="icon-btn back-to-chats-btn" title="Back to Conversations" aria-label="Back to conversations" style="display: none;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                <span class="back-btn-text">Chats</span>
+              </button>
+              <div id="roomAvatar" class="room-avatar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+              </div>
+              <div class="room-text-details">
+                <h2 id="roomTitle" class="room-title">Global Channel</h2>
+                <p id="roomSubtitle" class="room-subtitle"><span class="pulse-dot"></span> Realtime Active</p>
+              </div>
+            </div>
+
+            <!-- Chat Header Actions -->
+            <div class="chat-header-actions">
+              <button id="adminBtn" class="icon-btn logout-btn hidden" title="Admin Dashboard" aria-label="Admin Dashboard" style="display: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></button>
+              <button id="headerRemoveContactBtn" class="icon-btn" title="Remove Contact" style="display: none;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="18" y1="8" x2="23" y2="13"></line><line x1="23" y1="8" x2="18" y2="13"></line></svg></button>
+              <button id="closeChatBtn" class="icon-btn close-chat-btn" title="Close Chat & Return to Hub" aria-label="Close active chat">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+          </header>
+
+          <!-- Pinned Messages Banner -->
+          <div id="pinnedBanner" class="pinned-banner hidden" style="display: none;">
+            <span class="pinned-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24V17z"></path></svg></span>
+            <div class="pinned-text-wrapper">
+              <span class="pinned-label">PINNED MESSAGE</span>
+              <span id="pinnedTextSnippet" class="pinned-text-snippet">Pinned content...</span>
+            </div>
+            <button id="unpinBtn" class="unpin-btn" title="Unpin Message"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+          </div>
+
+          <!-- Message History Feed -->
+          <div id="messagesFeed" class="messages-feed" role="log" aria-live="polite">
+            <!-- Messages dynamically rendered here -->
+          </div>
+
+          <!-- Typing Indicator Banner -->
+          <div id="typingBanner" class="typing-indicator-banner hidden" style="display: none;">
+            <span class="dancing-dots">
+              <span></span><span></span><span></span>
+            </span>
+            <span id="typingText">Someone is typing...</span>
+          </div>
+
+          <!-- Message Input Bar -->
+          <footer class="chat-footer">
+            <!-- Full Unicode Emoji Picker (1,800+ Emojis, Search, Categories & Skin Tones) -->
+            <div id="emojiPicker" class="emoji-picker-container hidden" role="dialog" aria-label="Emoji Picker">
+              <emoji-picker class="dark schat-emoji-picker"></emoji-picker>
+            </div>
+
+            <!-- Reply Quoted Text Preview Bar -->
+            <div id="replyPreviewBar" class="reply-preview-bar hidden" style="display: none;">
+              <div class="reply-preview-info">
+                <span class="reply-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg></span>
+                <div class="reply-text-wrapper">
+                  <span id="replyUserLabel" class="reply-user-label">Replying to @username</span>
+                  <span id="replyTextSnippet" class="reply-text-snippet">Message content...</span>
+                </div>
+              </div>
+              <button type="button" id="cancelReplyBtn" class="cancel-reply-btn" title="Cancel Reply"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+            </div>
+
+            <!-- Feature Controls Bar (Blur & Timer) -->
+            <div class="input-controls-bar">
+              <button type="button" id="privacyBlurBtn" class="control-toggle-btn" title="Toggle Privacy Blur on next message">
+                <span class="control-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></span> <span class="control-text">Blur Off</span>
+              </button>
+
+              <div class="control-select-wrapper">
+                <span class="control-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
+                <select id="timerSelect" class="control-select" title="Self-Destruct Timer">
+                  <option value="0">Timer Off</option>
+                  <option value="10">10 Seconds</option>
+                  <option value="60">1 Minute</option>
+                  <option value="300">5 Minutes</option>
+                  <option value="3600">1 Hour</option>
+                </select>
+              </div>
+            </div>
+
+            <form id="messageForm" class="message-input-form">
+              <input type="file" id="imageUploadInput" accept="image/*" style="display:none;" />
+              <input type="file" id="docUploadInput" style="display:none;" />
+              <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji" aria-label="Add emoji"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></button>
+              <div class="attach-container" style="position: relative;">
+                <button type="button" id="attachBtn" class="input-action-btn attach-btn" title="Attach Media" aria-label="Attach Media">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </button>
+                <div id="attachDropdown" class="attach-dropdown hidden">
+                  <div class="attach-dropdown-item" id="optImageUpload">
+                    <div class="attach-badge image-badge">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                      </svg>
+                    </div>
+                    <div class="attach-text-wrap">
+                      <span class="attach-title">Photos & Videos</span>
+                      <span class="attach-subtitle">Optimized & compressed WebP</span>
+                    </div>
+                  </div>
+                  <div class="attach-dropdown-item" id="optDocUpload">
+                    <div class="attach-badge doc-badge">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                      </svg>
+                    </div>
+                    <div class="attach-text-wrap">
+                      <span class="attach-title">Documents & Files</span>
+                      <span class="attach-subtitle">Original format & quality</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required aria-label="Type a message">
+              <button type="button" id="micBtn" class="input-action-btn mic-btn" title="Tap to Record" aria-label="Record voice note">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              </button>
+              <button type="submit" id="sendBtn" class="send-btn" data-magnetic title="Send Message" aria-label="Send message">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 2L11 13"></path>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </form>
+
+            <!-- Voice Recording UI (Hidden by default) -->
+            <div id="recordingUi" class="recording-ui" style="display: none;">
+              <div class="recording-indicator">
+                <span class="pulsing-dot"></span>
+                <span id="recordingTimer" class="recording-timer">00:00</span>
+                <canvas id="waveformCanvas" width="120" height="30" class="waveform-canvas"></canvas>
+              </div>
+              <div class="recording-actions">
+                <button type="button" id="cancelRecordBtn" class="action-btn cancel-record-btn" title="Cancel Recording">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  </svg>
+                </button>
+                <button type="button" id="sendRecordBtn" class="send-btn" data-magnetic title="Send Voice Note">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 2L11 13"></path>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </footer>
+        </main>
+      </section>
+
+      <!-- 4. REQUESTS & CONTACTS SCREEN -->
+      <section id="viewRequests" class="app-view" role="region" aria-label="Contacts and Requests">
+        <div class="view-panel requests-panel">
+          <div class="view-panel-header">
+            <h2 class="view-title">🤝 Contacts & Requests</h2>
+            <p class="view-subtitle">Search users by username to send chat requests, and manage incoming requests.</p>
+          </div>
+
+          <!-- Add Contact Section -->
+          <div class="view-card">
+            <h3 class="card-subtitle">Find & Add Contact</h3>
+            <div class="contact-search-box">
+              <input type="text" id="contactSearchInput" placeholder="Enter username..." />
+              <button type="button" id="contactSearchBtn" class="btn btn-primary">Search</button>
+            </div>
+            <div id="contactSearchResults" class="contact-search-results"></div>
+          </div>
+
+          <!-- Incoming Requests Section -->
+          <div class="view-card">
+            <h3 class="card-subtitle">Incoming Requests</h3>
+            <div id="pendingRequestsList" class="pending-requests-container">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. SETTINGS SCREEN -->
+      <section id="viewSettings" class="app-view" role="region" aria-label="Settings">
+        <div class="view-panel settings-panel">
           <!-- Hero Account Card -->
           <div class="profile-hero-card">
             <div class="profile-hero-avatar-wrap">
-              <div class="profile-avatar-uploader" id="profileAvatarUploadBtn" title="Click to upload a real photo or change avatar">
+              <div class="profile-avatar-uploader" id="profileAvatarUploadBtn" title="Change Avatar">
                 <div id="profileAvatarPreview" class="profile-avatar-preview-wrap"></div>
                 <div class="avatar-camera-badge" aria-hidden="true">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                    <circle cx="12" cy="13" r="4"></circle>
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
                 </div>
               </div>
               <input type="file" id="profileAvatarInput" accept="image/png, image/jpeg, image/webp, image/heic" style="display: none;">
@@ -264,24 +546,18 @@
 
           <!-- Segmented Tab Navigation -->
           <div class="settings-tab-bar">
-            <button type="button" class="settings-tab-btn active" data-tab="general">
-              <span>👤 Profile</span>
-            </button>
-            <button type="button" class="settings-tab-btn" data-tab="security">
-              <span>🔒 Security</span>
-            </button>
-            <button type="button" class="settings-tab-btn" data-tab="sessions">
-              <span>💻 Active Devices</span>
-            </button>
+            <button type="button" class="settings-tab-btn active" data-tab="general"><span>👤 Profile</span></button>
+            <button type="button" class="settings-tab-btn" data-tab="security"><span>🔒 Security</span></button>
+            <button type="button" class="settings-tab-btn" data-tab="sessions"><span>💻 Devices</span></button>
           </div>
 
-          <!-- TAB 1: General Profile -->
+          <!-- General Profile Tab -->
           <div id="tabGeneralPanel" class="settings-tab-panel active">
             <form id="profileForm" class="settings-panel-form">
               <div class="input-group">
                 <label>Status Bio</label>
                 <input type="text" id="profileBioInput" placeholder="What's on your mind?..." maxLength="255">
-                <span class="input-hint">Your bio is visible to everyone across SChat.</span>
+                <span class="input-hint">Visible across SChat.</span>
               </div>
               
               <!-- Preset Graphic Vector Avatars Gallery -->
@@ -323,28 +599,37 @@
                 </div>
               </div>
 
-              <div class="avatar-quick-actions">
-                <button type="button" class="btn btn-secondary" onclick="window.cropperSourceContext = 'profile'; document.getElementById('profileAvatarInput').click();" style="width: 100%; justify-content: center; gap: 8px;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                  </svg>
-                  <span>Upload Custom Photo from Gallery</span>
-                </button>
+              <!-- Quick Preferences -->
+              <div class="settings-options-list">
+                <div class="settings-option-item" id="settingsThemeToggle">
+                  <span class="option-label">🌓 Theme Mode</span>
+                  <span class="option-value" id="settingsThemeLabel">Toggle Dark/Light</span>
+                </div>
+                <div class="settings-option-item" id="settingsSoundToggle">
+                  <span class="option-label">🔔 Sound Synthesis</span>
+                  <span class="option-value" id="settingsSoundLabel">Toggle Audio</span>
+                </div>
+                <div class="settings-option-item" id="settingsLangBtn">
+                  <span class="option-label">🌐 Translation Target</span>
+                  <span class="option-value" id="settingsLangLabel">Change Language</span>
+                </div>
+                <div class="settings-option-item" id="settingsAboutBtn">
+                  <span class="option-label">ℹ️ About SChat™</span>
+                  <span class="option-value">Credits & Version</span>
+                </div>
               </div>
 
-              <div class="settings-panel-footer">
+              <div class="profile-actions-row">
                 <button type="submit" class="btn btn-primary" id="saveProfileBtn">Save Changes</button>
+                <button type="button" class="btn btn-danger-outline" id="settingsLogoutBtn">Log Out</button>
               </div>
             </form>
           </div>
 
-          <!-- TAB 2: Security & Password -->
-          <div id="tabSecurityPanel" class="settings-tab-panel">
+          <!-- Security Tab -->
+          <div id="tabSecurityPanel" class="settings-tab-panel" style="display: none;">
             <form id="changePasswordForm" class="settings-panel-form">
               <div id="pwdAlert" class="auth-alert hidden"></div>
-              
               <div class="input-group">
                 <label>Current Password</label>
                 <div class="password-input-wrapper">
@@ -352,7 +637,6 @@
                   <button type="button" class="pwd-toggle" data-target="changeCurrentPwd" aria-label="Toggle password visibility">👁️</button>
                 </div>
               </div>
-              
               <div class="input-group">
                 <label>New Password</label>
                 <div class="password-input-wrapper">
@@ -361,15 +645,14 @@
                 </div>
                 <span class="input-hint">Use at least 6 characters with letters and numbers.</span>
               </div>
-
               <div class="settings-panel-footer">
                 <button type="submit" id="changePwdSubmitBtn" class="btn btn-primary">Update Password</button>
               </div>
             </form>
           </div>
 
-          <!-- TAB 3: Active Devices & Sessions -->
-          <div id="tabSessionsPanel" class="settings-tab-panel">
+          <!-- Active Devices Tab -->
+          <div id="tabSessionsPanel" class="settings-tab-panel" style="display: none;">
             <div class="sessions-panel-header">
               <div>
                 <h4 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--text-main);">Connected Devices</h4>
@@ -379,295 +662,52 @@
                 Log Out Others
               </button>
             </div>
-            
-            <div class="sessions-list-container" style="max-height: 240px; overflow-y: auto; margin-top: 12px;">
-              <!-- Injected dynamically -->
+            <div class="sessions-list-container" id="sessionsList">
+              <!-- Injected via JavaScript -->
             </div>
           </div>
-
         </div>
+      </section>
+
+      <!-- Compatibility Anchors Container (keeps legacy element IDs available for any automated tests or legacy handlers) -->
+      <div id="legacyCompatibilityContainer" style="display: none !important;" aria-hidden="true">
+        <aside class="chat-sidebar" id="legacySidebar"></aside>
+        <div id="globalChannelBtn"></div>
+        <button type="button" id="tabDirectMessages"></button>
+        <button type="button" id="tabIncomingRequests"></button>
+        <button type="button" id="addContactBtn"></button>
+        <span id="sidebarRequestsBadge">0</span>
+        <button id="themeModeBtn"></button>
+        <button id="soundToggleBtn"></button>
+        <button id="logoutBtn"></button>
+        <button id="mobileSidebarToggle"></button>
+        <button id="closeSidebarBtn"></button>
+        <button id="adminBtnLegacy"></button>
+        <button id="optionsMenuBtn"></button>
+        <div id="optionsDropdown">
+          <div id="dropdownThemeBtn"></div>
+          <span id="dropdownThemeIcon"></span>
+          <span id="dropdownThemeValue"></span>
+          <div id="dropdownLangBtn"></div>
+          <span id="dropdownLangValue"></span>
+          <div id="dropdownAutoTranslateBtn"></div>
+          <span id="dropdownAutoTranslateValue"></span>
+          <div id="dropdownSessionsBtn"></div>
+          <div id="dropdownExportBtn"></div>
+          <div id="dropdownPwaBtn"></div>
+          <div id="dropdownAboutBtn"></div>
+        </div>
+        <div id="sessionsModal"></div>
+        <div id="addContactModal"></div>
+        <div id="pendingRequestsModal"></div>
+        <div id="profileModal"></div>
+        <button id="closeSessionsModal"></button>
+        <button id="closeAddContactModal"></button>
+        <button id="closePendingRequestsModal"></button>
+        <button id="closeProfileBtn"></button>
+        <button id="pendingRequestsBtn"></button>
+        <span id="requestsCountText"></span>
       </div>
-
-      <!-- Sidebar (Collapsible Drawer on Mobile) -->
-      <aside id="chatSidebar" class="chat-sidebar" role="navigation" aria-label="Sidebar navigation">
-        <div class="sidebar-header">
-          <div class="brand-mini">
-            <div class="logo-icon-sm">
-              <img src="logo.png" alt="SChat Logo" class="brand-logo-img-sm" />
-            </div>
-            <h2>SChat™</h2>
-          </div>
-          <div class="sidebar-top-actions">
-            <button id="closeSidebarBtn" class="icon-btn close-sidebar-btn" title="Close Drawer" aria-label="Close drawer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-          </div>
-        </div>
-
-        <!-- Current User Profile Card -->
-        <div class="current-user-card" id="myProfileCard">
-          <div class="user-avatar-wrapper">
-            <span id="myAvatar" class="avatar-badge">⚡</span>
-            <span class="status-indicator online"></span>
-          </div>
-          <div class="user-info">
-            <h3 id="myUsername">Username</h3>
-            <span id="myBio" class="status-label">Online</span>
-          </div>
-          <button id="adminBtn" class="icon-btn logout-btn hidden" title="Admin Dashboard" aria-label="Admin Dashboard" style="display: none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg></button>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="sidebar-search">
-          <span class="search-icon" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></span>
-          <input type="text" id="filterInput" placeholder="Search (Ctrl + K)..." aria-label="Search users or messages">
-        </div>
-
-        <!-- Direct Messages / Conversations List -->
-        <div class="sidebar-section flex-fill">
-          <div class="sidebar-messages-header">
-            <span class="sidebar-header-label">Conversations</span>
-            <span id="onlineCountBadge" class="tab-badge">0</span>
-          </div>
-
-          <!-- Hidden compatibility elements to safely preserve any external JS queries -->
-          <div style="display: none !important;" aria-hidden="true">
-            <div id="globalChannelBtn"></div>
-            <button type="button" id="tabDirectMessages" class="active"></button>
-            <button type="button" id="tabIncomingRequests"></button>
-            <button type="button" id="addContactBtn"></button>
-            <span id="sidebarRequestsBadge">0</span>
-            <button id="themeModeBtn"></button>
-            <button id="soundToggleBtn"></button>
-            <button id="logoutBtn"></button>
-          </div>
-
-          <!-- Messages Container -->
-          <div id="sidebarMessagesContent" class="sidebar-tab-content">
-            <ul id="onlineUsersList" class="online-users-list">
-              <!-- User items injected dynamically -->
-            </ul>
-          </div>
-        </div>
-
-        <!-- Sidebar Footer Owner Credit Badge -->
-        <div class="sidebar-owner-footer">
-          <button id="sidebarAboutBtn" class="owner-badge-btn">
-            <span class="badge-spark"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg></span> Built by <strong>Shreyash Dwivedi</strong>
-          </button>
-        </div>
-
-      </aside>
-
-      <!-- Main Chat Container -->
-      <main class="chat-main">
-        <div class="interactive-pointer-halo" id="pointerHalo"></div>
-
-        <!-- Privacy Standby Screen with Interactive Pointer Spotlight & SChat Home Hub -->
-        <div class="empty-state-branding home-hub-container" id="emptyStateBranding">
-          <div class="home-hub-scroll-wrap">
-            
-            <!-- Hero Greeting & Status -->
-            <div class="home-hub-hero">
-              <div class="home-hub-brand-aura">
-                <div class="logo-icon-lg mature-logo" id="homeHubLogo" title="SChat™">
-                  <img src="logo.png" alt="SChat Logo" class="brand-logo-img-lg" />
-                </div>
-              </div>
-              <h1 id="welcomeGreeting" class="mature-greeting text-shimmer">Welcome to SChat™</h1>
-              <p id="welcomeSubtext" class="mature-subtext">Real-time messaging platform with ultra-low latency & privacy</p>
-              
-              <div class="home-hub-presence-pill">
-                <span class="pulse-dot"></span>
-                <span class="presence-text">Connected to Live Mesh • E2E Privacy Guard</span>
-              </div>
-            </div>
-
-            <!-- Quick Contacts Quick Jump Row -->
-            <div class="home-hub-quick-contacts" id="homeHubQuickContactsSection" style="display: none;">
-              <h4 class="quick-contacts-title">⚡ Quick Jump Conversations</h4>
-              <div class="quick-contacts-row" id="homeHubQuickContactsRow">
-                <!-- Dynamically populated -->
-              </div>
-            </div>
-
-          </div>
-        </div>
-        <!-- Chat Header -->
-        <header class="chat-header" role="banner">
-          <div class="room-info">
-            <button id="mobileSidebarToggle" class="icon-btn sidebar-toggle-btn" title="Conversations & Contacts" aria-label="Open conversations drawer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></button>
-            <div id="roomAvatar" class="room-avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></div>
-            <div class="room-text-details">
-              <h2 id="roomTitle" class="room-title">Global Channel</h2>
-              <p id="roomSubtitle" class="room-subtitle"><span class="pulse-dot"></span> Realtime Active</p>
-            </div>
-          </div>
-
-          <!-- Chat Header Actions -->
-          <div class="chat-header-actions">
-            <button id="closeChatBtn" class="icon-btn close-chat-btn" title="Close Chat & Return to Hub" aria-label="Close active chat" style="display: none;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-            
-            <!-- Hidden compatibility elements to safely preserve any external JS queries -->
-            <div style="display: none !important;" aria-hidden="true">
-              <button id="optionsMenuBtn"></button>
-              <div id="optionsDropdown">
-                <div id="dropdownThemeBtn"></div>
-                <span id="dropdownThemeIcon"></span>
-                <span id="dropdownThemeValue"></span>
-                <div id="dropdownLangBtn"></div>
-                <span id="dropdownLangValue"></span>
-                <div id="dropdownAutoTranslateBtn"></div>
-                <span id="dropdownAutoTranslateValue"></span>
-                <div id="dropdownSessionsBtn"></div>
-                <div id="dropdownExportBtn"></div>
-                <div id="dropdownPwaBtn"></div>
-                <div id="dropdownAboutBtn"></div>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <!-- Pinned Messages Banner -->
-        <div id="pinnedBanner" class="pinned-banner hidden" style="display: none;">
-          <span class="pinned-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"></line><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.89A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 0-2H8a1 1 0 0 0 0 2h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.89A2 2 0 0 0 5 15.24V17z"></path></svg></span>
-          <div class="pinned-text-wrapper">
-            <span class="pinned-label">PINNED MESSAGE</span>
-            <span id="pinnedTextSnippet" class="pinned-text-snippet">Pinned content...</span>
-          </div>
-          <button id="unpinBtn" class="unpin-btn" title="Unpin Message"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-        </div>
-
-        <!-- Message History Feed -->
-        <div id="messagesFeed" class="messages-feed" role="log" aria-live="polite">
-          <!-- Messages dynamically rendered here -->
-        </div>
-
-        <!-- Typing Indicator Banner -->
-        <div id="typingBanner" class="typing-indicator-banner hidden" style="display: none;">
-          <span class="dancing-dots">
-            <span></span><span></span><span></span>
-          </span>
-          <span id="typingText">Someone is typing...</span>
-        </div>
-
-        <!-- Message Input Bar -->
-        <footer class="chat-footer">
-          <!-- Full Unicode Emoji Picker (1,800+ Emojis, Search, Categories & Skin Tones) -->
-          <div id="emojiPicker" class="emoji-picker-container hidden" role="dialog" aria-label="Emoji Picker">
-            <emoji-picker class="dark schat-emoji-picker"></emoji-picker>
-          </div>
-
-          <!-- Reply Quoted Text Preview Bar -->
-          <div id="replyPreviewBar" class="reply-preview-bar hidden" style="display: none;">
-            <div class="reply-preview-info">
-              <span class="reply-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"></polyline><path d="M20 18v-2a4 4 0 0 0-4-4H4"></path></svg></span>
-              <div class="reply-text-wrapper">
-                <span id="replyUserLabel" class="reply-user-label">Replying to @username</span>
-                <span id="replyTextSnippet" class="reply-text-snippet">Message content...</span>
-              </div>
-            </div>
-            <button type="button" id="cancelReplyBtn" class="cancel-reply-btn" title="Cancel Reply"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
-          </div>
-
-          <!-- Feature Controls Bar (Blur & Timer) -->
-          <div class="input-controls-bar">
-            <button type="button" id="privacyBlurBtn" class="control-toggle-btn" title="Toggle Privacy Blur on next message">
-              <span class="control-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></span> <span class="control-text">Blur Off</span>
-            </button>
-
-            <div class="control-select-wrapper">
-              <span class="control-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></span>
-              <select id="timerSelect" class="control-select" title="Self-Destruct Timer">
-                <option value="0">Timer Off</option>
-                <option value="10">10 Seconds</option>
-                <option value="60">1 Minute</option>
-                <option value="300">5 Minutes</option>
-                <option value="3600">1 Hour</option>
-              </select>
-            </div>
-          </div>
-
-          <form id="messageForm" class="message-input-form">
-            <input type="file" id="imageUploadInput" accept="image/*" style="display:none;" />
-            <input type="file" id="docUploadInput" style="display:none;" />
-            <button type="button" id="emojiBtn" class="input-action-btn" title="Add Emoji" aria-label="Add emoji"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg></button>
-            <div class="attach-container" style="position: relative;">
-              <button type="button" id="attachBtn" class="input-action-btn attach-btn" title="Attach Media" aria-label="Attach Media">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
-              </button>
-              <div id="attachDropdown" class="attach-dropdown hidden">
-                <div class="attach-dropdown-item" id="optImageUpload">
-                  <div class="attach-badge image-badge">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="3" ry="3"></rect>
-                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                      <polyline points="21 15 16 10 5 21"></polyline>
-                    </svg>
-                  </div>
-                  <div class="attach-text-wrap">
-                    <span class="attach-title">Photos & Videos</span>
-                    <span class="attach-subtitle">Optimized & compressed WebP</span>
-                  </div>
-                </div>
-                <div class="attach-dropdown-item" id="optDocUpload">
-                  <div class="attach-badge doc-badge">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <line x1="16" y1="13" x2="8" y2="13"></line>
-                      <line x1="16" y1="17" x2="8" y2="17"></line>
-                    </svg>
-                  </div>
-                  <div class="attach-text-wrap">
-                    <span class="attach-title">Documents & Files</span>
-                    <span class="attach-subtitle">Original format & quality</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required aria-label="Type a message">
-            <button type="button" id="micBtn" class="input-action-btn mic-btn" title="Tap to Record" aria-label="Record voice note">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                <line x1="12" y1="19" x2="12" y2="23"></line>
-                <line x1="8" y1="23" x2="16" y2="23"></line>
-              </svg>
-            </button>
-            <button type="submit" id="sendBtn" class="send-btn" data-magnetic title="Send Message" aria-label="Send message">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 2L11 13"></path>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-              </svg>
-            </button>
-          </form>
-
-          <!-- Voice Recording UI (Hidden by default) -->
-          <div id="recordingUi" class="recording-ui" style="display: none;">
-            <div class="recording-indicator">
-              <span class="pulsing-dot"></span>
-              <span id="recordingTimer" class="recording-timer">00:00</span>
-              <canvas id="waveformCanvas" width="120" height="30" class="waveform-canvas"></canvas>
-            </div>
-            <div class="recording-actions">
-              <button type="button" id="cancelRecordBtn" class="action-btn cancel-record-btn" title="Cancel Recording">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
-                  <polyline points="3 6 5 6 21 6"></polyline>
-                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-              </button>
-              <button type="button" id="sendRecordBtn" class="send-btn" data-magnetic title="Send Voice Note">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M22 2L11 13"></path>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
-              </button>
-            </div>
-          </div>
-        </footer>
-
-      
-
-      </main>
 
       <!-- Modern Bottom Pill-Shaped Navigation Bar with Fluid Spring Motion -->
       <nav id="bottomPillNav" class="bottom-pill-nav" role="navigation" aria-label="Main Navigation">
@@ -826,63 +866,7 @@
     <script src="motion-fx.js????v=158" type="module"></script>
 
 
-  <!-- Active Devices & Sessions Modal -->
-  <div id="sessionsModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="sessionsModalTitle">
-    <div class="modal-card" style="max-width: 580px; text-align: left;">
-      <button id="closeSessionsModal" class="modal-close-btn" aria-label="Close modal">&times;</button>
-      <div class="modal-header">
-        <h2 id="sessionsModalTitle" style="color: var(--primary-accent); margin-bottom: 0.3rem;">📱 Active Devices & Sessions</h2>
-        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">Review and manage where your account is currently logged in. You can remotely terminate un-recognized sessions.</p>
-      </div>
-      <div class="modal-body" style="padding: 10px 0;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-          <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-main);">Current & Remote Logins</span>
-          <button type="button" id="revokeAllOtherSessionsBtn" class="btn-danger-outline" style="font-size: 0.75rem; padding: 6px 12px; border-radius: 8px; cursor: pointer;">
-            Log Out All Other Devices
-          </button>
-        </div>
-        <div class="sessions-list-container">
-          <!-- Injected via JavaScript -->
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- Add New Contact Modal -->
-  <div id="addContactModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="addContactModalTitle">
-    <div class="modal-card" style="max-width: 520px; text-align: left;">
-      <button id="closeAddContactModal" class="modal-close-btn" aria-label="Close modal">&times;</button>
-      <div class="modal-header">
-        <h2 id="addContactModalTitle" style="color: var(--primary-accent); margin-bottom: 0.3rem;">🤝 Find & Add Contacts</h2>
-        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">Search by @username to send a private direct chat request.</p>
-      </div>
-      <div class="modal-body" style="padding: 10px 0;">
-        <div class="contact-search-box" style="display: flex; gap: 8px; margin-bottom: 16px;">
-          <input type="text" id="contactSearchInput" placeholder="Enter username..." style="flex: 1; height: 42px; border-radius: 12px; background: var(--input-bg); border: 1px solid var(--panel-border); color: var(--text-main); padding: 0 14px;" />
-          <button type="button" id="contactSearchBtn" class="btn btn-primary" style="padding: 0 20px; font-weight: 700; border-radius: 12px; margin-top: 0; width: auto;">Search</button>
-        </div>
-        <div id="contactSearchResults" class="contact-search-results">
-          <!-- Search results injected here -->
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Pending Chat Requests Modal -->
-  <div id="pendingRequestsModal" class="about-modal hidden" style="display: none;" role="dialog" aria-labelledby="pendingRequestsModalTitle">
-    <div class="modal-card" style="max-width: 520px; text-align: left;">
-      <button id="closePendingRequestsModal" class="modal-close-btn" aria-label="Close modal">&times;</button>
-      <div class="modal-header">
-        <h2 id="pendingRequestsModalTitle" style="color: var(--primary-accent); margin-bottom: 0.3rem;">📥 Incoming Chat Requests</h2>
-        <p style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4;">Accept to start direct messaging, or decline to dismiss.</p>
-      </div>
-      <div class="modal-body" style="padding: 10px 0;">
-        <div id="pendingRequestsList" class="pending-requests-container">
-          <!-- Incoming requests injected here -->
-        </div>
-      </div>
-    </div>
-  </div>
 
   <!-- Image Lightbox Modal -->
   <div id="imageLightbox" class="lightbox-overlay hidden">
