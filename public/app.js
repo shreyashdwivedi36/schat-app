@@ -5430,24 +5430,17 @@ function init3DMotionBackground() {
 
 async function subscribeToPushNotifications() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.error('DEBUG: Browser does not support Service Workers or PushManager');
     return;
   }
 
   try {
-    console.error('DEBUG: Checking notification permission...');
     const permission = await Notification.requestPermission();
-    console.error('DEBUG: Permission is: ' + permission);
     if (permission !== 'granted') {
-      console.error('DEBUG: Notification permission is not granted! It is: ' + permission);
       return;
     }
 
-    console.error('DEBUG: Registering Service Worker...');
     const registration = await navigator.serviceWorker.register('/sw.js');
-    console.error('DEBUG: SW Registered. Getting existing sub...');
     let existingSub = await registration.pushManager.getSubscription();
-    console.error('DEBUG: Existing sub is: ' + (existingSub ? 'true' : 'false'));
     
     // Force refresh subscription once to ensure it matches the new VAPID keys
     if (existingSub && !localStorage.getItem('push_key_v4')) {
@@ -5457,15 +5450,14 @@ async function subscribeToPushNotifications() {
     }
 
     if (existingSub) {
-      const res = await fetch('/api/push/subscribe', {
+      await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('schat_token')}`
         },
         body: JSON.stringify(existingSub)
-      });
-      console.error('DEBUG: Updated existing sub on server. Server responded: ' + res.status);
+      }).catch(() => {});
       return; // Already subscribed
     }
 
@@ -5479,7 +5471,6 @@ async function subscribeToPushNotifications() {
     } catch (e) {}
 
     if (!PUBLIC_VAPID_KEY) {
-      console.warn('Push notifications disabled: VAPID public key not available.');
       return;
     }
     
@@ -5498,7 +5489,7 @@ async function subscribeToPushNotifications() {
     });
 
     const subJson = subscription.toJSON();
-    const res = await fetch('/api/push/subscribe', {
+    await fetch('/api/push/subscribe', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -5511,11 +5502,9 @@ async function subscribeToPushNotifications() {
           auth: subJson.keys?.auth
         }
       })
-    });
-
-    console.error('DEBUG: Created NEW sub on server. Server responded: ' + res.status);
+    }).catch(() => {});
   } catch (err) {
-    console.error('DEBUG: Failed to subscribe: ' + err.message);
+    console.debug('Push notification registration bypassed:', err.message);
   }
 }
 

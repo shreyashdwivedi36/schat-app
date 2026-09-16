@@ -6732,9 +6732,22 @@ body.admin-mode #bottomPillNav {
 }
 
 .admin-command-view {
+  display: none !important;
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
   background: radial-gradient(circle at top right, #1c0812 0%, #0c0509 45%, #06070a 100%) !important;
   padding: 0 !important;
-  z-index: 50 !important;
+  z-index: 100 !important;
+  box-sizing: border-box !important;
+}
+
+.admin-command-view.active:not(.hidden) {
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .admin-console-wrap {
