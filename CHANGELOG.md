@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2.0.2] - 2026-09-17
+
+### ⚡ Navigation, Interaction & Platform Refinements
+- **Mobile Swipe-to-Reply Gesture**: Added horizontal swipe gesture to message cards on touch devices with spring physics and subtle 8ms haptic tick (`navigator.vibrate`) to quickly quote and reply.
+- **Universal Keyboard Escape Controller**: Implemented top-down hierarchical `Escape` key dismissal for lightboxes, context menus, attachment dropdowns, emoji picker, active reply quotes, and modals.
+- **Double-Submit Prevention & Button Feedback**: Added instant visual loading state and button disablement across sign-in, registration, and password change flows.
+- **Real-Time Profile Broadcast**: Added real-time WebSocket broadcast for avatar and bio updates so changes reflect across connected peer clients immediately.
+- **Rich Link Previews & Metadata**: Added Open Graph and Twitter Card metadata alongside WebApplication JSON-LD schema for link previews across messaging platforms.
+- **CSS Syntax Balance Repair**: Resolved orphaned closing brace in core stylesheets to ensure strict standards compliance.
+
+---
+
 ## [v2.0.1] - 2026-09-16
 
 ### 🚀 Performance & UI Improvements

@@ -1889,6 +1889,23 @@ wss.on('connection', async (ws, req) => {
         } else {
           broadcast(typingPayload, ws);
         }
+      } else if (data.type === 'profile_update') {
+        if (data.avatar) {
+          currentUser.avatar = sanitizeString(data.avatar, 500000);
+        }
+        if (data.bio) {
+          currentUser.bio = sanitizeString(data.bio, 500);
+        }
+        clients.set(ws, currentUser);
+
+        broadcast({
+          type: 'user_profile_updated',
+          userId: currentUser.id,
+          username: currentUser.username,
+          avatar: currentUser.avatar,
+          bio: currentUser.bio,
+          onlineUsers: getOnlineUsersList()
+        });
       }
     } catch (err) {
       console.error('WS Message Handler Error:', err);

@@ -248,21 +248,6 @@ const startSChat = () => {
     });
   }
 
-  // Keyboard Shortcuts (Accessibility & Speed)
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-      e.preventDefault();
-      if (filterInput) filterInput.focus();
-    }
-    if (e.key === 'Escape') {
-      closeAboutModal();
-      closeProfileModal();
-      closeOptionsDropdown();
-      if (emojiPicker) hideElement(emojiPicker);
-    }
-  });
-
-  
   // Helper functions for showing/hiding elements with both style.display and classList
   const showElement = (el) => {
     if (!el) return;
@@ -275,6 +260,145 @@ const startSChat = () => {
     el.style.display = 'none';
     el.classList.add('hidden');
   };
+
+  // Universal Top-Down Keyboard Escape Controller (Accessibility & Speed)
+  const handleUniversalEscape = () => {
+    // 1. Fullscreen Image Lightbox
+    const imgLightbox = document.getElementById('imageLightbox');
+    if (imgLightbox && !imgLightbox.classList.contains('hidden') && imgLightbox.style.display !== 'none') {
+      imgLightbox.classList.add('hidden');
+      const lbImg = document.getElementById('lightboxImg');
+      if (lbImg) setTimeout(() => { lbImg.src = ''; }, 300);
+      return true;
+    }
+
+    // 2. Avatar Preview Lightbox
+    const avModal = document.getElementById('avatarLightboxModal');
+    if (avModal && !avModal.classList.contains('hidden') && avModal.style.display !== 'none') {
+      if (typeof window.hideAvatarLightbox === 'function') {
+        window.hideAvatarLightbox();
+      } else {
+        hideElement(avModal);
+      }
+      return true;
+    }
+
+    // 3. Message Context Menu
+    const msgCtx = document.getElementById('msgContextMenu');
+    if (msgCtx && !msgCtx.classList.contains('hidden') && msgCtx.style.display !== 'none') {
+      if (typeof closeMessageContextMenu === 'function') {
+        closeMessageContextMenu();
+      } else {
+        hideElement(msgCtx);
+      }
+      return true;
+    }
+
+    // 4. Channel Context Menu
+    const chCtx = document.getElementById('channelContextMenu');
+    if (chCtx && !chCtx.classList.contains('hidden') && chCtx.style.display !== 'none') {
+      if (typeof closeChannelContextMenu === 'function') {
+        closeChannelContextMenu();
+      } else {
+        hideElement(chCtx);
+      }
+      return true;
+    }
+
+    // 5. Attachment Menu Dropdown
+    const attDrop = document.getElementById('attachDropdown');
+    if (attDrop && !attDrop.classList.contains('hidden') && attDrop.style.display !== 'none') {
+      attDrop.classList.add('hidden');
+      return true;
+    }
+
+    // 6. Emoji Picker
+    const emojiP = document.getElementById('emojiPicker');
+    if (emojiP && !emojiP.classList.contains('hidden') && emojiP.style.display !== 'none') {
+      emojiP.classList.add('hidden');
+      return true;
+    }
+
+    // 7. Active Reply Quoting Banner
+    const replyBar = document.getElementById('replyPreviewBar');
+    const isReplyVisible = replyBar && !replyBar.classList.contains('hidden') && replyBar.style.display !== 'none';
+    if ((typeof activeReply !== 'undefined' && activeReply) || isReplyVisible) {
+      if (typeof setReplyState === 'function') {
+        setReplyState(null);
+      } else if (replyBar) {
+        replyBar.style.display = 'none';
+        replyBar.classList.add('hidden');
+      }
+      return true;
+    }
+
+    // 8. Options Menu Dropdown
+    const optDrop = document.getElementById('optionsDropdown');
+    if (optDrop && !optDrop.classList.contains('hidden') && optDrop.style.display !== 'none') {
+      if (typeof closeOptionsDropdown === 'function') {
+        closeOptionsDropdown();
+      } else {
+        hideElement(optDrop);
+      }
+      return true;
+    }
+
+    // 9. Profile & Settings Hub Modal
+    const profModal = document.getElementById('profileModal');
+    if (profModal && !profModal.classList.contains('hidden') && profModal.style.display !== 'none') {
+      if (typeof closeProfileModal === 'function') {
+        closeProfileModal();
+      } else {
+        hideElement(profModal);
+      }
+      return true;
+    }
+
+    // 10. Language Switcher Modal
+    const langModalEl = document.getElementById('langModal');
+    if (langModalEl && !langModalEl.classList.contains('hidden') && langModalEl.style.display !== 'none') {
+      hideElement(langModalEl);
+      return true;
+    }
+
+    // 11. About & Information Modal
+    const aboutModalEl = document.getElementById('aboutModal');
+    if (aboutModalEl && !aboutModalEl.classList.contains('hidden') && aboutModalEl.style.display !== 'none') {
+      if (typeof closeAboutModal === 'function') {
+        closeAboutModal();
+      } else {
+        hideElement(aboutModalEl);
+      }
+      return true;
+    }
+
+    // 12. Avatar Cropper Modal
+    const cropModal = document.getElementById('avatarCropperModal');
+    if (cropModal && !cropModal.classList.contains('hidden') && cropModal.style.display !== 'none') {
+      hideElement(cropModal);
+      return true;
+    }
+
+    // 13. If message input is currently focused, blur it cleanly
+    const msgInp = document.getElementById('messageInput');
+    if (document.activeElement === msgInp) {
+      msgInp.blur();
+      return true;
+    }
+
+    return false;
+  };
+
+  // Keyboard Shortcuts (Accessibility & Speed)
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      if (filterInput) filterInput.focus();
+    }
+    if (e.key === 'Escape') {
+      handleUniversalEscape();
+    }
+  });
 
   // DOM Elements
   const pwaInstallBtn = document.getElementById('pwaInstallBtn');
@@ -1238,6 +1362,13 @@ const startSChat = () => {
         return;
       }
 
+      const pwdSubmitBtn = changePasswordForm.querySelector('button[type="submit"]');
+      const origPwdText = pwdSubmitBtn ? pwdSubmitBtn.textContent : '';
+      if (pwdSubmitBtn) {
+        pwdSubmitBtn.disabled = true;
+        pwdSubmitBtn.textContent = 'Updating...';
+      }
+
       try {
         const res = await fetch('/api/user/change-password', {
           method: 'POST',
@@ -1267,6 +1398,11 @@ const startSChat = () => {
           pwdAlert.className = 'alert-banner error';
           pwdAlert.textContent = 'Network error. Please try again.';
           showElement(pwdAlert);
+        }
+      } finally {
+        if (pwdSubmitBtn) {
+          pwdSubmitBtn.disabled = false;
+          pwdSubmitBtn.textContent = origPwdText;
         }
       }
     });
@@ -1546,7 +1682,11 @@ const startSChat = () => {
     const password = document.getElementById('regPassword').value;
 
     const btn = document.getElementById('registerBtn');
-    btn.disabled = true;
+    const origRegText = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Creating account...';
+    }
 
     try {
       const res = await fetch('/api/register', {
@@ -1568,7 +1708,10 @@ const startSChat = () => {
     } catch (err) {
       showAlert(err.message, 'error');
     } finally {
-      btn.disabled = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = origRegText;
+      }
     }
   });
 
@@ -1578,7 +1721,11 @@ const startSChat = () => {
     const password = document.getElementById('loginPassword').value;
 
     const btn = document.getElementById('loginBtn');
-    btn.disabled = true;
+    const origLoginText = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+    }
 
     try {
       const res = await fetch('/api/login', {
@@ -1599,7 +1746,10 @@ const startSChat = () => {
     } catch (err) {
       showAlert(err.message, 'error');
     } finally {
-      btn.disabled = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = origLoginText;
+      }
     }
   });
 
@@ -2800,6 +2950,27 @@ const startSChat = () => {
             if (elActive && data.onlineUsers) elActive.textContent = data.onlineUsers.length;
           }
           updateOnlineUsers(data.onlineUsers);
+        } else if (data.type === 'user_profile_updated') {
+          const updatedId = Number(data.userId);
+          const cachedUser = allRegisteredUsers.find(u => Number(u.id) === updatedId);
+          if (cachedUser) {
+            if (data.avatar) cachedUser.avatar = data.avatar;
+            if (data.bio) cachedUser.bio = data.bio;
+          }
+          if (data.onlineUsers) {
+            updateOnlineUsers(data.onlineUsers);
+          } else {
+            updateOnlineUsers();
+          }
+
+          if (activeRecipient && Number(activeRecipient.id) === updatedId) {
+            if (data.avatar) activeRecipient.avatar = data.avatar;
+            if (data.bio) activeRecipient.bio = data.bio;
+            const roomAvatarEl = document.getElementById('roomAvatar');
+            if (roomAvatarEl && data.avatar) {
+              roomAvatarEl.innerHTML = renderAvatarHTML(data.avatar, data.username || activeRecipient.username);
+            }
+          }
         } else if (data.type === 'typing') {
           handleTypingEvent(data);
         } else if (data.type === 'user_banned') {
@@ -3655,26 +3826,84 @@ const startSChat = () => {
       });
     }
 
-        // Right-Click Desktop & Long-Press Mobile Listeners
+    // Right-Click Desktop & Long-Press / Swipe-to-Reply Mobile Listeners
     let longPressTimer = null;
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isSwiping = false;
+    let hasTriggeredHaptic = false;
+
     msgCard.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       openMessageContextMenu(e, msg, msgCard, isOutgoing);
     });
 
     msgCard.addEventListener('touchstart', (e) => {
+      // Don't intercept clicks on interactive buttons, audio sliders, or clickable media
+      if (e.target.closest('button, a, audio, .audio-player-ui, .lightbox-clickable, .audio-progress-bar')) {
+        return;
+      }
+      if (!e.touches || !e.touches[0]) return;
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      isSwiping = false;
+      hasTriggeredHaptic = false;
+
       longPressTimer = setTimeout(() => {
         openMessageContextMenu(e, msg, msgCard, isOutgoing);
       }, 400);
     }, { passive: true });
 
-    msgCard.addEventListener('touchend', () => {
-      if (longPressTimer) clearTimeout(longPressTimer);
+    msgCard.addEventListener('touchmove', (e) => {
+      if (!e.touches || !e.touches[0]) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+
+      // If predominantly vertical movement before horizontal, this is normal scrolling
+      if (Math.abs(dy) > 10 && !isSwiping) {
+        if (longPressTimer) clearTimeout(longPressTimer);
+        return;
+      }
+
+      // Horizontal swipe to the right (swipe-to-reply)
+      if (dx > 12 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+        if (longPressTimer) clearTimeout(longPressTimer);
+        isSwiping = true;
+
+        const clampedX = Math.min(dx * 0.45, 60);
+        msgCard.style.transform = `translateX(${clampedX}px)`;
+
+        if (clampedX >= 38 && !hasTriggeredHaptic) {
+          hasTriggeredHaptic = true;
+          if (navigator.vibrate) navigator.vibrate(8);
+        }
+      }
     }, { passive: true });
 
-    msgCard.addEventListener('touchmove', () => {
+    const handleTouchEndOrCancel = (e) => {
       if (longPressTimer) clearTimeout(longPressTimer);
-    }, { passive: true });
+      if (isSwiping) {
+        const finalDx = e.changedTouches && e.changedTouches[0] ? (e.changedTouches[0].clientX - touchStartX) : 0;
+        if (finalDx * 0.45 >= 38 || hasTriggeredHaptic) {
+          setReplyState(msg);
+          const msgInput = document.getElementById('messageInput');
+          if (msgInput) msgInput.focus();
+        }
+
+        // Animate smooth return to resting position
+        msgCard.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.9, 0.3, 1)';
+        msgCard.style.transform = 'translateX(0px)';
+        setTimeout(() => {
+          msgCard.style.transition = '';
+          msgCard.style.transform = '';
+        }, 230);
+      }
+      isSwiping = false;
+      hasTriggeredHaptic = false;
+    };
+
+    msgCard.addEventListener('touchend', handleTouchEndOrCancel, { passive: true });
+    msgCard.addEventListener('touchcancel', handleTouchEndOrCancel, { passive: true });
 
     messagesFeed.appendChild(msgCard);
     

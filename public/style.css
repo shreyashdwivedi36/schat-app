@@ -1370,6 +1370,7 @@ body {
   gap: 10px;
   max-width: 70%;
   position: relative;
+  touch-action: pan-y;
 }
 
 .message-card.removing {
@@ -3903,19 +3904,6 @@ button:active,
 .dropdown-item:active, .context-item:active {
   transform: scale(0.98) !important;
 }
-
-
-
-
-  .quick-action-card {
-    flex-direction: row;
-    text-align: left;
-    padding: 12px 14px;
-    gap: 12px;
-  }
-}
-
-
 
 /* ================= TELEGRAM/WHATSAPP STYLE WELCOME PILL ================= */
 .welcome-pill {
