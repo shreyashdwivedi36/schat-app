@@ -4,7 +4,7 @@ const WebSocket = require('ws');
 const { hashPassword, comparePassword, generateToken, verifyToken, authMiddleware, verifyUserSession } = require('./auth');
 const db = require('./db');
 
-console.log('🧪 Running Complete SChat 17-Suite Automated Regression & Integration Test Suite...\n');
+console.log('🧪 Running Complete SChat 18-Suite Automated Regression & Integration Test Suite...\n');
 
 async function runAllTests() {
   try {
@@ -579,11 +579,42 @@ async function runAllTests() {
       });
       assert.strictEqual(regRes.status, 400, 'Registering configured super admin username must return 400 Bad Request');
     }
-    console.log('✅ Passed Test 17 (Admin Ban Active Socket Termination, Session Purge & Reserved Username Verified)\n');
+    // 18. Web Hygiene, Crawler Discovery, Legal Routing & Custom 404 Verification
+    console.log('Test 18: Web Hygiene, SEO, Legal Routing & 404 Handler Verification');
+    const robotsRes = await fetch(`http://127.0.0.1:${hmacPort}/robots.txt`);
+    assert.strictEqual(robotsRes.status, 200, 'robots.txt must return 200');
+    const robotsText = await robotsRes.text();
+    assert.ok(robotsText.includes('sitemap.xml'), 'robots.txt must declare sitemap location');
+
+    const sitemapRes = await fetch(`http://127.0.0.1:${hmacPort}/sitemap.xml`);
+    assert.strictEqual(sitemapRes.status, 200, 'sitemap.xml must return 200');
+    const sitemapText = await sitemapRes.text();
+    assert.ok(sitemapText.includes('<urlset') && sitemapText.includes('/privacy'), 'sitemap.xml must contain urlset and /privacy');
+
+    const privacyRes = await fetch(`http://127.0.0.1:${hmacPort}/privacy`);
+    assert.strictEqual(privacyRes.status, 200, '/privacy must return 200');
+    const privacyText = await privacyRes.text();
+    assert.ok(privacyText.includes('Privacy Policy'), '/privacy must serve Privacy Policy');
+
+    const termsRes = await fetch(`http://127.0.0.1:${hmacPort}/terms`);
+    assert.strictEqual(termsRes.status, 200, '/terms must return 200');
+    const termsText = await termsRes.text();
+    assert.ok(termsText.includes('Terms of Service'), '/terms must serve Terms of Service');
+
+    const notFoundRes = await fetch(`http://127.0.0.1:${hmacPort}/nonexistent-route-for-test-404`);
+    assert.strictEqual(notFoundRes.status, 404, 'Unmatched web routes must return HTTP 404');
+    const notFoundText = await notFoundRes.text();
+    assert.ok(notFoundText.includes('Lost in the Mesh'), 'Unmatched web routes must render custom 404 page');
+
+    const apiNotFoundRes = await fetch(`http://127.0.0.1:${hmacPort}/api/nonexistent-endpoint`);
+    assert.strictEqual(apiNotFoundRes.status, 404, 'Unmatched API endpoints must return HTTP 404');
+    const apiNotFoundJson = await apiNotFoundRes.json();
+    assert.strictEqual(apiNotFoundJson.error, 'Endpoint not found', 'Unmatched API endpoints must return JSON error object');
+    console.log('✅ Passed Test 18 (Web Hygiene, SEO, Legal Routes & Custom 404 Handlers Verified)\n');
 
     hmacServer.close();
 
-    console.log('🎉 ALL 17 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
+    console.log('🎉 ALL 18 AUTOMATED REGRESSION & INTEGRATION TEST SUITES PASSED SUCCESSFULLY!');
     process.exit(0);
   } catch (err) {
     console.error('❌ TEST FAILED:', err);

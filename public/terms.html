@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Terms of Service — SChat™</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="apple-touch-icon" href="logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=162">
+  <style>
+    body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.08), transparent 70%);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      margin: 0;
+      padding: 40px 20px 80px;
+      box-sizing: border-box;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+    [data-theme="light"] body {
+      background-color: var(--bg-dark);
+      background-image: radial-gradient(circle at 50% 0%, rgba(219, 234, 254, 0.65), transparent 70%);
+    }
+    .legal-container {
+      width: 100%;
+      max-width: 780px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .legal-header {
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .legal-header .brand-logo {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-squircle-md, 18px);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(15, 23, 42, 0.8));
+      border: 1px solid rgba(96, 165, 250, 0.35);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .legal-header .brand-logo img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+    }
+    .legal-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin: 0 0 8px 0;
+      background: linear-gradient(135deg, #ffffff 40%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    [data-theme="light"] .legal-title {
+      background: linear-gradient(135deg, #0f172a 30%, #1e293b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .legal-subtitle {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .legal-card {
+      background: var(--glass-bg, rgba(16, 21, 35, 0.75));
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border-specular);
+      border-radius: var(--radius-squircle-lg, 24px);
+      box-shadow: var(--neu-shadow-surface), var(--glass-bevel);
+      padding: 32px 36px;
+      box-sizing: border-box;
+      line-height: 1.7;
+    }
+    [data-theme="light"] .legal-card {
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.95);
+      box-shadow: 0 16px 36px -8px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04), inset 0 1px 0 #ffffff;
+    }
+    .legal-card h2 {
+      font-size: 1.25rem;
+      font-weight: 750;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+      margin: 24px 0 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .legal-card h2:first-of-type {
+      margin-top: 0;
+    }
+    [data-theme="light"] .legal-card h2 {
+      color: #0f172a;
+    }
+    .legal-card p {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin: 0 0 14px 0;
+    }
+    [data-theme="light"] .legal-card p {
+      color: #475569;
+    }
+    .legal-card ul {
+      margin: 0 0 18px 20px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+    [data-theme="light"] .legal-card ul {
+      color: #475569;
+    }
+    .legal-card li {
+      margin-bottom: 8px;
+    }
+    .legal-footer-nav {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .nav-pill-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: var(--radius-pill);
+      background: var(--glass-bg-subtle, rgba(255, 255, 255, 0.05));
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      text-decoration: none;
+      font-weight: 650;
+      font-size: 0.88rem;
+      transition: all 0.2s ease;
+    }
+    .nav-pill-btn:hover {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(96, 165, 250, 0.4);
+      transform: translateY(-1.5px);
+    }
+    [data-theme="light"] .nav-pill-btn {
+      background: rgba(255, 255, 255, 0.9);
+      color: #0f172a;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+    }
+  </style>
+  <script>
+    try {
+      const savedTheme = localStorage.getItem('schat_theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+    } catch (e) {}
+  </script>
+</head>
+<body>
+  <div class="legal-container">
+    <div class="legal-header">
+      <div class="brand-logo">
+        <img src="logo.png" alt="SChat Logo">
+      </div>
+      <h1 class="legal-title">Terms of Service</h1>
+      <p class="legal-subtitle">Effective Date: October 2026 • Acceptable Use & Service Agreement</p>
+    </div>
+
+    <div class="legal-card">
+      <h2>📜 1. Acceptance of Terms</h2>
+      <p>
+        By accessing or using SChat ("the Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, you must discontinue using the application.
+      </p>
+
+      <h2>🤝 2. Acceptable Conduct</h2>
+      <p>
+        SChat is designed for secure, authentic communication between individuals and teams. You agree NOT to use the Service to:
+      </p>
+      <ul>
+        <li>Transmit malicious software, worms, spyware, or viruses.</li>
+        <li>Engage in harassment, hate speech, threats of physical harm, or illegal exploitation.</li>
+        <li>Attempt automated denial-of-service (DoS) attacks, unauthorized scraping, or WebSocket connection flood abuse.</li>
+        <li>Impersonate other individuals, public figures, or platform operators.</li>
+      </ul>
+
+      <h2>🔐 3. Security & Account Integrity</h2>
+      <p>
+        You are responsible for safeguarding your credentials and session tokens. SChat enforces cryptographically salted password hashing and stateless token verification. In the event of compromised credentials, you can immediately revoke all active sessions in the <strong>Settings &gt; Devices</strong> tab.
+      </p>
+
+      <h2>⚡ 4. Real-Time Service Availability</h2>
+      <p>
+        While we strive for 99.9% uptime with persistent background heartbeat mechanisms, SChat is provided on an "as is" and "as available" basis without warranties of uninterrupted transmission or zero latency.
+      </p>
+
+      <h2>🛑 5. Account Termination & Moderation</h2>
+      <p>
+        We reserve the right to suspend or terminate accounts that violate our acceptable use standards, engage in socket abuse, or compromise user privacy.
+      </p>
+
+      <h2>📬 6. Contact & Legal Questions</h2>
+      <p>
+        For inquiries regarding these Terms of Service, please contact the developer team at <a href="mailto:support@schat.dev" style="color: var(--primary-accent);">support@schat.dev</a> or open an inquiry on our official project repository.
+      </p>
+    </div>
+
+    <div class="legal-footer-nav">
+      <a href="/" class="nav-pill-btn">← Back to SChat</a>
+      <a href="/privacy" class="nav-pill-btn">Privacy Policy →</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# SChat - Real-Time Messaging Platform
+# https://schat-live.onrender.com
+
+User-agent: *
+Allow: /
+Allow: /privacy
+Allow: /terms
+Disallow: /api/
+Disallow: /admin
+
+Sitemap: https://schat-live.onrender.com/sitemap.xml

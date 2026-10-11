@@ -96,6 +96,14 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'ignore' }));
 app.use('/.well-known', express.static(path.join(__dirname, 'public', '.well-known'), { dotfiles: 'allow' }));
 
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
+
+app.get('/terms', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'terms.html'));
+});
+
 // Health Check Endpoint for Database & WebSocket Uptime Monitoring
 app.get('/api/health', async (req, res) => {
   try {
@@ -1282,6 +1290,14 @@ app.post('/api/admin/announce', superAdminMiddleware, (req, res) => {
   });
 
   res.json({ success: true, message: 'Announcement sent' });
+});
+
+// 404 Catch-All Handler for unmatched routes
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Endpoint not found', path: req.path });
+  }
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
 });
 
 // WebSocket Implementation with 64KB Frame Limit
