@@ -72,6 +72,27 @@ app.use(cors({
 
 app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ limit: '100kb', extended: true }));
+
+// Lightweight Uptime & Cron-Job Monitor Interceptor
+// Automatically intercepts cron-job.org, UptimeRobot, and uptime crawlers hitting '/'
+// returning an immediate 2-byte 'OK' response to completely eliminate payload size errors,
+// while keeping the database connection pool active via background ping.
+app.use((req, res, next) => {
+  const ua = (req.headers['user-agent'] || '').toLowerCase();
+  const isMonitor = ua.includes('cron-job') || ua.includes('uptimerobot') || ua.includes('betteruptime') || ua.includes('pingdom');
+
+  if (req.method === 'HEAD' && (req.path === '/' || req.path === '/index.html')) {
+    if (db) db.get('SELECT 1').catch(() => {});
+    return res.status(200).end();
+  }
+
+  if ((isMonitor && (req.path === '/' || req.path === '/index.html')) || req.path === '/ping' || req.path === '/health') {
+    if (db) db.get('SELECT 1').catch(() => {});
+    return res.status(200).send('OK');
+  }
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'ignore' }));
 app.use('/.well-known', express.static(path.join(__dirname, 'public', '.well-known'), { dotfiles: 'allow' }));
 

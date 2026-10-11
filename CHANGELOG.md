@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v2.0.3] - 2026-10-11
+
+### 🛠️ Infrastructure & Service Health Optimization
+- **Uptime Monitor & Keep-Alive Interceptor**: Added lightweight bot detection middleware to automatically serve 2-byte responses to scheduled uptime monitors hitting the root endpoint, preventing payload buffer overflows on external cron services while keeping the platform and database connection active.
+- **Health Route Aliases**: Added explicit `/ping` and `/health` route aliases supporting both `GET` and `HEAD` requests.
+
+---
+
 ## [v2.0.2] - 2026-09-17
 
 ### ⚡ Navigation, Interaction & Platform Refinements
